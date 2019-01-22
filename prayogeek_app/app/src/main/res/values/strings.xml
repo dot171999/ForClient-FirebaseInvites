@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">Yuscope</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Sign Out</string>
+
+    <string name="nav_to_website"> Website </string>
+    <string name="nav_link_to_website"> http://www.google.com </string>
+
+    <string name="nav_about_us"> About us </string>
+    <string name="nav_link_about_us"> http://www.google.com </string>
+
+    <string name="nav_youtube_channel"> Youtube </string>
+    <string name="nav_link_youtube_channel"> http://www.youtube.com/channel/UCVHFbqXqoYvEWM1Ddxl0QDg </string>
+
+    <string name="nav_instagram"> Instagram </string>
+    <string name="nav_link_instagram"> http://www.instagram.com/android </string>
+
+    <string name="nav_facebook"> Facebook </string>
+    <string name="nav_link_facebook"> http://developers.facebook.com </string>
+
+</resources>

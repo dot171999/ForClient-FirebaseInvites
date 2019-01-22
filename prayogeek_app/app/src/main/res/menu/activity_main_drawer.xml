@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_on_boarding"
+            android:icon="@drawable/question_mark"
+            android:title="OnBoarding" />
+        <item
+            android:id="@+id/nav_basic_electronic_tutorial"
+            android:icon="@drawable/creative"
+            android:title="Basic Electronic Tutorial" />
+    </group>
+
+    <item android:title="Communicate">
+        <menu>
+            <item
+                android:id="@+id/nav_link_to_website"
+                android:icon="@drawable/global"
+                android:title="@string/nav_to_website" />
+            <item
+                android:id="@+id/nav_youtube_channel"
+                android:icon="@drawable/youtube"
+                android:title="@string/nav_youtube_channel" />
+            <item
+                android:id="@+id/nav_facebook"
+                android:icon="@drawable/facebook"
+                android:title="@string/nav_facebook" />
+            <item
+                android:id="@+id/nav_instagram"
+                android:icon="@drawable/instagram"
+                android:title="@string/nav_instagram" />
+            <item
+                android:id="@+id/nav_about_us"
+                android:title="@string/nav_about_us" />
+            <item
+                android:id="@+id/nav_privacy_policy"
+                android:title="Privacy policy" />
+        </menu>
+    </item>
+
+</menu>
