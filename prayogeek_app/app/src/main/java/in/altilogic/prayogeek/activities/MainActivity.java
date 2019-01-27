@@ -10,21 +10,24 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
+import com.firebase.ui.auth.IdpResponse;
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import in.altilogic.prayogeek.R;
 import in.altilogic.prayogeek.utils.Utils;
@@ -34,7 +37,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
 
     // Firebase Authentication
     private FirebaseAuth mFirebaseAuth;
@@ -50,92 +53,28 @@ public class MainActivity extends AppCompatActivity
     boolean isOnline = false;
 
     public static final String TAG = "YOUSCOPE-DB";
+    private Toolbar mToolbar = null;
+
+    private Spinner mList1, mList2;
+    private TextView tvOut;
+    private Button mButton1, mButton2, mButton3, mButton4;
+
+    private TextView tvNavDrUser, tvNavDrEmail;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        isUserFirstTime = Boolean.valueOf(Utils.readSharedSetting(MainActivity.this, PREF_USER_FIRST_TIME, "true"));
-
-        Intent introIntent = new Intent(MainActivity.this, OnBoardingActivity.class);
-        introIntent.putExtra(PREF_USER_FIRST_TIME, isUserFirstTime);
-
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(mToolbar);
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
-        toggle.syncState();
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
-
-        // Firebase Authorization
-        mFirebaseAuth = FirebaseAuth.getInstance();
-
-        mAuthStateListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-                if(user != null){
-                    // user is signed in
-                    mUsername = user.getDisplayName();
-                    mEmailId = user.getEmail();
-                    //Global_Var GlobalVar = (Global_Var) getApplicationContext() ;
-                    //GlobalVar.Set_Username(mUsername);
-                    //GlobalVar.Set_EmailId(mEmailId);
-                } else {
-                    // user is signed out
-                    mUsername = ANONYMOUS;
-
-                    startActivityForResult(
-                            AuthUI.getInstance()
-                                    .createSignInIntentBuilder()
-                                    .setIsSmartLockEnabled(false) // Smart lock automatically saves user credentials and logs in
-                                    .setAvailableProviders(
-                                            Arrays.asList(new AuthUI.IdpConfig.GoogleBuilder().build()))
-                                    .build(),
-                            RC_SIGN_IN);
-                }
-            }
-        };
-
-        if (isUserFirstTime)
-            startActivity(introIntent);
-
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-        // Create a new user with a first and last name
-        Map<String, Object> user = new HashMap<>();
-        user.put("first", "Ada");
-        user.put("last", "Lovelace");
-        user.put("born", 1815);
-
-// Add a new document with a generated ID
-        db.collection("users")
-                .add(user)
-                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                    @Override
-                    public void onSuccess(DocumentReference documentReference) {
-                        Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w(TAG, "Error adding document", e);
-                    }
-                });
+//        ui_init();
+        firebase_auth_init();
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        isOnline = Utils.isOnline(this);
-        Toast.makeText(this, "Network available - " + isOnline, Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -159,7 +98,8 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        mFirebaseAuth.addAuthStateListener(mAuthStateListener);
+        if(mFirebaseAuth != null)
+            mFirebaseAuth.addAuthStateListener(mAuthStateListener);
     }
 
     @Override
@@ -181,6 +121,40 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    private void firebase_auth_init() {
+        isOnline = Utils.isOnline(this);
+
+        mFirebaseAuth = FirebaseAuth.getInstance();
+
+        mAuthStateListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+                if(user != null){
+                    // user is signed in
+                    mUsername = user.getDisplayName();
+                    mEmailId = user.getEmail();
+//                    Global_Var GlobalVar = (Global_Var) getApplicationContext() ;
+                    //GlobalVar.Set_Username(mUsername);
+                    //GlobalVar.Set_EmailId(mEmailId);
+                    ui_init();
+                } else {
+                    // user is signed out
+                    mUsername = ANONYMOUS;
+
+                    startActivityForResult(
+                            AuthUI.getInstance()
+                                    .createSignInIntentBuilder()
+                                    .setIsSmartLockEnabled(false) // Smart lock automatically saves user credentials and logs in
+                                    .setAvailableProviders(
+                                            Arrays.asList(new AuthUI.IdpConfig.GoogleBuilder().build()))
+                                    .build(),
+                            RC_SIGN_IN);
+                }
+            }
+        };
+    }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode,resultCode,data);
@@ -189,6 +163,8 @@ public class MainActivity extends AppCompatActivity
             case RC_SIGN_IN:
                 if(resultCode == RESULT_OK) {
                     Toast.makeText(this, "Signed in!", Toast.LENGTH_SHORT).show();
+
+                    ui_init();
                 }else if (resultCode == RESULT_CANCELED) {
                     if(isOnline == true){
                         Toast.makeText(this, "Sign In Cancelled!", Toast.LENGTH_SHORT).show();
@@ -200,6 +176,48 @@ public class MainActivity extends AppCompatActivity
                 }
                 break;
         }
+    }
+
+    private void ui_init() {
+        navigation_driver_init();
+
+        mList1 = findViewById(R.id.spList1);
+        mList2 = findViewById(R.id.spList2);
+        tvOut = findViewById(R.id.tv_main1);
+        mButton1 = findViewById(R.id.btn_button1);
+        mButton2 = findViewById(R.id.btn_button2);
+        mButton3 = findViewById(R.id.btn_button3);
+        mButton4 = findViewById(R.id.btn_button4);
+        mButton1.setOnClickListener(this);
+        mButton2.setOnClickListener(this);
+        mButton3.setOnClickListener(this);
+        mButton4.setOnClickListener(this);
+
+        isUserFirstTime = Boolean.valueOf(Utils.readSharedSetting(MainActivity.this, PREF_USER_FIRST_TIME, "true"));
+        if (isUserFirstTime)
+            startActivity( new Intent(MainActivity.this, OnBoardingActivity.class)
+                    .putExtra(PREF_USER_FIRST_TIME, isUserFirstTime));
+    }
+
+    private void navigation_driver_init() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, mToolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
+
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        View headerView = navigationView.getHeaderView(0);
+        tvNavDrUser = headerView.findViewById(R.id.tv_nav_user);
+        tvNavDrEmail = headerView.findViewById(R.id.tv_nav_email);
+
+        if(mUsername != null)
+            tvNavDrUser.setText(mUsername);
+
+        if(mEmailId != null)
+            tvNavDrEmail.setText(mEmailId);
     }
 
     @Override
@@ -235,5 +253,22 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
-}
 
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.btn_button1:
+                tvOut.setText("press button 1");
+                break;
+            case R.id.btn_button2:
+                tvOut.setText("press button 2");
+                break;
+            case R.id.btn_button3:
+                tvOut.setText("press button 3");
+                break;
+            case R.id.btn_button4:
+                tvOut.setText("press button 4");
+                break;
+        }
+    }
+}

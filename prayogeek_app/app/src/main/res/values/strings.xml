@@ -21,5 +21,6 @@
 
     <string name="nav_facebook"> Facebook </string>
     <string name="nav_link_facebook"> http://developers.facebook.com </string>
+    <string name="network_is_not_available">Network is not available</string>
 
 </resources>
