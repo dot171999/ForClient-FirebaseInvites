@@ -1,6 +1,11 @@
 package in.altilogic.prayogeek.activities;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -10,6 +15,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,26 +25,26 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
-import com.firebase.ui.auth.IdpResponse;
-import com.google.android.gms.auth.api.Auth;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInResult;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.FirebaseDatabase;
 
+
+import in.altilogic.prayogeek.FireBaseHelper;
+import in.altilogic.prayogeek.Global_Var;
 import in.altilogic.prayogeek.R;
 import in.altilogic.prayogeek.utils.Utils;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
+
+import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
+        implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener, EasyPermissions.PermissionCallbacks {
 
+    private static final float LOCATION_REFRESH_DISTANCE = 100.f;
+    private static final long LOCATION_REFRESH_TIME = 1000;
     // Firebase Authentication
     private FirebaseAuth mFirebaseAuth;
     private FirebaseAuth.AuthStateListener mAuthStateListener;
@@ -60,6 +66,7 @@ public class MainActivity extends AppCompatActivity
     private Button mButton1, mButton2, mButton3, mButton4;
 
     private TextView tvNavDrUser, tvNavDrEmail;
+    private LocationManager mLocationManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,18 +74,21 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
-
-//        ui_init();
         firebase_auth_init();
     }
 
     @Override
     public void onStart() {
         super.onStart();
+        isOnline = Utils.isOnline(this);
+        if(!isOnline) {
+            Toast.makeText(this, "Network is not available ", Toast.LENGTH_SHORT).show();
+            finish();
+        }
     }
 
     @Override
-    public void onPause(){
+    public void onPause() {
         super.onPause();
         if (mAuthStateListener != null) {
             mFirebaseAuth.removeAuthStateListener(mAuthStateListener);
@@ -98,7 +108,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        if(mFirebaseAuth != null)
+        if (mFirebaseAuth != null)
             mFirebaseAuth.addAuthStateListener(mAuthStateListener);
     }
 
@@ -130,14 +140,17 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
-                if(user != null){
+                if (user != null) {
                     // user is signed in
                     mUsername = user.getDisplayName();
                     mEmailId = user.getEmail();
-//                    Global_Var GlobalVar = (Global_Var) getApplicationContext() ;
-                    //GlobalVar.Set_Username(mUsername);
-                    //GlobalVar.Set_EmailId(mEmailId);
+                    Global_Var GlobalVar = (Global_Var) getApplicationContext();
+                    GlobalVar.Set_Username(mUsername);
+                    GlobalVar.Set_EmailId(mEmailId);
                     ui_init();
+
+//                    FireBaseHelper fireBaseHelper = new FireBaseHelper(FirebaseDatabase.getInstance().getReference());
+//                    fireBaseHelper.WriteGlobalVar(GlobalVar);
                 } else {
                     // user is signed out
                     mUsername = ANONYMOUS;
@@ -157,19 +170,17 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode,resultCode,data);
-        switch(requestCode)
-        {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
             case RC_SIGN_IN:
-                if(resultCode == RESULT_OK) {
+                if (resultCode == RESULT_OK) {
                     Toast.makeText(this, "Signed in!", Toast.LENGTH_SHORT).show();
 
                     ui_init();
-                }else if (resultCode == RESULT_CANCELED) {
-                    if(isOnline == true){
+                } else if (resultCode == RESULT_CANCELED) {
+                    if (isOnline == true) {
                         Toast.makeText(this, "Sign In Cancelled!", Toast.LENGTH_SHORT).show();
-                    }
-                    else {
+                    } else {
                         Toast.makeText(this, "Turn ON Internet to Sign In!", Toast.LENGTH_SHORT).show();
                     }
                     finish();
@@ -195,8 +206,10 @@ public class MainActivity extends AppCompatActivity
 
         isUserFirstTime = Boolean.valueOf(Utils.readSharedSetting(MainActivity.this, PREF_USER_FIRST_TIME, "true"));
         if (isUserFirstTime)
-            startActivity( new Intent(MainActivity.this, OnBoardingActivity.class)
+            startActivity(new Intent(MainActivity.this, OnBoardingActivity.class)
                     .putExtra(PREF_USER_FIRST_TIME, isUserFirstTime));
+
+        checkPermissions();
     }
 
     private void navigation_driver_init() {
@@ -271,4 +284,65 @@ public class MainActivity extends AppCompatActivity
                 break;
         }
     }
+
+    @Override
+    public void onPermissionsGranted(int requestCode, @NonNull List<String> perms) {
+        Log.d(TAG, "onPermissionsGranted " + requestCode);
+    }
+
+    @Override
+    public void onPermissionsDenied(int requestCode, @NonNull List<String> perms) {
+        Log.d(TAG, "onPermissionsDenied " + requestCode);
+        finish();
+    }
+
+    @SuppressLint("MissingPermission")
+    private boolean checkPermissions() {
+        String[] perms = {Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION};
+        if (EasyPermissions.hasPermissions(this, perms)) {
+            // Already have permission, do the thing
+            mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME,
+                    LOCATION_REFRESH_DISTANCE, mLocationListener);
+            return true;
+        } else {
+            // Do not have permissions, request them now
+            EasyPermissions.requestPermissions(this, getString(R.string.string_describe_why_do_you_need_a_location),
+                    1000, perms);
+        }
+        return false;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        Log.d(TAG, "onRequestPermissionsResult " + requestCode);
+
+        // Forward results to EasyPermissions
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
+    }
+
+    private final LocationListener mLocationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(final Location location) {
+            Log.d(TAG, "onLocationChanged: " + location.getLatitude() + ", "+ location.getLongitude());
+            ((Global_Var) getApplicationContext()).Set_Location(location.getLatitude(), location.getLongitude());
+        }
+
+        @Override
+        public void onStatusChanged(String s, int i, Bundle bundle) {
+            Log.d(TAG, "onStatusChanged " + (s != null? s : "null") +  "; " + i);
+        }
+
+        @Override
+        public void onProviderEnabled(String s) {
+            Log.d(TAG, "onProviderEnabled " + (s != null? s : "null"));
+        }
+
+        @Override
+        public void onProviderDisabled(String s) {
+            Log.d(TAG, "onProviderDisabled " + (s != null? s : "null"));
+        }
+    };
 }
+
