@@ -23,6 +23,14 @@
           }
         },
         {
+          "client_id": "1072961653196-d97tao7fq1o81uqjm63efnpea5fqog6f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "in.altilogic.prayogeek",
+            "certificate_hash": "4bf3b866f9b7947443a82dc4e1c31b3e38dc3a55"
+          }
+        },
+        {
           "client_id": "1072961653196-g0vrmovr877ooa8o2v7a6mdfjje46gps.apps.googleusercontent.com",
           "client_type": 3
         }
