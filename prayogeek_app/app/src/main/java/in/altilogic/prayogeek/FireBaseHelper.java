@@ -3,16 +3,27 @@ package in.altilogic.prayogeek;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.GenericTypeIndicator;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import in.altilogic.prayogeek.activities.MainActivity;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class FireBaseHelper {
@@ -27,13 +38,7 @@ public class FireBaseHelper {
 
     private DatabaseReference mDatabase;
 
-    public FireBaseHelper(DatabaseReference databaseReference) {
-//        mDatabase = databaseReference;
-        String main_key = databaseReference.getKey();
-        FirebaseDatabase firebaseDatabase = databaseReference.getDatabase();
-        DatabaseReference databaseReference1 = firebaseDatabase.getReference("Colleges");
-        String key = databaseReference1.getKey();
-        int i =10;
+    public FireBaseHelper() {
     }
 
 
@@ -64,4 +69,8 @@ public class FireBaseHelper {
                 });
     }
 
+    public void ReadChild(@NonNull OnCompleteListener<QuerySnapshot> querySnapshotOnCompleteListener) {
+        CollectionReference documentReference = FirebaseFirestore.getInstance().collection("Colleges");
+        documentReference.get().addOnCompleteListener(querySnapshotOnCompleteListener);
+    }
 }

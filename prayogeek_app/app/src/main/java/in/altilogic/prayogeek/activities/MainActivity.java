@@ -19,15 +19,27 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.GenericTypeIndicator;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 
 import in.altilogic.prayogeek.FireBaseHelper;
@@ -35,6 +47,7 @@ import in.altilogic.prayogeek.Global_Var;
 import in.altilogic.prayogeek.R;
 import in.altilogic.prayogeek.utils.Utils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -130,6 +143,8 @@ public class MainActivity extends AppCompatActivity
                 return super.onOptionsItemSelected(item);
         }
     }
+    ArrayAdapter<String> adapter;
+    ArrayList<String> dataList1 = new ArrayList<>();
 
     private void firebase_auth_init() {
         isOnline = Utils.isOnline(this);
@@ -148,9 +163,27 @@ public class MainActivity extends AppCompatActivity
                     GlobalVar.Set_Username(mUsername);
                     GlobalVar.Set_EmailId(mEmailId);
                     ui_init();
+                    FireBaseHelper fireBaseHelper = new FireBaseHelper();
+                    fireBaseHelper.ReadChild( new OnCompleteListener<QuerySnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                            if (task.isSuccessful()) {
+                                for (QueryDocumentSnapshot document : task.getResult()) {
+                                    Log.d(MainActivity.TAG, document.getId() + " => " + document.getData());
+                                    dataList1.add(document.getId());
+                                }
 
-//                    FireBaseHelper fireBaseHelper = new FireBaseHelper(FirebaseDatabase.getInstance().getReference());
-//                    fireBaseHelper.WriteGlobalVar(GlobalVar);
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        list1_init();
+                                    }
+                                });
+                            } else {
+                                Log.w(MainActivity.TAG, "Error getting documents.", task.getException());
+                            }
+                        }
+                    });
                 } else {
                     // user is signed out
                     mUsername = ANONYMOUS;
@@ -168,6 +201,13 @@ public class MainActivity extends AppCompatActivity
         };
     }
 
+    private void list1_init(){
+        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, dataList1);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        if(mList1 != null){
+            mList1.setAdapter(adapter);
+        }
+    }
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
