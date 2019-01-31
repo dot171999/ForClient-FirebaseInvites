@@ -229,7 +229,11 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    boolean is_init = false;
     private void ui_init() {
+        if(is_init)
+            return;
+        is_init = true;
         navigation_driver_init();
 
         mList1 = findViewById(R.id.spList1);
@@ -265,6 +269,13 @@ public class MainActivity extends AppCompatActivity
         View headerView = navigationView.getHeaderView(0);
         tvNavDrUser = headerView.findViewById(R.id.tv_nav_user);
         tvNavDrEmail = headerView.findViewById(R.id.tv_nav_email);
+
+        headerView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this, ProfileActivity.class));
+            }
+        });
 
         if(mUsername != null)
             tvNavDrUser.setText(mUsername);

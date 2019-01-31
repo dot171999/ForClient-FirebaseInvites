@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+    <include layout="@layout/nav_header_main" />
+
+    <RelativeLayout
+        android:padding="10dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/tiLayoutCollege"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="@dimen/nav_header_height"
+            android:padding="10dp">
+
+            <AutoCompleteTextView
+                android:id="@+id/actvCollege"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="College"
+                android:textColorHint="@color/colorPrimary"
+                android:imeOptions="actionNext"
+                android:inputType="text"
+                android:lines="1"
+                android:maxLines="1" />
+
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/tiLayoutSemester"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/tiLayoutCollege"
+            android:padding="10dp">
+
+            <AutoCompleteTextView
+                android:id="@+id/actvSemester"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Semester"
+                android:textColorHint="@color/colorPrimary"
+                android:maxLines="1"
+                android:maxLength="1"
+                android:imeOptions="actionDone"
+                android:inputType="numberPassword"
+                android:lines="1" />
+
+        </android.support.design.widget.TextInputLayout>
+    </RelativeLayout>
+</android.support.design.widget.CoordinatorLayout>
