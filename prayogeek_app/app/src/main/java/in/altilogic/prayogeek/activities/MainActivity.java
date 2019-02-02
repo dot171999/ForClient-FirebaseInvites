@@ -29,7 +29,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -82,13 +85,14 @@ public class MainActivity extends AppCompatActivity
     private Button mButton1, mButton2, mButton3, mButton4;
 
     private TextView tvNavDrUser, tvNavDrEmail;
-    private LocationManager mLocationManager;
+//    private LocationManager mLocationManager;
 
     private ArrayAdapter<String> adapterList1;
     private ArrayList<String> dataList1 = new ArrayList<>();
     private ArrayAdapter<String> adapterList2;
     private ArrayList<String> dataList2 = new ArrayList<>();
 
+    private FusedLocationProviderClient mFusedLocationClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +101,7 @@ public class MainActivity extends AppCompatActivity
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
         firebase_auth_init();
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
     }
 
     @Override
@@ -171,27 +176,6 @@ public class MainActivity extends AppCompatActivity
                     GlobalVar.Set_EmailId(mEmailId);
                     ui_init();
                     list1_update();
-//                    FireBaseHelper fireBaseHelper = new FireBaseHelper();
-//                    fireBaseHelper.ReadChild( new OnCompleteListener<QuerySnapshot>() {
-//                        @Override
-//                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
-//                            if (task.isSuccessful()) {
-//                                for (QueryDocumentSnapshot document : task.getResult()) {
-//                                    Log.d(MainActivity.TAG, document.getId() + " => " + document.getData());
-//                                    dataList1.add(document.getId());
-//                                }
-//
-//                                runOnUiThread(new Runnable() {
-//                                    @Override
-//                                    public void run() {
-//                                        list1_init();
-//                                    }
-//                                });
-//                            } else {
-//                                Log.w(MainActivity.TAG, "Error getting documents.", task.getException());
-//                            }
-//                        }
-//                    });
                 } else {
                     // user is signed out
                     mUsername = ANONYMOUS;
@@ -207,14 +191,6 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         };
-    }
-
-    private void list1_init(){
-        adapterList1 = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, dataList1);
-        adapterList1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        if(mList1 != null){
-            mList1.setAdapter(adapterList1);
-        }
     }
 
     private void list1_update() {
@@ -243,28 +219,6 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         });
-
-//        documentReference.document("College_List").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-//            @Override
-//            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-//                if (task.isSuccessful()) {
-//                    dataList1.clear();
-//                    for (QueryDocumentSnapshot document : task.getResult()) {
-//                        Log.d(MainActivity.TAG, document.getId() + " => " + document.getData());
-//                        dataList1.add(document.getId());
-//                    }
-//
-//                    adapterList1 = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, dataList1);
-//                    adapterList1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-//                    mList1.setAdapter(adapterList1);
-//                    if(dataList1.size() > 0){
-//                        list2_update(dataList1.get(0));
-//                    }
-//                } else {
-//                    Log.w(MainActivity.TAG, "Error getting documents.", task.getException());
-//                }
-//            }
-//        });
     }
 
     private String mDocumentName;
@@ -291,8 +245,6 @@ public class MainActivity extends AppCompatActivity
                             Map<String, Object> dataMap = (Map<String, Object>)docum.getData();
                             if(dataMap != null){
                                 if(dataMap.containsKey(mEmailId)){
-//                                if(dataMap.containsKey("chetangp@gmail.com")){
-//                                    Map<String, Object> dataModules = (Map<String, Object>)dataMap.get((Object)"chetangp@gmail.com");
                                     Map<String, Object> dataModules = (Map<String, Object>)dataMap.get((Object)mEmailId);
                                     if(dataModules != null){
                                         if(dataModules.containsKey("module")) {
@@ -309,7 +261,6 @@ public class MainActivity extends AppCompatActivity
                                             }
                                         }
                                     }
-
                                 }
                                 else {
                                     printErrorMessage("You have not Subscribed");
@@ -381,7 +332,7 @@ public class MainActivity extends AppCompatActivity
             startActivity(new Intent(MainActivity.this, OnBoardingActivity.class)
                     .putExtra(PREF_USER_FIRST_TIME, isUserFirstTime));
 
-        checkPermissions();
+        checkLocationPermissions();
 
         adapterList1 = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, dataList1);
         adapterList1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -406,6 +357,20 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        mList2.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if(dataList2.size() > 0 && dataList2.size() > i) {
+                    printInfoMessage("App will connect to Module " + dataList2.get(i));
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+        printInfoMessage("Select the Correct Module to Connect");
     }
 
     private void navigation_driver_init() {
@@ -478,15 +443,19 @@ public class MainActivity extends AppCompatActivity
         switch (view.getId()) {
             case R.id.btn_button1:
                 printInfoMessage("press button 1");
+                updateLocation();
                 break;
             case R.id.btn_button2:
                 printInfoMessage("press button 2");
+                updateLocation();
                 break;
             case R.id.btn_button3:
                 printInfoMessage("press button 3");
+                updateLocation();
                 break;
             case R.id.btn_button4:
                 printInfoMessage("press button 4");
+                updateLocation();
                 break;
         }
     }
@@ -503,13 +472,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     @SuppressLint("MissingPermission")
-    private boolean checkPermissions() {
+    private boolean checkLocationPermissions() {
         String[] perms = {Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION};
         if (EasyPermissions.hasPermissions(this, perms)) {
-            // Already have permission, do the thing
-            mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME,
-                    LOCATION_REFRESH_DISTANCE, mLocationListener);
             return true;
         } else {
             // Do not have permissions, request them now
@@ -528,39 +493,32 @@ public class MainActivity extends AppCompatActivity
         EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
     }
 
-    private final LocationListener mLocationListener = new LocationListener() {
-        @Override
-        public void onLocationChanged(final Location location) {
-            Log.d(TAG, "onLocationChanged: " + location.getLatitude() + ", "+ location.getLongitude());
-            ((Global_Var) getApplicationContext()).Set_Location(location.getLatitude(), location.getLongitude());
-        }
-
-        @Override
-        public void onStatusChanged(String s, int i, Bundle bundle) {
-            Log.d(TAG, "onStatusChanged " + (s != null? s : "null") +  "; " + i);
-        }
-
-        @Override
-        public void onProviderEnabled(String s) {
-            Log.d(TAG, "onProviderEnabled " + (s != null? s : "null"));
-        }
-
-        @Override
-        public void onProviderDisabled(String s) {
-            Log.d(TAG, "onProviderDisabled " + (s != null? s : "null"));
-        }
-    };
-
-    private void printInfoMessage(String message){
-        tvError.setVisibility(View.GONE);
-        tvInfo.setVisibility(View.VISIBLE);
-        tvInfo.setText(message);
-    }
-
     private void printErrorMessage(String message){
         tvError.setVisibility(View.VISIBLE);
         tvInfo.setVisibility(View.GONE);
         tvError.setText(message);
+    }
+
+    private void printInfoMessage(String message){
+        tvInfo.setVisibility(View.VISIBLE);
+        tvError.setVisibility(View.GONE);
+        tvInfo.setText(message);
+    }
+
+    @SuppressLint("MissingPermission")
+    private void updateLocation() {
+        if(checkLocationPermissions()) {
+            mFusedLocationClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                @Override
+                public void onSuccess(Location location) {
+                    if (location != null) {
+                        Global_Var GlobalVar = (Global_Var) getApplicationContext();
+                        GlobalVar.Set_Location(location.getLatitude(), location.getLongitude());
+                        Log.d(TAG, "update location " + location.toString());
+                    }
+                }
+            });
+        }
     }
 }
 
