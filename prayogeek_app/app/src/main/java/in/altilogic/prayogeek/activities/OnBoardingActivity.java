@@ -72,7 +72,7 @@ public class OnBoardingActivity extends AppCompatActivity {
         setContentView(R.layout.activity_onboarding);
 
 
-        // Create the adapter that will return a fragment for each of the three
+        // Create the adapterList1 that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
@@ -94,7 +94,7 @@ public class OnBoardingActivity extends AppCompatActivity {
 
         indicators = new ImageView[]{zero, one, two};
 
-        // Set up the ViewPager with the sections adapter.
+        // Set up the ViewPager with the sections adapterList1.
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
 

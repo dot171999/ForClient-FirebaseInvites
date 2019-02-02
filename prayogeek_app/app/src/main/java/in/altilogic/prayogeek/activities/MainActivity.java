@@ -8,6 +8,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -20,7 +21,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
@@ -32,24 +32,24 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.GenericTypeIndicator;
-import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 
 
-import in.altilogic.prayogeek.FireBaseHelper;
 import in.altilogic.prayogeek.Global_Var;
 import in.altilogic.prayogeek.R;
 import in.altilogic.prayogeek.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Nullable;
 
 import pub.devrel.easypermissions.EasyPermissions;
 
@@ -80,6 +80,12 @@ public class MainActivity extends AppCompatActivity
 
     private TextView tvNavDrUser, tvNavDrEmail;
     private LocationManager mLocationManager;
+
+    private ArrayAdapter<String> adapterList1;
+    private ArrayList<String> dataList1 = new ArrayList<>();
+    private ArrayAdapter<String> adapterList2;
+    private ArrayList<String> dataList2 = new ArrayList<>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,8 +149,6 @@ public class MainActivity extends AppCompatActivity
                 return super.onOptionsItemSelected(item);
         }
     }
-    ArrayAdapter<String> adapter;
-    ArrayList<String> dataList1 = new ArrayList<>();
 
     private void firebase_auth_init() {
         isOnline = Utils.isOnline(this);
@@ -163,27 +167,28 @@ public class MainActivity extends AppCompatActivity
                     GlobalVar.Set_Username(mUsername);
                     GlobalVar.Set_EmailId(mEmailId);
                     ui_init();
-                    FireBaseHelper fireBaseHelper = new FireBaseHelper();
-                    fireBaseHelper.ReadChild( new OnCompleteListener<QuerySnapshot>() {
-                        @Override
-                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                            if (task.isSuccessful()) {
-                                for (QueryDocumentSnapshot document : task.getResult()) {
-                                    Log.d(MainActivity.TAG, document.getId() + " => " + document.getData());
-                                    dataList1.add(document.getId());
-                                }
-
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        list1_init();
-                                    }
-                                });
-                            } else {
-                                Log.w(MainActivity.TAG, "Error getting documents.", task.getException());
-                            }
-                        }
-                    });
+                    list1_update();
+//                    FireBaseHelper fireBaseHelper = new FireBaseHelper();
+//                    fireBaseHelper.ReadChild( new OnCompleteListener<QuerySnapshot>() {
+//                        @Override
+//                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
+//                            if (task.isSuccessful()) {
+//                                for (QueryDocumentSnapshot document : task.getResult()) {
+//                                    Log.d(MainActivity.TAG, document.getId() + " => " + document.getData());
+//                                    dataList1.add(document.getId());
+//                                }
+//
+//                                runOnUiThread(new Runnable() {
+//                                    @Override
+//                                    public void run() {
+//                                        list1_init();
+//                                    }
+//                                });
+//                            } else {
+//                                Log.w(MainActivity.TAG, "Error getting documents.", task.getException());
+//                            }
+//                        }
+//                    });
                 } else {
                     // user is signed out
                     mUsername = ANONYMOUS;
@@ -202,12 +207,121 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void list1_init(){
-        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, dataList1);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        adapterList1 = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, dataList1);
+        adapterList1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         if(mList1 != null){
-            mList1.setAdapter(adapter);
+            mList1.setAdapter(adapterList1);
         }
     }
+
+    private void list1_update() {
+        CollectionReference documentReference = FirebaseFirestore.getInstance().collection("Colleges");
+        documentReference.document("College_List").addSnapshotListener(new EventListener<DocumentSnapshot>() {
+            @Override
+            public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
+                if (e != null) {
+                    Log.w(TAG, "Listen failed.", e);
+                    return;
+                }
+                if (documentSnapshot != null && documentSnapshot.exists()) {
+                    dataList1.clear();
+                    List<String> colleges = (List<String>) documentSnapshot.get("Colleges");
+                    if(colleges != null && colleges.size() > 0) {
+                        Log.d(TAG, " data: " + colleges.toString());
+
+                        dataList1.addAll(colleges);
+                        adapterList1.notifyDataSetChanged();
+                        if(dataList1.size() > 0){
+                            list2_update(dataList1.get(0));
+                        }
+                    }
+                } else {
+                    Log.d(TAG, " data: null");
+                }
+            }
+        });
+
+//        documentReference.document("College_List").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+//            @Override
+//            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+//                if (task.isSuccessful()) {
+//                    dataList1.clear();
+//                    for (QueryDocumentSnapshot document : task.getResult()) {
+//                        Log.d(MainActivity.TAG, document.getId() + " => " + document.getData());
+//                        dataList1.add(document.getId());
+//                    }
+//
+//                    adapterList1 = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, dataList1);
+//                    adapterList1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//                    mList1.setAdapter(adapterList1);
+//                    if(dataList1.size() > 0){
+//                        list2_update(dataList1.get(0));
+//                    }
+//                } else {
+//                    Log.w(MainActivity.TAG, "Error getting documents.", task.getException());
+//                }
+//            }
+//        });
+    }
+
+    private String mDocumentName;
+
+    private void list2_update(String document) {
+        mDocumentName = document;
+
+        CollectionReference documentReference = FirebaseFirestore.getInstance().collection("Colleges");
+        documentReference.document(document).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    dataList2.clear();
+                    DocumentSnapshot docum = task.getResult();
+                    if(mDocumentName != null && docum != null) {
+                        if(mDocumentName.equals("Demo")) {
+                            List<String> dataMap = (List<String>)docum.get("demo_modules");
+                            if(dataMap != null && dataMap.size() > 0) {
+                                Log.d(TAG, " data: " + dataMap.toString());
+                                dataList2.addAll(dataMap);
+                            }
+                        }
+                        else if(mDocumentName.equals("Individual")) {
+                            Map<String, Object> dataMap = (Map<String, Object>)docum.getData();
+                            if(dataMap != null){
+//                                if(dataMap.containsKey(mEmailId)){
+                                if(dataMap.containsKey("chetangp@gmail.com")){
+                                    Map<String, Object> dataModules = (Map<String, Object>)dataMap.get((Object)"chetangp@gmail.com");
+                                    if(dataModules != null && dataModules.containsKey("module")) {
+                                        String dataMod = (String)dataModules.get((Object)"module");
+                                        if(dataMod != null ) {
+                                            dataList2.add(dataMod);
+                                            Log.d(TAG, " module " + dataMod);
+                                        }
+                                    }
+                                }
+                                else {
+                                    tvOut.setText("You have not Subscribed");
+                                }
+                                Log.d(TAG, " Select Individual " + dataMap.toString());
+                            }
+                        }
+                        else {
+                            List<String> dataMap = (List<String>) docum.get("college_modules");
+                            if (dataMap != null && dataMap.size() > 0) {
+                                Log.d(TAG, " data: " + dataMap.toString());
+                                dataList2.addAll(dataMap);
+                            }
+                        }
+                    }
+
+                    adapterList2.notifyDataSetChanged();
+                    Log.d(MainActivity.TAG, docum.getId() + " => " + docum.getData());
+                } else {
+                    Log.w(MainActivity.TAG, "Error getting documents.", task.getException());
+                }
+            }
+        });
+    }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -254,6 +368,30 @@ public class MainActivity extends AppCompatActivity
                     .putExtra(PREF_USER_FIRST_TIME, isUserFirstTime));
 
         checkPermissions();
+
+        adapterList1 = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, dataList1);
+        adapterList1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mList1.setAdapter(adapterList1);
+        adapterList2 = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, dataList2);
+        adapterList2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mList2.setAdapter(adapterList2);
+
+        mList1.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if(dataList1.size() > 0 && dataList1.size() > i)
+                {
+                    Log.d(TAG, "List 1 selected " + i + "; listSize " + dataList1.size());
+                    list2_update(dataList1.get(i));
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
     }
 
     private void navigation_driver_init() {
