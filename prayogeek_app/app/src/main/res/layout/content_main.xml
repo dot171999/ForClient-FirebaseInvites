@@ -35,11 +35,20 @@
         </LinearLayout>
 
         <TextView
+            android:id="@+id/tv_main2"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_margin ="16dp"
+            android:textColor="@color/color_splash"
+            android:text="Error" />
+
+        <TextView
             android:id="@+id/tv_main1"
             android:layout_width="match_parent"
             android:layout_height="80dp"
             android:layout_margin ="16dp"
-            android:text="TextView" />
+            android:text="Info" />
 
         <LinearLayout
             android:layout_width="match_parent"

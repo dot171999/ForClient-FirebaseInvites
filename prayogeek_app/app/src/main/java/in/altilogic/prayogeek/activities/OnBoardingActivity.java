@@ -220,8 +220,8 @@ public class OnBoardingActivity extends AppCompatActivity {
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_onboarding, container, false);
             GifImageView gif = rootView.findViewById(R.id.gif_on_board);
-            int num_screen = getArguments().getInt(ARG_SECTION_NUMBER);
-            assert (num_screen >= 1 && num_screen <= 3);
+            int num_screen = getArguments() != null ? getArguments().getInt(ARG_SECTION_NUMBER) : 1;
+            if ((num_screen < 1 || num_screen > 3)) throw new AssertionError();
             gif.setImageResource(gif_image_ids[num_screen-1]);
 
             return rootView;

@@ -3,12 +3,13 @@ package in.altilogic.prayogeek.activities;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -30,6 +31,7 @@ import android.widget.Toast;
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
@@ -45,7 +47,6 @@ import in.altilogic.prayogeek.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -75,7 +76,7 @@ public class MainActivity extends AppCompatActivity
     private Toolbar mToolbar = null;
 
     private Spinner mList1, mList2;
-    private TextView tvOut;
+    private TextView tvInfo, tvError;
     private Button mButton1, mButton2, mButton3, mButton4;
 
     private TextView tvNavDrUser, tvNavDrEmail;
@@ -287,19 +288,29 @@ public class MainActivity extends AppCompatActivity
                         else if(mDocumentName.equals("Individual")) {
                             Map<String, Object> dataMap = (Map<String, Object>)docum.getData();
                             if(dataMap != null){
-//                                if(dataMap.containsKey(mEmailId)){
-                                if(dataMap.containsKey("chetangp@gmail.com")){
-                                    Map<String, Object> dataModules = (Map<String, Object>)dataMap.get((Object)"chetangp@gmail.com");
-                                    if(dataModules != null && dataModules.containsKey("module")) {
-                                        String dataMod = (String)dataModules.get((Object)"module");
-                                        if(dataMod != null ) {
-                                            dataList2.add(dataMod);
-                                            Log.d(TAG, " module " + dataMod);
+                                if(dataMap.containsKey(mEmailId)){
+//                                if(dataMap.containsKey("chetangp@gmail.com")){
+//                                    Map<String, Object> dataModules = (Map<String, Object>)dataMap.get((Object)"chetangp@gmail.com");
+                                    Map<String, Object> dataModules = (Map<String, Object>)dataMap.get((Object)mEmailId);
+                                    if(dataModules != null){
+                                        if(dataModules.containsKey("module")) {
+                                            String dataMod = (String)dataModules.get((Object)"module");
+                                            if(dataMod != null ) {
+                                                dataList2.add(dataMod);
+                                                Log.d(TAG, " module " + dataMod);
+                                            }
+                                        }
+                                        if(dataModules.containsKey("validity")) {
+                                            Timestamp dataMod = (Timestamp) dataModules.get((Object)"validity");
+                                            if(dataMod != null ) {
+                                                printInfoMessage("Subscription valid untill : " +dataMod.toDate().toString());
+                                            }
                                         }
                                     }
+
                                 }
                                 else {
-                                    tvOut.setText("You have not Subscribed");
+                                    printErrorMessage("You have not Subscribed");
                                 }
                                 Log.d(TAG, " Select Individual " + dataMap.toString());
                             }
@@ -352,7 +363,8 @@ public class MainActivity extends AppCompatActivity
 
         mList1 = findViewById(R.id.spList1);
         mList2 = findViewById(R.id.spList2);
-        tvOut = findViewById(R.id.tv_main1);
+        tvInfo = findViewById(R.id.tv_main1);
+        tvError = findViewById(R.id.tv_main2);
         mButton1 = findViewById(R.id.btn_button1);
         mButton2 = findViewById(R.id.btn_button2);
         mButton3 = findViewById(R.id.btn_button3);
@@ -460,16 +472,16 @@ public class MainActivity extends AppCompatActivity
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btn_button1:
-                tvOut.setText("press button 1");
+                printInfoMessage("press button 1");
                 break;
             case R.id.btn_button2:
-                tvOut.setText("press button 2");
+                printInfoMessage("press button 2");
                 break;
             case R.id.btn_button3:
-                tvOut.setText("press button 3");
+                printInfoMessage("press button 3");
                 break;
             case R.id.btn_button4:
-                tvOut.setText("press button 4");
+                printInfoMessage("press button 4");
                 break;
         }
     }
@@ -533,5 +545,17 @@ public class MainActivity extends AppCompatActivity
             Log.d(TAG, "onProviderDisabled " + (s != null? s : "null"));
         }
     };
+
+    private void printInfoMessage(String message){
+        tvError.setVisibility(View.GONE);
+        tvInfo.setVisibility(View.VISIBLE);
+        tvInfo.setText(message);
+    }
+
+    private void printErrorMessage(String message){
+        tvError.setVisibility(View.VISIBLE);
+        tvInfo.setVisibility(View.GONE);
+        tvError.setText(message);
+    }
 }
 
