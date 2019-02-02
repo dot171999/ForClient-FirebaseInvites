@@ -17,6 +17,16 @@ public class Global_Var extends Application {
     private int INA1_Calibration;   //-> From Database based on value of List 2
     private int INA2_Calibration;   //-> From Database based on value of List 2
 
+/** Needs save to database
+    mUsername
+    mEmailId
+    College_name
+    Semester
+    Connection_status
+    Location
+    Module_Name
+    TimeStamp
+*/
 
     public void Set_Username(String username) {
         mUsername = username;

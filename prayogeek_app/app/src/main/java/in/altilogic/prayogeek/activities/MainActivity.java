@@ -69,6 +69,8 @@ public class MainActivity extends AppCompatActivity
     public static final String ANONYMOUS = "anonymous";
 
     public static final String PREF_USER_FIRST_TIME = "user_first_time";
+    public static final String PREF_USER_NAME = "user_name";
+    public static final String PREF_EMAILID = "email_id";
     boolean isUserFirstTime;
     boolean isOnline = false;
 
@@ -423,7 +425,10 @@ public class MainActivity extends AppCompatActivity
         headerView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this, ProfileActivity.class));
+                Intent intent = new Intent(MainActivity.this, ProfileActivity.class);
+                intent.putExtra(PREF_USER_NAME, mUsername)
+                        .putExtra(PREF_EMAILID, mEmailId);
+                startActivity(intent);
             }
         });
 
