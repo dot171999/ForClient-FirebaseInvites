@@ -565,6 +565,8 @@ public class MainActivity extends AppCompatActivity
     private boolean isUserFullProfile() {
         String college = Utils.readSharedSetting(getApplicationContext(), Global_Var.COLLEGE_NAME, null);
         String semester = Utils.readSharedSetting(getApplicationContext(), Global_Var.SEMESTER, null);
+        ((Global_Var) getApplicationContext()).Set_College_Name(college != null ? college : "null");
+        ((Global_Var) getApplicationContext()).Set_Semester(semester != null ? semester : "null");
         return college != null && semester != null;
     }
 
