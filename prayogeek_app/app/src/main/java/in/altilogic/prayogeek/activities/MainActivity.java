@@ -65,7 +65,10 @@ public class MainActivity extends AppCompatActivity
     // Firebase Authentication
     private FirebaseAuth mFirebaseAuth;
     private FirebaseAuth.AuthStateListener mAuthStateListener;
+
     public static final int RC_SIGN_IN = 3;
+    public static final int RC_ON_BOARDING = 4;
+    public static final int RC_PROFILE_CHANGE = 5;
 
     private String mUsername;
     private String mEmailId;
@@ -304,6 +307,9 @@ public class MainActivity extends AppCompatActivity
                     finish();
                 }
                 break;
+            case RC_ON_BOARDING:
+                Log.d(TAG, "OnBoarding Finish");
+                break;
         }
     }
 
@@ -329,10 +335,12 @@ public class MainActivity extends AppCompatActivity
 
         isUserFirstTime = Boolean.valueOf(Utils.readSharedSetting(MainActivity.this, PREF_USER_FIRST_TIME, "true"));
         if (isUserFirstTime)
-            startActivity(new Intent(MainActivity.this, OnBoardingActivity.class)
-                    .putExtra(PREF_USER_FIRST_TIME, isUserFirstTime));
+            runOnboarding();
 
         checkLocationPermissions();
+
+        if(!isUserFullProfile())
+            runProfileChange();
 
         adapterList1 = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, dataList1);
         adapterList1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -370,6 +378,7 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
+
         printInfoMessage("Select the Correct Module to Connect");
     }
 
@@ -390,10 +399,7 @@ public class MainActivity extends AppCompatActivity
         headerView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, ProfileActivity.class);
-                intent.putExtra(PREF_USER_NAME, mUsername)
-                        .putExtra(PREF_EMAILID, mEmailId);
-                startActivity(intent);
+                runProfileChange();
             }
         });
 
@@ -410,8 +416,7 @@ public class MainActivity extends AppCompatActivity
         Uri uri = null;
 
         if (id == R.id.nav_on_boarding) {
-            Intent intent = new Intent(this, OnBoardingActivity.class);
-            startActivity(intent);
+            runOnboarding();
         }
         else if (id == R.id.nav_basic_electronic_tutorial) {
             Toast.makeText(this, "Run electronic tutorial", Toast.LENGTH_SHORT).show();
@@ -519,6 +524,24 @@ public class MainActivity extends AppCompatActivity
                 }
             });
         }
+    }
+
+    private boolean isUserFullProfile() {
+        String college = Utils.readSharedSetting(getApplicationContext(), Global_Var.COLLEGE_NAME, null);
+        String semester = Utils.readSharedSetting(getApplicationContext(), Global_Var.SEMESTER, null);
+        return college != null && semester != null;
+    }
+
+    private void runProfileChange() {
+        Intent intent = new Intent(MainActivity.this, ProfileActivity.class);
+        intent.putExtra(PREF_USER_NAME, mUsername)
+                .putExtra(PREF_EMAILID, mEmailId);
+        startActivityForResult(intent, RC_PROFILE_CHANGE);
+    }
+
+    private void runOnboarding(){
+        startActivityForResult(new Intent(MainActivity.this, OnBoardingActivity.class)
+                .putExtra(PREF_USER_FIRST_TIME, isUserFirstTime), RC_ON_BOARDING);
     }
 }
 

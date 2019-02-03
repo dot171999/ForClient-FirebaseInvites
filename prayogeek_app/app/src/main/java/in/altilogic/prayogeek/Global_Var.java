@@ -3,6 +3,9 @@ package in.altilogic.prayogeek;
 import android.app.Application;
 
 public class Global_Var extends Application {
+    public static final String COLLEGE_NAME = "COLLEGE_NAME";
+    public static final String SEMESTER = "SEMESTER";
+
     private String mUsername;	//-> Got from Firebase Login
     private String mEmailId;	//-> Got from Firebase Login
     private String mCollegeName;  //-> from profile info

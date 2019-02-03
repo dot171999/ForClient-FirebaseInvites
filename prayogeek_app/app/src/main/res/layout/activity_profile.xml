@@ -51,9 +51,34 @@
                 android:maxLines="1"
                 android:maxLength="1"
                 android:imeOptions="actionDone"
-                android:inputType="numberPassword"
+                android:inputType="numberDecimal"
                 android:lines="1" />
 
         </android.support.design.widget.TextInputLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center|center_vertical"
+            android:padding="10dp"
+            android:layout_below="@+id/tiLayoutSemester"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnSave"
+                android:layout_margin ="16dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:theme="@style/AppTheme.Button"
+                android:text="Save" />
+
+            <Button
+                android:id="@+id/btnCancel"
+                android:layout_margin ="16dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:theme="@style/AppTheme.Button"
+                android:text="Cancel" />
+        </LinearLayout>
     </RelativeLayout>
 </android.support.design.widget.CoordinatorLayout>
