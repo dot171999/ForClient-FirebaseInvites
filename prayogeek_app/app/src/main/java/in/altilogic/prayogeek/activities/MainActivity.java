@@ -69,6 +69,8 @@ public class MainActivity extends AppCompatActivity
     public static final int RC_SIGN_IN = 3;
     public static final int RC_ON_BOARDING = 4;
     public static final int RC_PROFILE_CHANGE = 5;
+    public static final int RC_BUTTON1 = 6;
+    public static final int RC_BUTTON2 = 7;
 
     private String mUsername;
     private String mEmailId;
@@ -103,6 +105,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
+        ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_APP_OPENED);
         firebase_auth_init();
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
     }
@@ -178,6 +181,10 @@ public class MainActivity extends AppCompatActivity
                     GlobalVar.Set_Username(mUsername);
                     GlobalVar.Set_EmailId(mEmailId);
                     ui_init();
+                    if(!isUserFullProfile()) {
+                        Log.d(TAG, "The profile not full, run the profile screen");
+                        runProfileChange();
+                    }
                     list1_update();
                 } else {
                     // user is signed out
@@ -298,6 +305,19 @@ public class MainActivity extends AppCompatActivity
                     Toast.makeText(this, "Signed in!", Toast.LENGTH_SHORT).show();
 
                     ui_init();
+                    FirebaseUser user = mFirebaseAuth.getCurrentUser();
+                    if (user != null) {
+                        // user is signed in
+                        mUsername = user.getDisplayName();
+                        mEmailId = user.getEmail();
+                        Global_Var GlobalVar = (Global_Var) getApplicationContext();
+                        GlobalVar.Set_Username(mUsername);
+                        GlobalVar.Set_EmailId(mEmailId);
+                    }
+                    if(!isUserFullProfile()) {
+                        Log.d(TAG, "The profile not full, run the profile screen");
+                        runProfileChange();
+                    }
                 } else if (resultCode == RESULT_CANCELED) {
                     if (isOnline == true) {
                         Toast.makeText(this, "Sign In Cancelled!", Toast.LENGTH_SHORT).show();
@@ -309,7 +329,18 @@ public class MainActivity extends AppCompatActivity
                 break;
             case RC_ON_BOARDING:
                 Log.d(TAG, "OnBoarding Finish");
+                if(!isUserFullProfile())
+                    runProfileChange();
                 break;
+            case RC_PROFILE_CHANGE:
+                if(!isUserFullProfile())
+                    finish();
+                break;
+            case RC_BUTTON1:
+            case RC_BUTTON2:
+                ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_DISCONNECTED);
+                break;
+
         }
     }
 
@@ -334,13 +365,14 @@ public class MainActivity extends AppCompatActivity
         mButton4.setOnClickListener(this);
 
         isUserFirstTime = Boolean.valueOf(Utils.readSharedSetting(MainActivity.this, PREF_USER_FIRST_TIME, "true"));
+
         if (isUserFirstTime)
+        {
+            Log.d(TAG, "First use, run onboarding");
             runOnboarding();
+        }
 
         checkLocationPermissions();
-
-        if(!isUserFullProfile())
-            runProfileChange();
 
         adapterList1 = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, dataList1);
         adapterList1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -449,10 +481,14 @@ public class MainActivity extends AppCompatActivity
             case R.id.btn_button1:
                 printInfoMessage("press button 1");
                 updateLocation();
+                ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_CONNECTED);
                 break;
             case R.id.btn_button2:
                 printInfoMessage("press button 2");
                 updateLocation();
+                ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_CONNECTED);
+                startActivityForResult(new Intent(MainActivity.this, Button2Activity.class)
+                        .putExtra(PREF_USER_FIRST_TIME, isUserFirstTime), RC_BUTTON2);
                 break;
             case R.id.btn_button3:
                 printInfoMessage("press button 3");
