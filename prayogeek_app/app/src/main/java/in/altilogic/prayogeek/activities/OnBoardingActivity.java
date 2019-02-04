@@ -1,6 +1,7 @@
 package in.altilogic.prayogeek.activities;
 
 import android.animation.ArgbEvaluator;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -12,14 +13,11 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import in.altilogic.prayogeek.R;
 import in.altilogic.prayogeek.utils.Utils;
@@ -72,7 +70,7 @@ public class OnBoardingActivity extends AppCompatActivity {
         setContentView(R.layout.activity_onboarding);
 
 
-        // Create the adapter that will return a fragment for each of the three
+        // Create the adapterList1 that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
@@ -94,7 +92,7 @@ public class OnBoardingActivity extends AppCompatActivity {
 
         indicators = new ImageView[]{zero, one, two};
 
-        // Set up the ViewPager with the sections adapter.
+        // Set up the ViewPager with the sections adapterList1.
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
 
@@ -165,20 +163,30 @@ public class OnBoardingActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                finish();
+                finishActivity();
             }
         });
 
         mFinishBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish();
+                finishActivity();
                 //  update 1st time pref
                 Utils.saveSharedSetting(OnBoardingActivity.this, MainActivity.PREF_USER_FIRST_TIME, "false");
 
             }
         });
 
+    }
+
+    private void finishActivity(){
+        if (getParent() == null) {
+            setResult(RESULT_OK, new Intent());
+        }
+        else {
+            getParent().setResult(RESULT_OK, new Intent());
+        }
+        finish();
     }
 
     void updateIndicators(int position) {
@@ -220,8 +228,8 @@ public class OnBoardingActivity extends AppCompatActivity {
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_onboarding, container, false);
             GifImageView gif = rootView.findViewById(R.id.gif_on_board);
-            int num_screen = getArguments().getInt(ARG_SECTION_NUMBER);
-            assert (num_screen >= 1 && num_screen <= 3);
+            int num_screen = getArguments() != null ? getArguments().getInt(ARG_SECTION_NUMBER) : 1;
+            if ((num_screen < 1 || num_screen > 3)) throw new AssertionError();
             gif.setImageResource(gif_image_ids[num_screen-1]);
 
             return rootView;
