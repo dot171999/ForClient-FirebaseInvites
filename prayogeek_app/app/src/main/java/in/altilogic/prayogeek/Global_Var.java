@@ -2,9 +2,20 @@ package in.altilogic.prayogeek;
 
 import android.app.Application;
 
+import com.google.firebase.Timestamp;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class Global_Var extends Application {
+    public static final String USER_NAME = "USER_NAME";
+    public static final String EMAIL_ID = "EMAIL_ID";
     public static final String COLLEGE_NAME = "COLLEGE_NAME";
     public static final String SEMESTER = "SEMESTER";
+    public static final String CONNECTION_STATUS = "CONNECTION_STATUS";
+    public static final String LOCATION = "LOCATION";
+    public static final String MODULE_NAME = "MODULE_NAME";
+    public static final String TIMESTAMP = "TIMESTAMP";
 
     public static final String CS_APP_OPENED = "App Opened";
     public static final String CS_CONNECTED = "Connected";
@@ -19,22 +30,11 @@ public class Global_Var extends Application {
     private int mCurrent_session=0;//  -> no need to update
     private int mError_Code;    // -> no need to update
     private String mConnection_status;// -> Check Requirements
-    private double gps_lat = 0.0, gps_lon = 0.0; // -> Last best Location
+    private double mLat = 0.0, mLon = 0.0; // -> Last best Location
     private String mMAC_Address;   //-> From Database based on value of List 2
     private String mModule_Name;   //-> From Database based on value of List 2
-    private int INA1_Calibration;   //-> From Database based on value of List 2
-    private int INA2_Calibration;   //-> From Database based on value of List 2
-
-/** Needs save to database
-    mUsername
-    mEmailId
-    College_name
-    Semester
-    mConnection_status
-    Location
-    mModule_Name
-    TimeStamp
-*/
+    private int mINA1_Calibration;   //-> From Database based on value of List 2
+    private int mINA2_Calibration;   //-> From Database based on value of List 2
 
     public void Set_Username(String username) {
         mUsername = username;
@@ -69,16 +69,16 @@ public class Global_Var extends Application {
     }
 
     public void Set_Location(double lat, double lon){
-        gps_lat = lat;
-        gps_lon = lon;
+        mLat = lat;
+        mLon = lon;
     }
 
     public double Get_LocationLat(){
-        return gps_lat;
+        return mLat;
     }
 
     public double Get_LocationLon(){
-        return gps_lon;
+        return mLon;
     }
 
     public String Get_Category() {
@@ -87,10 +87,6 @@ public class Global_Var extends Application {
 
     public int Get_CurrentSession() {
         return mCurrent_session;
-    }
-
-    public int Get_ErrorCode() {
-        return mError_Code;
     }
 
     public String Get_ConnectionStatus() {
@@ -110,10 +106,53 @@ public class Global_Var extends Application {
     }
 
     public int Get_INA1Calibration() {
-        return INA1_Calibration;
+        return mINA1_Calibration;
     }
 
     public int Get_INA2Calibration() {
-        return INA2_Calibration;
+        return mINA2_Calibration;
+    }
+    public Map<String, Object> Get_Map(){
+        Map<String, Object> globalVar = new HashMap<>();
+        globalVar.put(USER_NAME, mUsername);
+        globalVar.put(EMAIL_ID, mEmailId);
+        globalVar.put(COLLEGE_NAME, mCollegeName);
+        globalVar.put(SEMESTER, mSemester);
+        globalVar.put(CONNECTION_STATUS, mConnection_status);
+        globalVar.put(LOCATION, mLat + ", " + mLon);
+        globalVar.put(MODULE_NAME, mModule_Name);
+        globalVar.put(TIMESTAMP, Timestamp.now().toString());
+        return globalVar;
+    }
+    public void Set_Category(String category) {
+        mCategory = category;
+    }
+
+    public void Set_INA1Calibration(int ina1_cal) {
+        mINA1_Calibration = ina1_cal;
+    }
+
+    public void Set_INA2Calibration(int ina2_cal) {
+        mINA2_Calibration = ina2_cal;
+    }
+
+    public void Set_MacAddress(String mac_address) {
+        mMAC_Address = mac_address;
+    }
+
+    public void Set_Module_Name(String moduleName) {
+        mModule_Name = moduleName;
+    }
+
+    public String Get_Module_Name() {
+        return mModule_Name;
+    }
+
+    public void Set_ErrorCode(int errorCode){
+        mError_Code = errorCode;
+    }
+
+    public int Get_ErrorCode(){
+        return mError_Code;
     }
 }

@@ -3,15 +3,13 @@ package in.altilogic.prayogeek.activities;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.res.ColorStateList;
-import android.graphics.Color;
+import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -44,6 +42,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 
 
+import in.altilogic.prayogeek.FireBaseHelper;
 import in.altilogic.prayogeek.Global_Var;
 import in.altilogic.prayogeek.R;
 import in.altilogic.prayogeek.utils.Utils;
@@ -65,6 +64,7 @@ public class MainActivity extends AppCompatActivity
     // Firebase Authentication
     private FirebaseAuth mFirebaseAuth;
     private FirebaseAuth.AuthStateListener mAuthStateListener;
+    private FireBaseHelper mFireBaseHelper;
 
     public static final int RC_SIGN_IN = 3;
     public static final int RC_ON_BOARDING = 4;
@@ -106,6 +106,7 @@ public class MainActivity extends AppCompatActivity
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
         ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_APP_OPENED);
+        mFireBaseHelper = new FireBaseHelper();
         firebase_auth_init();
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
     }
@@ -114,7 +115,7 @@ public class MainActivity extends AppCompatActivity
     public void onStart() {
         super.onStart();
         isOnline = Utils.isOnline(this);
-        if(!isOnline) {
+        if (!isOnline) {
             Toast.makeText(this, "Network is not available ", Toast.LENGTH_SHORT).show();
             finish();
         }
@@ -181,7 +182,7 @@ public class MainActivity extends AppCompatActivity
                     GlobalVar.Set_Username(mUsername);
                     GlobalVar.Set_EmailId(mEmailId);
                     ui_init();
-                    if(!isUserFullProfile()) {
+                    if (!isUserFullProfile()) {
                         Log.d(TAG, "The profile not full, run the profile screen");
                         runProfileChange();
                     }
@@ -204,8 +205,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void list1_update() {
-        CollectionReference documentReference = FirebaseFirestore.getInstance().collection("Colleges");
-        documentReference.document("College_List").addSnapshotListener(new EventListener<DocumentSnapshot>() {
+        mFireBaseHelper.read("Colleges", "College_List", new EventListener<DocumentSnapshot>() {
             @Override
             public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
                 if (e != null) {
@@ -215,12 +215,12 @@ public class MainActivity extends AppCompatActivity
                 if (documentSnapshot != null && documentSnapshot.exists()) {
                     dataList1.clear();
                     List<String> colleges = (List<String>) documentSnapshot.get("Colleges");
-                    if(colleges != null && colleges.size() > 0) {
+                    if (colleges != null && colleges.size() > 0) {
                         Log.d(TAG, " data: " + colleges.toString());
 
                         dataList1.addAll(colleges);
                         adapterList1.notifyDataSetChanged();
-                        if(dataList1.size() > 0){
+                        if (dataList1.size() > 0) {
                             list2_update(dataList1.get(0));
                         }
                     }
@@ -235,50 +235,57 @@ public class MainActivity extends AppCompatActivity
 
     private void list2_update(String document) {
         mDocumentName = document;
-
-        CollectionReference documentReference = FirebaseFirestore.getInstance().collection("Colleges");
-        documentReference.document(document).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+        mFireBaseHelper.read("Colleges", document, new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                 if (task.isSuccessful()) {
                     dataList2.clear();
                     DocumentSnapshot docum = task.getResult();
-                    if(mDocumentName != null && docum != null) {
-                        if(mDocumentName.equals("Demo")) {
-                            List<String> dataMap = (List<String>)docum.get("demo_modules");
-                            if(dataMap != null && dataMap.size() > 0) {
+                    if (mDocumentName != null && docum != null) {
+                        if (mDocumentName.equals("Demo")) {
+                            List<String> dataMap = (List<String>) docum.get("demo_modules");
+                            if (dataMap != null && dataMap.size() > 0) {
                                 Log.d(TAG, " data: " + dataMap.toString());
                                 dataList2.addAll(dataMap);
                             }
-                        }
-                        else if(mDocumentName.equals("Individual")) {
-                            Map<String, Object> dataMap = (Map<String, Object>)docum.getData();
-                            if(dataMap != null){
-                                if(dataMap.containsKey(mEmailId)){
-                                    Map<String, Object> dataModules = (Map<String, Object>)dataMap.get((Object)mEmailId);
-                                    if(dataModules != null){
-                                        if(dataModules.containsKey("module")) {
-                                            String dataMod = (String)dataModules.get((Object)"module");
-                                            if(dataMod != null ) {
+                        } else if (mDocumentName.equals("Individual")) {
+                            Map<String, Object> dataMap = (Map<String, Object>) docum.getData();
+                            if (dataMap != null) {
+                                if (dataMap.containsKey(mEmailId)) {
+                                    Map<String, Object> dataModules = (Map<String, Object>) dataMap.get((Object) mEmailId);
+                                    if (dataModules != null) {
+                                        if (dataModules.containsKey("module")) {
+                                            String dataMod = (String) dataModules.get((Object) "module");
+                                            if (dataMod != null) {
                                                 dataList2.add(dataMod);
                                                 Log.d(TAG, " module " + dataMod);
+                                                Global_Var GlobalVar = (Global_Var) getApplicationContext();
+                                                GlobalVar.Set_Module_Name(dataMod);
+                                                if (dataMap.containsKey(dataMod)) {
+                                                    Map<String, Object> hw = (Map<String, Object>) dataMap.get(dataMod);
+                                                    long hw_version = (Long) hw.get((String) "hw_version");
+                                                    long ina1_cal = (Long) hw.get((String) "ina1_cal");
+                                                    long ina2_cal = (Long) hw.get((String) "ina2_cal");
+                                                    String mac_address = (String) hw.get((String) "mac_address");
+                                                    GlobalVar.Set_INA1Calibration((int) ina1_cal);
+                                                    GlobalVar.Set_INA2Calibration((int) ina2_cal);
+                                                    GlobalVar.Set_MacAddress(mac_address);
+                                                }
                                             }
                                         }
-                                        if(dataModules.containsKey("validity")) {
-                                            Timestamp dataMod = (Timestamp) dataModules.get((Object)"validity");
-                                            if(dataMod != null ) {
-                                                printInfoMessage("Subscription valid untill : " +dataMod.toDate().toString());
+                                        if (dataModules.containsKey("validity")) {
+                                            Timestamp dataMod = (Timestamp) dataModules.get((Object) "validity");
+                                            if (dataMod != null) {
+                                                printInfoMessage("Subscription valid untill : " + dataMod.toDate().toString());
                                             }
                                         }
                                     }
-                                }
-                                else {
+                                } else {
                                     printErrorMessage("You have not Subscribed");
                                 }
                                 Log.d(TAG, " Select Individual " + dataMap.toString());
                             }
-                        }
-                        else {
+                        } else {
                             List<String> dataMap = (List<String>) docum.get("college_modules");
                             if (dataMap != null && dataMap.size() > 0) {
                                 Log.d(TAG, " data: " + dataMap.toString());
@@ -314,7 +321,7 @@ public class MainActivity extends AppCompatActivity
                         GlobalVar.Set_Username(mUsername);
                         GlobalVar.Set_EmailId(mEmailId);
                     }
-                    if(!isUserFullProfile()) {
+                    if (!isUserFullProfile()) {
                         Log.d(TAG, "The profile not full, run the profile screen");
                         runProfileChange();
                     }
@@ -329,11 +336,11 @@ public class MainActivity extends AppCompatActivity
                 break;
             case RC_ON_BOARDING:
                 Log.d(TAG, "OnBoarding Finish");
-                if(!isUserFullProfile())
+                if (!isUserFullProfile())
                     runProfileChange();
                 break;
             case RC_PROFILE_CHANGE:
-                if(!isUserFullProfile())
+                if (!isUserFullProfile())
                     finish();
                 break;
             case RC_BUTTON1:
@@ -345,8 +352,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     boolean is_init = false;
+
     private void ui_init() {
-        if(is_init)
+        if (is_init)
             return;
         is_init = true;
         navigation_driver_init();
@@ -366,8 +374,7 @@ public class MainActivity extends AppCompatActivity
 
         isUserFirstTime = Boolean.valueOf(Utils.readSharedSetting(MainActivity.this, PREF_USER_FIRST_TIME, "true"));
 
-        if (isUserFirstTime)
-        {
+        if (isUserFirstTime) {
             Log.d(TAG, "First use, run onboarding");
             runOnboarding();
         }
@@ -384,9 +391,9 @@ public class MainActivity extends AppCompatActivity
         mList1.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                if(dataList1.size() > 0 && dataList1.size() > i)
-                {
+                if (dataList1.size() > 0 && dataList1.size() > i) {
                     Log.d(TAG, "List 1 selected " + i + "; listSize " + dataList1.size());
+                    ((Global_Var) getApplicationContext()).Set_Category(dataList1.get(i));
                     list2_update(dataList1.get(i));
                 }
             }
@@ -400,7 +407,7 @@ public class MainActivity extends AppCompatActivity
         mList2.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                if(dataList2.size() > 0 && dataList2.size() > i) {
+                if (dataList2.size() > 0 && dataList2.size() > i) {
                     printInfoMessage("App will connect to Module " + dataList2.get(i));
                 }
             }
@@ -435,10 +442,10 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        if(mUsername != null)
+        if (mUsername != null)
             tvNavDrUser.setText(mUsername);
 
-        if(mEmailId != null)
+        if (mEmailId != null)
             tvNavDrEmail.setText(mEmailId);
     }
 
@@ -449,8 +456,7 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_on_boarding) {
             runOnboarding();
-        }
-        else if (id == R.id.nav_basic_electronic_tutorial) {
+        } else if (id == R.id.nav_basic_electronic_tutorial) {
             Toast.makeText(this, "Run electronic tutorial", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_about_us) {
             uri = Uri.parse(getString(R.string.nav_link_about_us));
@@ -465,7 +471,7 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_privacy_policy) {
             Toast.makeText(this, "Privacy policy", Toast.LENGTH_SHORT).show();
         }
-        if(uri != null) {
+        if (uri != null) {
             Intent intent = new Intent(Intent.ACTION_VIEW, uri);
             startActivity(intent);
         }
@@ -493,6 +499,8 @@ public class MainActivity extends AppCompatActivity
             case R.id.btn_button3:
                 printInfoMessage("press button 3");
                 updateLocation();
+                FireBaseHelper fireBaseHelper = new FireBaseHelper();
+                fireBaseHelper.write((Global_Var) getApplicationContext());
                 break;
             case R.id.btn_button4:
                 printInfoMessage("press button 4");
@@ -512,7 +520,6 @@ public class MainActivity extends AppCompatActivity
         finish();
     }
 
-    @SuppressLint("MissingPermission")
     private boolean checkLocationPermissions() {
         String[] perms = {Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION};
         if (EasyPermissions.hasPermissions(this, perms)) {
@@ -534,21 +541,20 @@ public class MainActivity extends AppCompatActivity
         EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
     }
 
-    private void printErrorMessage(String message){
+    private void printErrorMessage(String message) {
         tvError.setVisibility(View.VISIBLE);
         tvInfo.setVisibility(View.GONE);
         tvError.setText(message);
     }
 
-    private void printInfoMessage(String message){
+    private void printInfoMessage(String message) {
         tvInfo.setVisibility(View.VISIBLE);
         tvError.setVisibility(View.GONE);
         tvInfo.setText(message);
     }
 
-    @SuppressLint("MissingPermission")
     private void updateLocation() {
-        if(checkLocationPermissions()) {
+        if (checkLocationPermissions()) {
             mFusedLocationClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
                 @Override
                 public void onSuccess(Location location) {
