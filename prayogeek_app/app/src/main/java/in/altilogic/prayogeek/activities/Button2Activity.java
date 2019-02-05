@@ -2,6 +2,7 @@ package in.altilogic.prayogeek.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 
@@ -13,6 +14,11 @@ public class Button2Activity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_button);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(false);
+            actionBar.setTitle("Button 2");
+        }
         TextView tvOut = findViewById(R.id.tvOut);
         Global_Var globalVar = (Global_Var) getApplicationContext();
         StringBuilder sb = new StringBuilder();

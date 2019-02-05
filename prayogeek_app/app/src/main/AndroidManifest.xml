@@ -37,10 +37,13 @@
             android:theme="@style/AppTheme.NoActionBar"/>
         <activity
             android:name=".activities.ProfileActivity"
-            android:theme="@style/AppTheme.NoActionBar"/>
+            android:theme="@style/ProfileTheme"/>
+        <activity
+            android:name=".activities.Button1Activity"
+            android:theme="@style/AppTheme"/>
         <activity
             android:name=".activities.Button2Activity"
-            android:theme="@style/AppTheme.NoActionBar"/>
+            android:theme="@style/AppTheme"/>
     </application>
 
 </manifest>

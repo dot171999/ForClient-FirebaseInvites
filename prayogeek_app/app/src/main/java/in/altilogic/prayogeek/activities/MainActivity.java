@@ -1,10 +1,12 @@
 package in.altilogic.prayogeek.activities;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -13,6 +15,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -35,10 +38,8 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 
 
@@ -59,8 +60,6 @@ import pub.devrel.easypermissions.EasyPermissions;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener, EasyPermissions.PermissionCallbacks {
 
-    private static final float LOCATION_REFRESH_DISTANCE = 100.f;
-    private static final long LOCATION_REFRESH_TIME = 1000;
     // Firebase Authentication
     private FirebaseAuth mFirebaseAuth;
     private FirebaseAuth.AuthStateListener mAuthStateListener;
@@ -119,6 +118,7 @@ public class MainActivity extends AppCompatActivity
             Toast.makeText(this, "Network is not available ", Toast.LENGTH_SHORT).show();
             finish();
         }
+        updateLocation();
     }
 
     @Override
@@ -182,10 +182,10 @@ public class MainActivity extends AppCompatActivity
                     GlobalVar.Set_Username(mUsername);
                     GlobalVar.Set_EmailId(mEmailId);
                     ui_init();
-                    if (!isUserFullProfile()) {
-                        Log.d(TAG, "The profile not full, run the profile screen");
-                        runProfileChange();
-                    }
+//                    if (!isUserFullProfile()) {
+//                        Log.d(TAG, "The profile not full, run the profile screen");
+//                        runProfileChange();
+//                    }
                     list1_update();
                 } else {
                     // user is signed out
@@ -247,6 +247,7 @@ public class MainActivity extends AppCompatActivity
                             if (dataMap != null && dataMap.size() > 0) {
                                 Log.d(TAG, " data: " + dataMap.toString());
                                 dataList2.addAll(dataMap);
+                                saveGlobals();
                             }
                         } else if (mDocumentName.equals("Individual")) {
                             Map<String, Object> dataMap = (Map<String, Object>) docum.getData();
@@ -270,6 +271,7 @@ public class MainActivity extends AppCompatActivity
                                                     GlobalVar.Set_INA1Calibration((int) ina1_cal);
                                                     GlobalVar.Set_INA2Calibration((int) ina2_cal);
                                                     GlobalVar.Set_MacAddress(mac_address);
+                                                    saveGlobals();
                                                 }
                                             }
                                         }
@@ -290,6 +292,7 @@ public class MainActivity extends AppCompatActivity
                             if (dataMap != null && dataMap.size() > 0) {
                                 Log.d(TAG, " data: " + dataMap.toString());
                                 dataList2.addAll(dataMap);
+                                saveGlobals();
                             }
                         }
                     }
@@ -321,10 +324,10 @@ public class MainActivity extends AppCompatActivity
                         GlobalVar.Set_Username(mUsername);
                         GlobalVar.Set_EmailId(mEmailId);
                     }
-                    if (!isUserFullProfile()) {
-                        Log.d(TAG, "The profile not full, run the profile screen");
-                        runProfileChange();
-                    }
+//                    if (!isUserFullProfile()) {
+//                        Log.d(TAG, "The profile not full, run the profile screen");
+//                        runProfileChange();
+//                    }
                 } else if (resultCode == RESULT_CANCELED) {
                     if (isOnline == true) {
                         Toast.makeText(this, "Sign In Cancelled!", Toast.LENGTH_SHORT).show();
@@ -346,6 +349,7 @@ public class MainActivity extends AppCompatActivity
             case RC_BUTTON1:
             case RC_BUTTON2:
                 ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_DISCONNECTED);
+                saveGlobals();
                 break;
 
         }
@@ -377,6 +381,11 @@ public class MainActivity extends AppCompatActivity
         if (isUserFirstTime) {
             Log.d(TAG, "First use, run onboarding");
             runOnboarding();
+        }
+        else {
+            if(!isUserFullProfile()) {
+                runProfileChange();
+            }
         }
 
         checkLocationPermissions();
@@ -488,19 +497,21 @@ public class MainActivity extends AppCompatActivity
                 printInfoMessage("press button 1");
                 updateLocation();
                 ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_CONNECTED);
+                saveGlobals();
+                startActivityForResult(new Intent(MainActivity.this, Button1Activity.class)
+                        .putExtra(PREF_USER_FIRST_TIME, isUserFirstTime), RC_BUTTON1);
                 break;
             case R.id.btn_button2:
                 printInfoMessage("press button 2");
                 updateLocation();
                 ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_CONNECTED);
+                saveGlobals();
                 startActivityForResult(new Intent(MainActivity.this, Button2Activity.class)
                         .putExtra(PREF_USER_FIRST_TIME, isUserFirstTime), RC_BUTTON2);
                 break;
             case R.id.btn_button3:
                 printInfoMessage("press button 3");
                 updateLocation();
-                FireBaseHelper fireBaseHelper = new FireBaseHelper();
-                fireBaseHelper.write((Global_Var) getApplicationContext());
                 break;
             case R.id.btn_button4:
                 printInfoMessage("press button 4");
@@ -554,7 +565,12 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void updateLocation() {
+        checkGps();
         if (checkLocationPermissions()) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                    && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
             mFusedLocationClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
                 @Override
                 public void onSuccess(Location location) {
@@ -562,6 +578,7 @@ public class MainActivity extends AppCompatActivity
                         Global_Var GlobalVar = (Global_Var) getApplicationContext();
                         GlobalVar.Set_Location(location.getLatitude(), location.getLongitude());
                         Log.d(TAG, "update location " + location.toString());
+                        saveGlobals();
                     }
                 }
             });
@@ -587,5 +604,30 @@ public class MainActivity extends AppCompatActivity
         startActivityForResult(new Intent(MainActivity.this, OnBoardingActivity.class)
                 .putExtra(PREF_USER_FIRST_TIME, isUserFirstTime), RC_ON_BOARDING);
     }
-}
 
+    private void saveGlobals(){
+        mFireBaseHelper.write((Global_Var) getApplicationContext());
+    }
+
+    private void checkGps(){
+        final LocationManager manager = (LocationManager) getSystemService( Context.LOCATION_SERVICE );
+
+        if ( !manager.isProviderEnabled( LocationManager.GPS_PROVIDER ) ) {
+            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
+                    .setCancelable(false)
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                            startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                        }
+                    })
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                            dialog.cancel();
+                        }
+                    });
+            final AlertDialog alert = builder.create();
+            alert.show();
+        }
+    }
+}
