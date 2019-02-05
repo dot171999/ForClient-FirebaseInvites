@@ -19,7 +19,6 @@
                 android:id="@+id/tvOut"
                 android:layout_width="match_parent"
                 android:layout_height="600dp"
-                android:layout_marginTop="@dimen/nav_header_height"
                 android:text="TextView" />
         </LinearLayout>
     </ScrollView>

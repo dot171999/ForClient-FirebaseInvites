@@ -50,6 +50,7 @@ import in.altilogic.prayogeek.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -116,7 +117,7 @@ public class MainActivity extends AppCompatActivity
         isOnline = Utils.isOnline(this);
         if (!isOnline) {
             Toast.makeText(this, "Network is not available ", Toast.LENGTH_SHORT).show();
-            finish();
+//            finish();
         }
         updateLocation();
     }
@@ -182,11 +183,8 @@ public class MainActivity extends AppCompatActivity
                     GlobalVar.Set_Username(mUsername);
                     GlobalVar.Set_EmailId(mEmailId);
                     ui_init();
-//                    if (!isUserFullProfile()) {
-//                        Log.d(TAG, "The profile not full, run the profile screen");
-//                        runProfileChange();
-//                    }
-                    list1_update();
+                    loadList1();
+                    list1_check_for_update();
                 } else {
                     // user is signed out
                     mUsername = ANONYMOUS;
@@ -204,7 +202,28 @@ public class MainActivity extends AppCompatActivity
         };
     }
 
-    private void list1_update() {
+    private boolean isListsEquals(List<String> list, ArrayList<String> arrayList){
+        if(list != null && arrayList != null){
+            if(list.size() != arrayList.size())
+                return false;
+
+            for(int i=0; i<list.size(); i++){
+                boolean equals = false;
+                for(int j=0; j<arrayList.size();j++) {
+                    if(list.get(i).equals(arrayList.get(j))){
+                        equals = true;
+                        break;
+                    }
+                }
+                if(!equals)
+                    return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private void list1_check_for_update() {
         mFireBaseHelper.read("Colleges", "College_List", new EventListener<DocumentSnapshot>() {
             @Override
             public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
@@ -213,13 +232,20 @@ public class MainActivity extends AppCompatActivity
                     return;
                 }
                 if (documentSnapshot != null && documentSnapshot.exists()) {
-                    dataList1.clear();
                     List<String> colleges = (List<String>) documentSnapshot.get("Colleges");
+
+                    if(isListsEquals(colleges, dataList1))
+                        return;
+
+                    Log.d(TAG, "Updating List1");
+
+                    dataList1.clear();
                     if (colleges != null && colleges.size() > 0) {
                         Log.d(TAG, " data: " + colleges.toString());
 
                         dataList1.addAll(colleges);
                         adapterList1.notifyDataSetChanged();
+                        saveList1();
                         if (dataList1.size() > 0) {
                             list2_update(dataList1.get(0));
                         }
@@ -324,10 +350,6 @@ public class MainActivity extends AppCompatActivity
                         GlobalVar.Set_Username(mUsername);
                         GlobalVar.Set_EmailId(mEmailId);
                     }
-//                    if (!isUserFullProfile()) {
-//                        Log.d(TAG, "The profile not full, run the profile screen");
-//                        runProfileChange();
-//                    }
                 } else if (resultCode == RESULT_CANCELED) {
                     if (isOnline == true) {
                         Toast.makeText(this, "Sign In Cancelled!", Toast.LENGTH_SHORT).show();
@@ -418,6 +440,26 @@ public class MainActivity extends AppCompatActivity
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 if (dataList2.size() > 0 && dataList2.size() > i) {
                     printInfoMessage("App will connect to Module " + dataList2.get(i));
+                    mFireBaseHelper.read("Colleges", mList1.getSelectedItem().toString(), new OnCompleteListener<DocumentSnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                            if(task != null){
+                                DocumentSnapshot docum = task.getResult();
+                                Map<String, Object> hw =  (Map<String, Object>) docum.get(mList2.getSelectedItem().toString());
+                                if (hw != null) {
+                                    long hw_version = (Long) hw.get((String) "hw_version");
+                                    long ina1_cal = (Long) hw.get((String) "ina1_cal");
+                                    long ina2_cal = (Long) hw.get((String) "ina2_cal");
+                                    String mac_address = (String) hw.get((String) "mac_address");
+                                    Global_Var GlobalVar = ((Global_Var) getApplicationContext());
+                                    GlobalVar.Set_INA1Calibration((int) ina1_cal);
+                                    GlobalVar.Set_INA2Calibration((int) ina2_cal);
+                                    GlobalVar.Set_MacAddress(mac_address);
+                                    saveGlobals();
+                                }
+                            }
+                        }
+                    });
                 }
             }
 
@@ -629,5 +671,41 @@ public class MainActivity extends AppCompatActivity
             final AlertDialog alert = builder.create();
             alert.show();
         }
+    }
+
+    private void saveList1(){
+        if(dataList1 != null && dataList1.size() > 0) {
+            StringBuilder sb = new StringBuilder();
+            for(int i=0; i<dataList1.size(); i++){
+                sb.append(dataList1.get(i));
+                if(i<dataList1.size()-1)
+                    sb.append(",");
+            }
+
+            Utils.saveSharedSetting(this, "PREFERENCES_LIST1", sb.toString());
+        }
+    }
+
+    private void loadList1() {
+        String list1 = Utils.readSharedSetting(this, "PREFERENCES_LIST1", null);
+        if(dataList1 != null) {
+            dataList1.clear();
+            if(list1 == null) {
+                dataList1.add("Demo");
+                dataList1.add("Individual");
+                dataList1.add("RNSIT");
+            }
+            else{
+                try {
+                    String[] lists = list1.split(",");
+                    Collections.addAll(dataList1, lists);
+                }
+                catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        }
+        if(adapterList1 != null)
+            adapterList1.notifyDataSetChanged();
     }
 }
