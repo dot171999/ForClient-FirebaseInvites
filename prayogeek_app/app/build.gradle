@@ -10,6 +10,7 @@ android {
         versionName "1.0"
         resConfigs "en"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        archivesBaseName = "Yuscope-$versionName"
     }
     buildTypes {
         release {
