@@ -366,6 +366,12 @@ public class MainActivity extends AppCompatActivity
             case RC_PROFILE_CHANGE:
                 if (!isUserFullProfile())
                     finish();
+
+                isUserFirstTime = Boolean.valueOf(Utils.readSharedSetting(MainActivity.this, PREF_USER_FIRST_TIME, "true"));
+                if (isUserFirstTime) {
+                    Log.d(TAG, "First use, run onboarding");
+                    runOnboarding();
+                }
                 break;
             case RC_BUTTON1:
             case RC_BUTTON2:
@@ -648,6 +654,10 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void saveGlobals(){
+        if(mList2 != null) {
+            String module = mList2.getSelectedItem().toString();
+            ((Global_Var) getApplicationContext()).Set_Module_Name(module);
+        }
         mFireBaseHelper.write((Global_Var) getApplicationContext());
     }
 

@@ -121,7 +121,7 @@ public class Global_Var extends Application {
         globalVar.put(CONNECTION_STATUS, mConnection_status);
         globalVar.put(LOCATION, mLat + ", " + mLon);
         globalVar.put(MODULE_NAME, mModule_Name);
-        globalVar.put(TIMESTAMP, Timestamp.now().toString());
+        globalVar.put(TIMESTAMP, Timestamp.now().toDate().toString());
         return globalVar;
     }
     public void Set_Category(String category) {
