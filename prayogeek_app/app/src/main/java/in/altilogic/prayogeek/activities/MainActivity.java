@@ -339,7 +339,6 @@ public class MainActivity extends AppCompatActivity
                 if (resultCode == RESULT_OK) {
                     Toast.makeText(this, "Signed in!", Toast.LENGTH_SHORT).show();
 
-                    ui_init();
                     FirebaseUser user = mFirebaseAuth.getCurrentUser();
                     if (user != null) {
                         // user is signed in
@@ -349,6 +348,7 @@ public class MainActivity extends AppCompatActivity
                         GlobalVar.Set_Username(mUsername);
                         GlobalVar.Set_EmailId(mEmailId);
                     }
+                    ui_init();
                 } else if (resultCode == RESULT_CANCELED) {
                     if (isOnline == true) {
                         Toast.makeText(this, "Sign In Cancelled!", Toast.LENGTH_SHORT).show();
