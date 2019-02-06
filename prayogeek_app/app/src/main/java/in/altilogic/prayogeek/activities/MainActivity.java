@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity
     public static final String PREF_USER_FIRST_TIME = "user_first_time";
     public static final String PREF_USER_NAME = "user_name";
     public static final String PREF_EMAILID = "email_id";
-    boolean isUserFirstTime;
+
     boolean isOnline = false;
 
     public static final String TAG = "YOUSCOPE-DB";
@@ -121,7 +121,8 @@ public class MainActivity extends AppCompatActivity
             Toast.makeText(this, "Network is not available ", Toast.LENGTH_SHORT).show();
 //            finish();
         }
-        updateLocation();
+        if(isUserFullProfile() && isOnboardingShowing())
+            updateLocation();
     }
 
     @Override
@@ -350,7 +351,7 @@ public class MainActivity extends AppCompatActivity
                     }
                     ui_init();
                 } else if (resultCode == RESULT_CANCELED) {
-                    if (isOnline == true) {
+                    if (isOnline) {
                         Toast.makeText(this, "Sign In Cancelled!", Toast.LENGTH_SHORT).show();
                     } else {
                         Toast.makeText(this, "Turn ON Internet to Sign In!", Toast.LENGTH_SHORT).show();
@@ -367,8 +368,7 @@ public class MainActivity extends AppCompatActivity
                 if (!isUserFullProfile())
                     finish();
 
-                isUserFirstTime = Boolean.valueOf(Utils.readSharedSetting(MainActivity.this, PREF_USER_FIRST_TIME, "true"));
-                if (isUserFirstTime) {
+                if (!isOnboardingShowing()) {
                     Log.d(TAG, "First use, run onboarding");
                     runOnboarding();
                 }
@@ -404,8 +404,7 @@ public class MainActivity extends AppCompatActivity
         mButton4.setOnClickListener(this);
 
         if (isUserFullProfile()) {
-            isUserFirstTime = Boolean.valueOf(Utils.readSharedSetting(MainActivity.this, PREF_USER_FIRST_TIME, "true"));
-            if (isUserFirstTime) {
+            if (!isOnboardingShowing()) {
                 Log.d(TAG, "First use, run onboarding");
                 runOnboarding();
             }
@@ -414,10 +413,12 @@ public class MainActivity extends AppCompatActivity
             checkLocationPermissions();
         }
 
-        adapterList1 = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, dataList1);
+//        adapterList1 = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, dataList1);
+        adapterList1 = new ArrayAdapter<String>(MainActivity.this, R.layout.spinner_custom, dataList1);
         adapterList1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mList1.setAdapter(adapterList1);
-        adapterList2 = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, dataList2);
+//        adapterList2 = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, dataList2);
+        adapterList2 = new ArrayAdapter<String>(MainActivity.this, R.layout.spinner_custom, dataList2);
         adapterList2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mList2.setAdapter(adapterList2);
 
@@ -547,16 +548,14 @@ public class MainActivity extends AppCompatActivity
                 updateLocation();
                 ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_CONNECTED);
                 saveGlobals();
-                startActivityForResult(new Intent(MainActivity.this, Button1Activity.class)
-                        .putExtra(PREF_USER_FIRST_TIME, isUserFirstTime), RC_BUTTON1);
+                startActivityForResult(new Intent(MainActivity.this, Button1Activity.class), RC_BUTTON1);
                 break;
             case R.id.btn_button2:
                 printInfoMessage("press button 2");
                 updateLocation();
                 ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_CONNECTED);
                 saveGlobals();
-                startActivityForResult(new Intent(MainActivity.this, Button2Activity.class)
-                        .putExtra(PREF_USER_FIRST_TIME, isUserFirstTime), RC_BUTTON2);
+                startActivityForResult(new Intent(MainActivity.this, Button2Activity.class), RC_BUTTON2);
                 break;
             case R.id.btn_button3:
                 printInfoMessage("press button 3");
@@ -614,8 +613,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void updateLocation() {
-        checkGps();
-        if (checkLocationPermissions()) {
+        if (checkLocationPermissions() && isGpsEnabled()) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                     && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return;
@@ -649,8 +647,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void runOnboarding(){
-        startActivityForResult(new Intent(MainActivity.this, OnBoardingActivity.class)
-                .putExtra(PREF_USER_FIRST_TIME, isUserFirstTime), RC_ON_BOARDING);
+        startActivityForResult(new Intent(MainActivity.this, OnBoardingActivity.class), RC_ON_BOARDING);
+    }
+
+    private boolean isOnboardingShowing(){
+        return !Boolean.valueOf(Utils.readSharedSetting(MainActivity.this, PREF_USER_FIRST_TIME, "true"));
     }
 
     private void saveGlobals(){
@@ -661,7 +662,7 @@ public class MainActivity extends AppCompatActivity
         mFireBaseHelper.write((Global_Var) getApplicationContext());
     }
 
-    private void checkGps(){
+    private boolean isGpsEnabled(){
         final LocationManager manager = (LocationManager) getSystemService( Context.LOCATION_SERVICE );
 
         if ( !manager.isProviderEnabled( LocationManager.GPS_PROVIDER ) ) {
@@ -681,6 +682,9 @@ public class MainActivity extends AppCompatActivity
             final AlertDialog alert = builder.create();
             alert.show();
         }
+        else
+            return true;
+        return false;
     }
 
     private void saveList1(){

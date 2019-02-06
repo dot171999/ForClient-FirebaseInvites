@@ -162,7 +162,6 @@ public class OnBoardingActivity extends AppCompatActivity {
         mSkipBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 finishActivity();
             }
         });
@@ -170,10 +169,9 @@ public class OnBoardingActivity extends AppCompatActivity {
         mFinishBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finishActivity();
                 //  update 1st time pref
                 Utils.saveSharedSetting(OnBoardingActivity.this, MainActivity.PREF_USER_FIRST_TIME, "false");
-
+                finishActivity();
             }
         });
 
