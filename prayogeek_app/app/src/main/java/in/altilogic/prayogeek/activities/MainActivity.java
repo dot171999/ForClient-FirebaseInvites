@@ -370,10 +370,7 @@ public class MainActivity extends AppCompatActivity
                 if (!isUserFullProfile())
                     finish();
 
-                if (!isOnboardingShowing()) {
-                    Log.d(TAG, "First use, run onboarding");
-                    runOnboarding();
-                }
+                checkLocationPermissions();
                 break;
             case RC_BUTTON1:
             case RC_BUTTON2:
@@ -412,7 +409,6 @@ public class MainActivity extends AppCompatActivity
             }
         } else {
             runProfileChange();
-            checkLocationPermissions();
         }
 
 //        adapterList1 = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, dataList1);
@@ -573,6 +569,11 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onPermissionsGranted(int requestCode, @NonNull List<String> perms) {
         Log.d(TAG, "onPermissionsGranted " + requestCode);
+
+        if (!isOnboardingShowing()) {
+            Log.d(TAG, "First use, run onboarding");
+            runOnboarding();
+        }
     }
 
     @Override
@@ -615,12 +616,14 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void updateLocation() {
+        Log.d(TAG, "Start update location ");
         if (checkLocationPermissions() && isGpsEnabled()) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                     && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "Fail permission: update location ");
                 return;
             }
-            mFusedLocationClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
+            mFusedLocationClient.getLastLocation().addOnSuccessListener( new OnSuccessListener<Location>() {
                 @Override
                 public void onSuccess(Location location) {
                     if (location != null) {

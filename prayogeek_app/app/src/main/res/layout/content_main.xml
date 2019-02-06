@@ -16,7 +16,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center|center_vertical"
-            android:padding="10dp"
+            android:padding="8dp"
             android:layout_weight="1">
 
             <Spinner
@@ -25,7 +25,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@android:drawable/btn_dropdown"
-                android:layout_margin="8dp" />
+                android:layout_marginLeft="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"/>
 
             <Spinner
                 android:id="@+id/spList2"
@@ -33,7 +35,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@android:drawable/btn_dropdown"
-                android:layout_margin="8dp" />
+                android:layout_marginRight="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"/>
         </LinearLayout>
 
         <TextView
