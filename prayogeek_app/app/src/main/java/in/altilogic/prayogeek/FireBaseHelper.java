@@ -27,41 +27,21 @@ public class FireBaseHelper {
     }
 
     public void write(final Global_Var gv) {
-        String documentId = Utils.readSharedSetting(gv.getApplicationContext(), GLOBAL_VARIABLE_ID, null);
-        if(documentId == null) {
-            mDb .collection(GLOBAL_VARIABLE_COLLECTION)
-                    .add(gv.Get_Map())
-                    .addOnSuccessListener(new OnSuccessListener<DocumentReference>()  {
-                        @Override
-                        public void onSuccess(DocumentReference documentReference) {
-                            Log.d(MainActivity.TAG,  "DocumentSnapshot written with ID: " + documentReference.getId());
-                            Utils.saveSharedSetting(gv.getApplicationContext(), GLOBAL_VARIABLE_ID, documentReference.getId());
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Log.w(MainActivity.TAG, "Error writing document", e);
-                        }
-                    });
-        }
-        else{
-            mDb.collection(GLOBAL_VARIABLE_COLLECTION)
-                    .document(documentId)
-                    .set(gv.Get_Map())
-                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void aVoid) {
-                            Log.d(MainActivity.TAG, "DocumentSnapshot successfully written!");
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Log.w(MainActivity.TAG, "Error writing document", e);
-                        }
-                    });
-        }
+        mDb .collection(GLOBAL_VARIABLE_COLLECTION)
+                .add(gv.Get_Map())
+                .addOnSuccessListener(new OnSuccessListener<DocumentReference>()  {
+                    @Override
+                    public void onSuccess(DocumentReference documentReference) {
+                        Log.d(MainActivity.TAG,  "DocumentSnapshot written with ID: " + documentReference.getId());
+                        Utils.saveSharedSetting(gv.getApplicationContext(), GLOBAL_VARIABLE_ID, documentReference.getId());
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w(MainActivity.TAG, "Error writing document", e);
+                    }
+                });
     }
 
     public void write(String collection, String document, Map<String, Object> data) {
