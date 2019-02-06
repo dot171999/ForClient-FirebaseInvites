@@ -19,6 +19,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -98,6 +99,7 @@ public class MainActivity extends AppCompatActivity
     private ArrayList<String> dataList2 = new ArrayList<>();
 
     private FusedLocationProviderClient mFusedLocationClient;
+    private DrawerLayout mDrawer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -273,7 +275,6 @@ public class MainActivity extends AppCompatActivity
                             if (dataMap != null && dataMap.size() > 0) {
                                 Log.d(TAG, " data: " + dataMap.toString());
                                 dataList2.addAll(dataMap);
-                                saveGlobals();
                             }
                         } else if (mDocumentName.equals("Individual")) {
                             Map<String, Object> dataMap = (Map<String, Object>) docum.getData();
@@ -297,7 +298,6 @@ public class MainActivity extends AppCompatActivity
                                                     GlobalVar.Set_INA1Calibration((int) ina1_cal);
                                                     GlobalVar.Set_INA2Calibration((int) ina2_cal);
                                                     GlobalVar.Set_MacAddress(mac_address);
-                                                    saveGlobals();
                                                 }
                                             }
                                         }
@@ -318,7 +318,6 @@ public class MainActivity extends AppCompatActivity
                             if (dataMap != null && dataMap.size() > 0) {
                                 Log.d(TAG, " data: " + dataMap.toString());
                                 dataList2.addAll(dataMap);
-                                saveGlobals();
                             }
                         }
                     }
@@ -398,19 +397,16 @@ public class MainActivity extends AppCompatActivity
         mButton3.setOnClickListener(this);
         mButton4.setOnClickListener(this);
 
-        isUserFirstTime = Boolean.valueOf(Utils.readSharedSetting(MainActivity.this, PREF_USER_FIRST_TIME, "true"));
-
-        if (isUserFirstTime) {
-            Log.d(TAG, "First use, run onboarding");
-            runOnboarding();
-        }
-        else {
-            if(!isUserFullProfile()) {
-                runProfileChange();
+        if (isUserFullProfile()) {
+            isUserFirstTime = Boolean.valueOf(Utils.readSharedSetting(MainActivity.this, PREF_USER_FIRST_TIME, "true"));
+            if (isUserFirstTime) {
+                Log.d(TAG, "First use, run onboarding");
+                runOnboarding();
             }
+        } else {
+            runProfileChange();
+            checkLocationPermissions();
         }
-
-        checkLocationPermissions();
 
         adapterList1 = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, dataList1);
         adapterList1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -455,7 +451,6 @@ public class MainActivity extends AppCompatActivity
                                     GlobalVar.Set_INA1Calibration((int) ina1_cal);
                                     GlobalVar.Set_INA2Calibration((int) ina2_cal);
                                     GlobalVar.Set_MacAddress(mac_address);
-                                    saveGlobals();
                                 }
                             }
                         }
@@ -473,10 +468,10 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void navigation_driver_init() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, mToolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
+                this, mDrawer, mToolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        mDrawer.addDrawerListener(toggle);
         toggle.syncState();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
@@ -490,6 +485,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view) {
                 runProfileChange();
+                mDrawer.closeDrawer(Gravity.LEFT);
             }
         });
 
@@ -526,6 +522,11 @@ public class MainActivity extends AppCompatActivity
             Intent intent = new Intent(Intent.ACTION_VIEW, uri);
             startActivity(intent);
         }
+        if (mUsername != null)
+            tvNavDrUser.setText(mUsername);
+
+        if (mEmailId != null)
+            tvNavDrEmail.setText(mEmailId);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -620,7 +621,6 @@ public class MainActivity extends AppCompatActivity
                         Global_Var GlobalVar = (Global_Var) getApplicationContext();
                         GlobalVar.Set_Location(location.getLatitude(), location.getLongitude());
                         Log.d(TAG, "update location " + location.toString());
-                        saveGlobals();
                     }
                 }
             });
