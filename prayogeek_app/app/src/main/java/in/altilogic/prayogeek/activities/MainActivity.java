@@ -326,6 +326,9 @@ public class MainActivity extends AppCompatActivity
                     adapterList2.notifyDataSetChanged();
                     if(dataList2 != null && dataList2.size() > 0)
                         printInfoMessage("App will connect to Module " + dataList2.get(0) );
+                    if(dataList2 != null && dataList2.size()> 0)
+                        mList2.setSelection(0);
+
                     Log.d(MainActivity.TAG, docum.getId() + " => " + docum.getData());
                 } else {
                     Log.w(MainActivity.TAG, "Error getting documents.", task.getException());
