@@ -31,6 +31,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -60,7 +62,7 @@ import javax.annotation.Nullable;
 import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener, EasyPermissions.PermissionCallbacks {
+        implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener, EasyPermissions.PermissionCallbacks, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     // Firebase Authentication
     private FirebaseAuth mFirebaseAuth;
@@ -110,6 +112,7 @@ public class MainActivity extends AppCompatActivity
         ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_APP_OPENED);
         mFireBaseHelper = new FireBaseHelper();
         firebase_auth_init();
+
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
     }
 
@@ -617,7 +620,8 @@ public class MainActivity extends AppCompatActivity
 
     private void updateLocation() {
         Log.d(TAG, "Start update location ");
-        if (checkLocationPermissions() && isGpsEnabled()) {
+        isGpsEnabled();
+        if (checkLocationPermissions()) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                     && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 Log.d(TAG, "Fail permission: update location ");
@@ -630,6 +634,9 @@ public class MainActivity extends AppCompatActivity
                         Global_Var GlobalVar = (Global_Var) getApplicationContext();
                         GlobalVar.Set_Location(location.getLatitude(), location.getLongitude());
                         Log.d(TAG, "update location " + location.toString());
+                    }
+                    else {
+                        Log.d(TAG, "no location ");
                     }
                 }
             });
@@ -726,5 +733,20 @@ public class MainActivity extends AppCompatActivity
         }
         if(adapterList1 != null)
             adapterList1.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onConnected(@android.support.annotation.Nullable Bundle bundle) {
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
     }
 }
