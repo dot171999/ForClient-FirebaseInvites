@@ -268,6 +268,8 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                 if (task.isSuccessful()) {
+                    boolean individual = false;
+                    Global_Var GlobalVar = (Global_Var) getApplicationContext();
                     dataList2.clear();
                     DocumentSnapshot docum = task.getResult();
                     if (mDocumentName != null && docum != null) {
@@ -278,6 +280,7 @@ public class MainActivity extends AppCompatActivity
                                 dataList2.addAll(dataMap);
                             }
                         } else if (mDocumentName.equals("Individual")) {
+                            individual = true;
                             Map<String, Object> dataMap = (Map<String, Object>) docum.getData();
                             if (dataMap != null) {
                                 if (dataMap.containsKey(mEmailId)) {
@@ -288,7 +291,6 @@ public class MainActivity extends AppCompatActivity
                                             if (dataMod != null) {
                                                 dataList2.add(dataMod);
                                                 Log.d(TAG, " module " + dataMod);
-                                                Global_Var GlobalVar = (Global_Var) getApplicationContext();
                                                 GlobalVar.Set_Module_Name(dataMod);
                                                 if (dataMap.containsKey(dataMod)) {
                                                     Map<String, Object> hw = (Map<String, Object>) dataMap.get(dataMod);
@@ -305,7 +307,7 @@ public class MainActivity extends AppCompatActivity
                                         if (dataModules.containsKey("validity")) {
                                             Timestamp dataMod = (Timestamp) dataModules.get((Object) "validity");
                                             if (dataMod != null) {
-                                                printInfoMessage("Subscription valid untill : " + dataMod.toDate().toString());
+                                                GlobalVar.Set_Validity(dataMod);
                                             }
                                         }
                                     }
@@ -324,14 +326,69 @@ public class MainActivity extends AppCompatActivity
                     }
 
                     adapterList2.notifyDataSetChanged();
-                    if(dataList2 != null && dataList2.size() > 0)
-                        printInfoMessage("App will connect to Module " + dataList2.get(0) );
-                    if(dataList2 != null && dataList2.size()> 0)
+                    StringBuilder sb = new StringBuilder();
+                    if(dataList2 != null && dataList2.size() > 0) {
+                        Timestamp current = Timestamp.now();
+                        if(individual) {
+                            Timestamp validity = GlobalVar.Get_Validity();
+                            if (validity != null && validity.getSeconds() > current.getSeconds())
+                                sb.append("Subscription valid until : ").append(validity.toDate().toString()).append("\n");
+                            else
+                                sb.append("Subscription Expired. Kindly Renew").append("\n");
+                        }
+
+                        sb.append("App will connect to Module ").append(dataList2.get(0));
+
                         mList2.setSelection(0);
+                    }
+
+                    printInfoMessage(sb.toString());
 
                     Log.d(MainActivity.TAG, docum.getId() + " => " + docum.getData());
                 } else {
                     Log.w(MainActivity.TAG, "Error getting documents.", task.getException());
+                }
+
+                update_validacity();
+            }
+        });
+    }
+
+    private void check_validity() {
+        Global_Var GlobalVar = (Global_Var) getApplicationContext();
+        Timestamp validity = GlobalVar.Get_Validity();
+        if(validity != null){
+            Timestamp current = Timestamp.now();
+            if (validity.getSeconds() < current.getSeconds()){
+                Toast.makeText(getApplicationContext(),"Subscription Expired. Kindly Renew", Toast.LENGTH_SHORT ).show();
+            }
+        }
+    }
+
+    private void update_validacity() {
+        if(((Global_Var) getApplicationContext()).Get_Validity() != null)
+            return;
+
+        mFireBaseHelper.read("Colleges", "Individual", new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                DocumentSnapshot docum = task.getResult();
+                Map<String, Object> dataMap = (Map<String, Object>) docum.getData();
+                if (dataMap != null) {
+                    if (dataMap.containsKey(mEmailId)) {
+                        Map<String, Object> dataModules = (Map<String, Object>) dataMap.get((Object) mEmailId);
+                        if (dataModules != null) {
+                            if (dataModules.containsKey("validity")) {
+                                Timestamp dataMod = (Timestamp) dataModules.get((Object) "validity");
+                                if (dataMod != null) {
+                                    ((Global_Var) getApplicationContext()).Set_Validity(dataMod);
+                                }
+                            }
+                        }
+                    } else {
+                        printErrorMessage("You have not Subscribed");
+                    }
+                    Log.d(TAG, " Select Individual " + dataMap.toString());
                 }
             }
         });
@@ -549,6 +606,7 @@ public class MainActivity extends AppCompatActivity
                 updateLocation();
                 ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_CONNECTED);
                 saveGlobals();
+                check_validity();
                 startActivityForResult(new Intent(MainActivity.this, Button1Activity.class), RC_BUTTON1);
                 break;
             case R.id.btn_button2:
@@ -556,6 +614,7 @@ public class MainActivity extends AppCompatActivity
                 updateLocation();
                 ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_CONNECTED);
                 saveGlobals();
+                check_validity();
                 startActivityForResult(new Intent(MainActivity.this, Button2Activity.class), RC_BUTTON2);
                 break;
             case R.id.btn_button3:
