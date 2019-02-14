@@ -35,6 +35,7 @@ public class Global_Var extends Application {
     private String mModule_Name;   //-> From Database based on value of List 2
     private int mINA1_Calibration;   //-> From Database based on value of List 2
     private int mINA2_Calibration;   //-> From Database based on value of List 2
+    private Timestamp mValidity;
 
     public void Set_Username(String username) {
         mUsername = username;
@@ -154,5 +155,13 @@ public class Global_Var extends Application {
 
     public int Get_ErrorCode(){
         return mError_Code;
+    }
+
+    public void Set_Validity(Timestamp validity) {
+        mValidity = validity;
+    }
+
+    public Timestamp Get_Validity() {
+        return mValidity;
     }
 }

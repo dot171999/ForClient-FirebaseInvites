@@ -49,7 +49,9 @@
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
             android:textColor="@color/color_splash"
-            android:background="@drawable/textview_rounded"
+            android:background="@drawable/textview_border"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
             android:text="Error" />
 
         <TextView
@@ -59,7 +61,7 @@
             android:layout_margin ="16dp"
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
-            android:background="@drawable/textview_rounded"
+            android:background="@drawable/textview_border"
             android:text="Info" />
 
         <LinearLayout
