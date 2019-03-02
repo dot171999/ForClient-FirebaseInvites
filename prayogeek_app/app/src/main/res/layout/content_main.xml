@@ -50,8 +50,6 @@
             android:paddingRight="10dp"
             android:textColor="@color/color_splash"
             android:background="@drawable/textview_border"
-            android:paddingLeft="10dp"
-            android:paddingRight="10dp"
             android:text="Error" />
 
         <TextView
@@ -84,8 +82,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin ="16dp"
-                android:theme="@style/AppTheme.Button"
-                android:text="Button2"/>
+                android:background="@null"
+                android:drawableBottom="@drawable/icons_book"/>
+            <!--android:theme="@style/AppTheme.Button"-->
+                <!--android:text="Button2"/>-->
         </LinearLayout>
 
         <LinearLayout

@@ -276,54 +276,65 @@ public class MainActivity extends AppCompatActivity
                     dataList2.clear();
                     DocumentSnapshot docum = task.getResult();
                     if (mDocumentName != null && docum != null) {
-                        if (mDocumentName.equals("Demo")) {
-                            List<String> dataMap = (List<String>) docum.get("demo_modules");
-                            if (dataMap != null && dataMap.size() > 0) {
-                                Log.d(TAG, " data: " + dataMap.toString());
-                                dataList2.addAll(dataMap);
+                        switch (mDocumentName) {
+                            case "Demo": {
+                                ((Global_Var) getApplicationContext()).Set_Project_Access(false);
+                                List<String> dataMap = (List<String>) docum.get("demo_modules");
+                                if (dataMap != null && dataMap.size() > 0) {
+                                    Log.d(TAG, " data: " + dataMap.toString());
+                                    dataList2.addAll(dataMap);
+                                }
+                                break;
                             }
-                        } else if (mDocumentName.equals("Individual")) {
-                            individual = true;
-                            Map<String, Object> dataMap = (Map<String, Object>) docum.getData();
-                            if (dataMap != null) {
-                                if (dataMap.containsKey(mEmailId)) {
-                                    Map<String, Object> dataModules = (Map<String, Object>) dataMap.get((Object) mEmailId);
-                                    if (dataModules != null) {
-                                        if (dataModules.containsKey("module")) {
-                                            String dataMod = (String) dataModules.get((Object) "module");
-                                            if (dataMod != null) {
-                                                dataList2.add(dataMod);
-                                                Log.d(TAG, " module " + dataMod);
-                                                GlobalVar.Set_Module_Name(dataMod);
-                                                if (dataMap.containsKey(dataMod)) {
-                                                    Map<String, Object> hw = (Map<String, Object>) dataMap.get(dataMod);
-                                                    long hw_version = (Long) hw.get((String) "hw_version");
-                                                    long ina1_cal = (Long) hw.get((String) "ina1_cal");
-                                                    long ina2_cal = (Long) hw.get((String) "ina2_cal");
-                                                    String mac_address = (String) hw.get((String) "mac_address");
-                                                    GlobalVar.Set_INA1Calibration((int) ina1_cal);
-                                                    GlobalVar.Set_INA2Calibration((int) ina2_cal);
-                                                    GlobalVar.Set_MacAddress(mac_address);
+                            case "Individual": {
+                                individual = true;
+                                Map<String, Object> dataMap = (Map<String, Object>) docum.getData();
+                                if (dataMap != null) {
+                                    if (dataMap.containsKey(mEmailId)) {
+                                        ((Global_Var) getApplicationContext()).Set_Project_Access(true);
+
+                                        Map<String, Object> dataModules = (Map<String, Object>) dataMap.get((Object) mEmailId);
+                                        if (dataModules != null) {
+                                            if (dataModules.containsKey("module")) {
+                                                String dataMod = (String) dataModules.get((Object) "module");
+                                                if (dataMod != null) {
+                                                    dataList2.add(dataMod);
+                                                    Log.d(TAG, " module " + dataMod);
+                                                    GlobalVar.Set_Module_Name(dataMod);
+                                                    if (dataMap.containsKey(dataMod)) {
+                                                        Map<String, Object> hw = (Map<String, Object>) dataMap.get(dataMod);
+                                                        long hw_version = (Long) hw.get((String) "hw_version");
+                                                        long ina1_cal = (Long) hw.get((String) "ina1_cal");
+                                                        long ina2_cal = (Long) hw.get((String) "ina2_cal");
+                                                        String mac_address = (String) hw.get((String) "mac_address");
+                                                        GlobalVar.Set_INA1Calibration((int) ina1_cal);
+                                                        GlobalVar.Set_INA2Calibration((int) ina2_cal);
+                                                        GlobalVar.Set_MacAddress(mac_address);
+                                                    }
+                                                }
+                                            }
+                                            if (dataModules.containsKey("validity")) {
+                                                Timestamp dataMod = (Timestamp) dataModules.get((Object) "validity");
+                                                if (dataMod != null) {
+                                                    GlobalVar.Set_Validity(dataMod);
                                                 }
                                             }
                                         }
-                                        if (dataModules.containsKey("validity")) {
-                                            Timestamp dataMod = (Timestamp) dataModules.get((Object) "validity");
-                                            if (dataMod != null) {
-                                                GlobalVar.Set_Validity(dataMod);
-                                            }
-                                        }
+                                    } else {
+                                        ((Global_Var) getApplicationContext()).Set_Project_Access(false);
+                                        printErrorMessage("You have not Subscribed");
                                     }
-                                } else {
-                                    printErrorMessage("You have not Subscribed");
+                                    Log.d(TAG, " Select Individual " + dataMap.toString());
                                 }
-                                Log.d(TAG, " Select Individual " + dataMap.toString());
+                                break;
                             }
-                        } else {
-                            List<String> dataMap = (List<String>) docum.get("college_modules");
-                            if (dataMap != null && dataMap.size() > 0) {
-                                Log.d(TAG, " data: " + dataMap.toString());
-                                dataList2.addAll(dataMap);
+                            default: {
+                                List<String> dataMap = (List<String>) docum.get("college_modules");
+                                if (dataMap != null && dataMap.size() > 0) {
+                                    Log.d(TAG, " data: " + dataMap.toString());
+                                    dataList2.addAll(dataMap);
+                                }
+                                break;
                             }
                         }
                     }
@@ -347,7 +358,7 @@ public class MainActivity extends AppCompatActivity
 
                     printInfoMessage(sb.toString());
 
-                    Log.d(MainActivity.TAG, docum.getId() + " => " + docum.getData());
+                    Log.d(MainActivity.TAG, (docum != null ? docum.getId() : "NULL") + " => " + (docum != null ? docum.getData() : "NULL"));
                 } else {
                     Log.w(MainActivity.TAG, "Error getting documents.", task.getException());
                 }

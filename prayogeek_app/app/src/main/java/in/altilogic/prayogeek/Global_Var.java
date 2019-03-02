@@ -36,6 +36,7 @@ public class Global_Var extends Application {
     private int mINA1_Calibration;   //-> From Database based on value of List 2
     private int mINA2_Calibration;   //-> From Database based on value of List 2
     private Timestamp mValidity;
+    private boolean mProject_Access;
 
     public void Set_Username(String username) {
         mUsername = username;
@@ -163,5 +164,13 @@ public class Global_Var extends Application {
 
     public Timestamp Get_Validity() {
         return mValidity;
+    }
+
+    public boolean isProject_Access() {
+        return mProject_Access;
+    }
+
+    public void Set_Project_Access(boolean project_access) {
+        this.mProject_Access = project_access;
     }
 }
