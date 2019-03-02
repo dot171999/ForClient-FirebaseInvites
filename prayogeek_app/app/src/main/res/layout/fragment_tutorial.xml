@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <Button
+        android:id="@+id/btnBasicElectronic"
+        android:layout_width="120dp"
+        android:layout_height="70dp"
+        android:layout_marginStart="100dp"
+        android:layout_marginTop="60dp"
+        android:text="Basic electronics"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btnProjects"
+        android:layout_width="120dp"
+        android:layout_height="70dp"
+        android:layout_marginStart="88dp"
+        android:layout_marginEnd="8dp"
+        android:text="Projects"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/btnBasicElectronic"
+        app:layout_constraintTop_toTopOf="@+id/btnBasicElectronic" />
+
+    <Button
+        android:id="@+id/btnDemoProjects"
+        android:layout_width="120dp"
+        android:layout_height="70dp"
+        android:layout_marginTop="40dp"
+        android:text="Demo Projects"
+        app:layout_constraintStart_toStartOf="@+id/btnBasicElectronic"
+        app:layout_constraintTop_toBottomOf="@+id/btnBasicElectronic" />
+</android.support.constraint.ConstraintLayout>
