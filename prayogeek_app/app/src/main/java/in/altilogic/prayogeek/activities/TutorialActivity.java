@@ -48,6 +48,11 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     private final static int SCREEN_ID_DEMO_PROJECT2 = 10;
     private int mScreenStatus = 0;
 
+    /**
+     * TODO UPDATE pictures
+     * To change screen pictures, you need to add these pictures to the DRAWABLE folder,
+     * then add the ID of each image to the corresponding array below.
+     */
     private final static int[] mBreadboardImages = {R.drawable.breadboard};
     private final static int[] mLedOnOffImages = {R.drawable.led_on_off};
     private final static int[] mPowerSupplyImages = {R.drawable.power_supply};
