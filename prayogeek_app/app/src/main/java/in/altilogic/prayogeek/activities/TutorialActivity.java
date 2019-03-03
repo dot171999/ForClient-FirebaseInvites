@@ -5,12 +5,15 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.ablanco.zoomy.DoubleTapListener;
 import com.ablanco.zoomy.Zoomy;
@@ -60,7 +63,7 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        setContentView(R.layout.activity_button2);
+        setContentView(R.layout.activity_tutolial);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,WindowManager.LayoutParams.FLAG_SECURE); // disable snapshots
         mFragmentManager = getSupportFragmentManager();
 
@@ -100,7 +103,13 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     public void onClick(View view) {
         switch (view.getId()){
             case R.id.btnBasicElectronic: showBasicElectronic(); break;
-            case R.id.btnProjects: mScreenStatus = 0; showProjectsFragment(); break;
+            case R.id.btnProjects:
+                mScreenStatus = 0;
+                if(((Global_Var) getApplicationContext()).isProject_Access())
+                    showProjectsFragment();
+                else
+                    Toast.makeText(getApplicationContext(), "Please Subscribe to access Projects", Toast.LENGTH_SHORT).show();
+                break;
             case R.id.btnDemoProjects: mScreenStatus = 0;  showDemoProjectsFragment(); break;
             case R.id.btnBreadBoard: mScreenStatus = SCREEN_ID_BREADBOARD_USAGE; showGifFragment(mBreadboardImages); break;
             case R.id.btnLedOnOFF: mScreenStatus = SCREEN_ID_LED_ON_OFF;  showGifFragment(mLedOnOffImages);  break;
@@ -180,12 +189,7 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
             Button btnProjects = (Button) view.findViewById(R.id.btnProjects);
             Button btnDemo = (Button) view.findViewById(R.id.btnDemoProjects);
             btnBasicElectronic.setOnClickListener(this);
-
-            if(mProjectAccess)
-                btnProjects.setOnClickListener(this);
-            else
-                btnProjects.setClickable(false);
-
+            btnProjects.setOnClickListener(this);
             btnDemo.setOnClickListener(this);
         }
 

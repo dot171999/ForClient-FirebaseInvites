@@ -82,10 +82,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin ="16dp"
-                android:background="@null"
-                android:drawableBottom="@drawable/icons_book"/>
-            <!--android:theme="@style/AppTheme.Button"-->
-                <!--android:text="Button2"/>-->
+                android:theme="@style/AppTheme.Button"
+                android:text="Button2" />
         </LinearLayout>
 
         <LinearLayout

@@ -643,7 +643,7 @@ public class MainActivity extends AppCompatActivity
                 ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_CONNECTED);
                 saveGlobals();
                 check_validity();
-                startActivityForResult(new Intent(MainActivity.this, TutorialActivity.class), RC_BUTTON2);
+                startActivityForResult(new Intent(MainActivity.this, Button2Activity.class), RC_BUTTON2);
                 break;
             case R.id.btn_button3:
                 printInfoMessage("press button 3");
