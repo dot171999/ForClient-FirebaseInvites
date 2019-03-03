@@ -2,7 +2,6 @@ package in.altilogic.prayogeek.activities;
 
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -12,10 +11,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.Toast;
+
+import com.ablanco.zoomy.DoubleTapListener;
+import com.ablanco.zoomy.Zoomy;
+
+import java.io.IOException;
 
 import in.altilogic.prayogeek.Global_Var;
 import in.altilogic.prayogeek.R;
+import pl.droidsonroids.gif.GifDrawable;
 import pl.droidsonroids.gif.GifImageView;
 
 import static in.altilogic.prayogeek.utils.Utils.*;
@@ -24,7 +28,7 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     private TutorialFragment mTutorialFragment;
     private BasicElectronicFragment mBasicElectronicFragment;
     private FragmentManager mFragmentManager;
-    private ShowGifFragment mShowGifFragment;
+    private GifShowFragment mShowGifFragment;
     private ShowProjectsFragment mProjectsFragment;
     private ShowDemoProjectsFragment mDemoProjectsFragment;
 
@@ -40,6 +44,18 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     private final static int SCREEN_ID_DEMO_PROJECT1 = 9;
     private final static int SCREEN_ID_DEMO_PROJECT2 = 10;
     private int mScreenStatus = 0;
+
+    private final static int[] mBreadboardImages = {R.drawable.breadboard};
+    private final static int[] mLedOnOffImages = {R.drawable.led_on_off};
+    private final static int[] mPowerSupplyImages = {R.drawable.power_supply};
+    private final static int[] mTransistorSwitchImages = {R.drawable.transistor_switch};
+    private final static int[] mIC741Images = {R.drawable.ic741};
+    private final static int[] mIC555Images = {R.drawable.ic555};
+    private final static int[] mProject1Images = {R.drawable.project1};
+    private final static int[] mProject2Images = {R.drawable.project2};
+    private final static int[] mDemoProject1Images = {R.drawable.demo_project1};
+    private final static int[] mDemoProject2Images = {R.drawable.demo_project1, R.drawable.demo_project2};
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,54 +66,18 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
 
         int last_screen_id = readSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
         switch(last_screen_id){
-            case 0:
-                mScreenStatus = 0;
-                showTutorialFragment();
-                break;
-            case SCREEN_ID_BREADBOARD_USAGE:
-                mScreenStatus = SCREEN_ID_BREADBOARD_USAGE;
-                showGifFragment(R.drawable.breadboard);
-                break;
-            case SCREEN_ID_LED_ON_OFF:
-                mScreenStatus = SCREEN_ID_LED_ON_OFF;
-                showGifFragment(R.drawable.led_on_off);
-                break;
-            case SCREEN_ID_POWER_SUPPLY:
-                mScreenStatus = SCREEN_ID_POWER_SUPPLY;
-                showGifFragment(R.drawable.power_supply);
-                break;
-            case SCREEN_ID_TRANSISTOR_SWITCH:
-                mScreenStatus = SCREEN_ID_TRANSISTOR_SWITCH;
-                showGifFragment(R.drawable.transistor_switch);
-                break;
-            case SCREEN_ID_IC741:
-                mScreenStatus = SCREEN_ID_IC741;
-                showGifFragment(R.drawable.ic741);
-                break;
-            case SCREEN_ID_IC555:
-                mScreenStatus = SCREEN_ID_IC555;
-                showGifFragment(R.drawable.ic555);
-                break;
-            case SCREEN_ID_PROJECT1:
-                mScreenStatus = SCREEN_ID_PROJECT1;
-                showGifFragment(R.drawable.project1);
-                break;
-            case SCREEN_ID_PROJECT2:
-                mScreenStatus = SCREEN_ID_PROJECT2;
-                showGifFragment(R.drawable.project2);
-                break;
-            case SCREEN_ID_DEMO_PROJECT1:
-                mScreenStatus = SCREEN_ID_DEMO_PROJECT1;
-                showGifFragment(R.drawable.demo_project1);
-                break;
-            case SCREEN_ID_DEMO_PROJECT2:
-                mScreenStatus = SCREEN_ID_DEMO_PROJECT2;
-                showGifFragment(R.drawable.demo_project2);
-                break;
-            default:
-                mScreenStatus = 0;
-                showTutorialFragment();
-                break;
+            case 0: mScreenStatus = 0; showTutorialFragment(); break;
+            case SCREEN_ID_BREADBOARD_USAGE: mScreenStatus = SCREEN_ID_BREADBOARD_USAGE; showGifFragment(mBreadboardImages); break;
+            case SCREEN_ID_LED_ON_OFF: mScreenStatus = SCREEN_ID_LED_ON_OFF; showGifFragment(mLedOnOffImages); break;
+            case SCREEN_ID_POWER_SUPPLY: mScreenStatus = SCREEN_ID_POWER_SUPPLY; showGifFragment(mPowerSupplyImages); break;
+            case SCREEN_ID_TRANSISTOR_SWITCH: mScreenStatus = SCREEN_ID_TRANSISTOR_SWITCH;  showGifFragment(mTransistorSwitchImages);  break;
+            case SCREEN_ID_IC741: mScreenStatus = SCREEN_ID_IC741; showGifFragment(mIC741Images); break;
+            case SCREEN_ID_IC555: mScreenStatus = SCREEN_ID_IC555; showGifFragment(mIC555Images); break;
+            case SCREEN_ID_PROJECT1: mScreenStatus = SCREEN_ID_PROJECT1; showGifFragment(mProject1Images); break;
+            case SCREEN_ID_PROJECT2: mScreenStatus = SCREEN_ID_PROJECT2; showGifFragment(mProject2Images); break;
+            case SCREEN_ID_DEMO_PROJECT1: mScreenStatus = SCREEN_ID_DEMO_PROJECT1; showGifFragment(mDemoProject1Images); break;
+            case SCREEN_ID_DEMO_PROJECT2: mScreenStatus = SCREEN_ID_DEMO_PROJECT2; showGifFragment(mDemoProject2Images); break;
+            default: mScreenStatus = 0; showTutorialFragment(); break;
         }
     }
 
@@ -119,117 +99,62 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void onClick(View view) {
         switch (view.getId()){
-            case R.id.btnBasicElectronic:
-                Toast.makeText(getApplicationContext(), "BasicElectronic", Toast.LENGTH_SHORT).show();
-                mBasicElectronicFragment = new BasicElectronicFragment();
-                mBasicElectronicFragment.setOnClickListener(this);
-                mFragmentManager.beginTransaction()
-                        .replace(R.id.fragmentContent, mBasicElectronicFragment)
-                        .commit();
-                break;
-            case R.id.btnProjects:
-                Toast.makeText(getApplicationContext(), "Projects", Toast.LENGTH_SHORT).show();
-                mScreenStatus = 0;
-                showProjectsFragment();
-                break;
-            case R.id.btnDemoProjects:
-                Toast.makeText(getApplicationContext(), "DemoProjects", Toast.LENGTH_SHORT).show();
-                mScreenStatus = 0;
-                showDemoProjectsFragment();
-                break;
-            case R.id.btnBreadBoard:
-                Toast.makeText(getApplicationContext(), "Breadbroad", Toast.LENGTH_SHORT).show();
-                mScreenStatus = SCREEN_ID_BREADBOARD_USAGE;
-                showGifFragment(R.drawable.breadboard);
-                break;
-            case R.id.btnLedOnOFF:
-                Toast.makeText(getApplicationContext(), "LED ON/OFF", Toast.LENGTH_SHORT).show();
-                mScreenStatus = SCREEN_ID_LED_ON_OFF;
-                showGifFragment(R.drawable.led_on_off);
-                break;
-            case R.id.btnPowerSupply:
-                Toast.makeText(getApplicationContext(), "Power supply", Toast.LENGTH_SHORT).show();
-                mScreenStatus = SCREEN_ID_POWER_SUPPLY;
-                showGifFragment(R.drawable.power_supply);
-                break;
-            case R.id.btnTransistorSwitch:
-                Toast.makeText(getApplicationContext(), "Transistor switch", Toast.LENGTH_SHORT).show();
-                mScreenStatus = SCREEN_ID_TRANSISTOR_SWITCH;
-                showGifFragment(R.drawable.transistor_switch);
-                break;
-            case R.id.btnIC741:
-                Toast.makeText(getApplicationContext(), "IC741", Toast.LENGTH_SHORT).show();
-                mScreenStatus = SCREEN_ID_IC741;
-                showGifFragment(R.drawable.ic741);
-                break;
-            case R.id.btnIC555:
-                Toast.makeText(getApplicationContext(), "IC555", Toast.LENGTH_SHORT).show();
-                mScreenStatus = SCREEN_ID_IC555;
-                showGifFragment(R.drawable.ic555);
-                break;
-            case R.id.btnProject1:
-                Toast.makeText(getApplicationContext(), "Project 1", Toast.LENGTH_SHORT).show();
-                mScreenStatus = SCREEN_ID_PROJECT1;
-                showGifFragment(R.drawable.project1);
-                break;
-            case R.id.btnProject2:
-                Toast.makeText(getApplicationContext(), "Project 2", Toast.LENGTH_SHORT).show();
-                mScreenStatus = SCREEN_ID_PROJECT2;
-                showGifFragment(R.drawable.project2);
-                break;
-            case R.id.btnDemoProject1:
-                Toast.makeText(getApplicationContext(), "Demo project 1", Toast.LENGTH_SHORT).show();
-                mScreenStatus = SCREEN_ID_DEMO_PROJECT1;
-                showGifFragment(R.drawable.demo_project1);
-                break;
-            case R.id.btnDemoProject2:
-                Toast.makeText(getApplicationContext(), "Demo project 2", Toast.LENGTH_SHORT).show();
-                mScreenStatus = SCREEN_ID_DEMO_PROJECT2;
-                showGifFragment(R.drawable.demo_project2);
-                break;
-            case R.id.btnHome:
-                Toast.makeText(getApplicationContext(), "Home", Toast.LENGTH_SHORT).show();
-                showTutorialFragment();
-                break;
-            case R.id.btnMinimize:
-                Toast.makeText(getApplicationContext(), "Minimize", Toast.LENGTH_SHORT).show();
-                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, mScreenStatus);
-                finishActivity();
-                break;
-            case R.id.btnDone:
-                Toast.makeText(getApplicationContext(), "Done", Toast.LENGTH_SHORT).show();
-                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
-                finishActivity();
-                break;
+            case R.id.btnBasicElectronic: showBasicElectronic(); break;
+            case R.id.btnProjects: mScreenStatus = 0; showProjectsFragment(); break;
+            case R.id.btnDemoProjects: mScreenStatus = 0;  showDemoProjectsFragment(); break;
+            case R.id.btnBreadBoard: mScreenStatus = SCREEN_ID_BREADBOARD_USAGE; showGifFragment(mBreadboardImages); break;
+            case R.id.btnLedOnOFF: mScreenStatus = SCREEN_ID_LED_ON_OFF;  showGifFragment(mLedOnOffImages);  break;
+            case R.id.btnPowerSupply: mScreenStatus = SCREEN_ID_POWER_SUPPLY; showGifFragment(mPowerSupplyImages); break;
+            case R.id.btnTransistorSwitch: mScreenStatus = SCREEN_ID_TRANSISTOR_SWITCH;  showGifFragment(mTransistorSwitchImages); break;
+            case R.id.btnIC741: mScreenStatus = SCREEN_ID_IC741; showGifFragment(mIC741Images); break;
+            case R.id.btnIC555: mScreenStatus = SCREEN_ID_IC555; showGifFragment(mIC555Images); break;
+            case R.id.btnProject1: mScreenStatus = SCREEN_ID_PROJECT1; showGifFragment(mProject1Images); break;
+            case R.id.btnProject2: mScreenStatus = SCREEN_ID_PROJECT2; showGifFragment(mProject2Images); break;
+            case R.id.btnDemoProject1: mScreenStatus = SCREEN_ID_DEMO_PROJECT1;  showGifFragment(mDemoProject1Images); break;
+            case R.id.btnDemoProject2:  mScreenStatus = SCREEN_ID_DEMO_PROJECT2; showGifFragment(mDemoProject2Images); break;
+            case R.id.btnHome: showTutorialFragment(); break;
+            case R.id.btnMinimize: saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, mScreenStatus); finishActivity(); break;
+            case R.id.btnDone: saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0); finishActivity(); break;
         }
     }
 
-    private void showGifFragment(int drawable_id) {
-        mShowGifFragment = ShowGifFragment.newInstance(drawable_id);
+    private void showGifFragment(int[] drawable_id) {
+        mShowGifFragment = GifShowFragment.newInstance(drawable_id);
         mShowGifFragment.setOnClickListener(this);
         mFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContent, mShowGifFragment)
                 .commit();
     }
 
+    private void showBasicElectronic(){
+        mBasicElectronicFragment = new BasicElectronicFragment();
+        mBasicElectronicFragment.setOnClickListener(this);
+        mFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContent, mBasicElectronicFragment)
+                .commit();
+    }
+
     private void showTutorialFragment() {
         mTutorialFragment = new TutorialFragment();
         mTutorialFragment.setOnClickListener(this, ((Global_Var) getApplicationContext()).isProject_Access());
-        mFragmentManager.beginTransaction().replace(R.id.fragmentContent, mTutorialFragment)
+        mFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContent, mTutorialFragment)
                 .commit();
     }
 
     private void showProjectsFragment() {
         mProjectsFragment = new ShowProjectsFragment();
         mProjectsFragment.setOnClickListener(this);
-        mFragmentManager.beginTransaction().replace(R.id.fragmentContent, mProjectsFragment)
+        mFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContent, mProjectsFragment)
                 .commit();
     }
 
     private void showDemoProjectsFragment() {
         mDemoProjectsFragment = new ShowDemoProjectsFragment();
         mDemoProjectsFragment.setOnClickListener(this);
-        mFragmentManager.beginTransaction().replace(R.id.fragmentContent, mDemoProjectsFragment)
+        mFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContent, mDemoProjectsFragment)
                 .commit();
     }
 
@@ -308,12 +233,17 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         }
     }
 
-    public static class ShowGifFragment extends Fragment implements View.OnClickListener {
-        public static ShowGifFragment newInstance(int drawable_id) {
-            ShowGifFragment myFragment = new ShowGifFragment();
+    public static class GifShowFragment extends Fragment implements View.OnClickListener {
+        private GifImageView mGif;
+        private GifDrawable mGifDrawable;
+        private int[] mDrawableId;
+        private int mDrawCount = 0;
+
+        public static GifShowFragment newInstance(int[] drawable_id) {
+            GifShowFragment myFragment = new GifShowFragment();
 
             Bundle args = new Bundle();
-            args.putInt("show-gif-id", drawable_id);
+            args.putIntArray("show-gif-id", drawable_id);
             myFragment.setArguments(args);
 
             return myFragment;
@@ -339,14 +269,45 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
             btnHome.setOnClickListener(this);
             btnMinimize.setOnClickListener(this);
             btnDone.setOnClickListener(this);
-            GifImageView gif = view.findViewById(R.id.gif_content);
-            gif.setImageResource(getArguments().getInt("show-gif-id"));
+            mGif = view.findViewById(R.id.gif_content);
+            mDrawableId = getArguments().getIntArray("show-gif-id");
+            if(mDrawableId == null || mDrawableId.length == 0)
+                return;
+
+            try {
+                mGifDrawable = new GifDrawable(getResources(), mDrawableId[mDrawCount]);
+                if(++mDrawCount >= mDrawableId.length )
+                    mDrawCount = 0;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            mGif.setImageDrawable(mGifDrawable);
+            Zoomy.Builder builder = new Zoomy.Builder(getActivity()).target(mGif).doubleTapListener(new DoubleTapListener() {
+                @Override
+                public void onDoubleTap(View v) {
+                    try {
+                        mGifDrawable = new GifDrawable(getResources(), mDrawableId[mDrawCount]);
+                        mGif.setImageDrawable(mGifDrawable);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    if(++mDrawCount >= mDrawableId.length )
+                        mDrawCount = 0;
+                }
+            });
+            builder.register();
         }
 
         @Override
         public void onClick(View view) {
             if(mListener != null)
                 mListener.onClick(view);
+        }
+
+        @Override
+        public void onStop(){
+            super.onStop();
+            Zoomy.unregister(mGif);
         }
     }
 
@@ -407,5 +368,4 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
                 mListener.onClick(view);
         }
     }
-
 }

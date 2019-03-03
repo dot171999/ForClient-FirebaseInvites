@@ -334,6 +334,15 @@ public class MainActivity extends AppCompatActivity
                                     Log.d(TAG, " data: " + dataMap.toString());
                                     dataList2.addAll(dataMap);
                                 }
+//                                Map<String, Object> dataMap = (Map<String, Object>) docum.getData();
+//                                List<String> dataColleges = (List<String>) docum.get("List 1");
+//                                if (dataColleges != null && dataColleges.size() > 0) {
+//                                    if (dataColleges.containsKey(mEmailId)) {
+//
+//                                    }
+//                                    Log.d(TAG, " data: " + dataColleges.toString());
+//                                }
+
                                 break;
                             }
                         }
