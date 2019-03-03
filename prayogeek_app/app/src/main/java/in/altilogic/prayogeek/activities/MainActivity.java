@@ -334,14 +334,19 @@ public class MainActivity extends AppCompatActivity
                                     Log.d(TAG, " data: " + dataMap.toString());
                                     dataList2.addAll(dataMap);
                                 }
-//                                Map<String, Object> dataMap = (Map<String, Object>) docum.getData();
-//                                List<String> dataColleges = (List<String>) docum.get("List 1");
-//                                if (dataColleges != null && dataColleges.size() > 0) {
-//                                    if (dataColleges.containsKey(mEmailId)) {
-//
-//                                    }
-//                                    Log.d(TAG, " data: " + dataColleges.toString());
-//                                }
+                                ((Global_Var) getApplicationContext()).Set_Project_Access(false);
+
+                                Map<String, Object> defMap = (Map<String, Object>) docum.getData();
+                                if (defMap != null && defMap.size() > 0) {
+                                    if (defMap.containsKey("proj_access")) {
+                                        List<String> mails = (List<String>) defMap.get("proj_access");
+                                        if(mails.contains(mEmailId))
+                                        {
+                                            ((Global_Var) getApplicationContext()).Set_Project_Access(true);
+                                        }
+                                    }
+                                    Log.d(TAG, " data: " + defMap.toString());
+                                }
 
                                 break;
                             }
