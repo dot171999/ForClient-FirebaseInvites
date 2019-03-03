@@ -38,10 +38,22 @@ public class Utils {
         return sharedPref.getString(settingName, defaultValue);
     }
 
+    public static int readSharedSetting(Context ctx, String settingName, int defaultValue) {
+        SharedPreferences sharedPref = ctx.getSharedPreferences(PREFERENCES_FILE, Context.MODE_PRIVATE);
+        return sharedPref.getInt(settingName, defaultValue);
+    }
+
     public static void saveSharedSetting(Context ctx, String settingName, String settingValue) {
         SharedPreferences sharedPref = ctx.getSharedPreferences(PREFERENCES_FILE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putString(settingName, settingValue);
+        editor.apply();
+    }
+
+    public static void saveSharedSetting(Context ctx, String settingName, int settingValue) {
+        SharedPreferences sharedPref = ctx.getSharedPreferences(PREFERENCES_FILE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putInt(settingName, settingValue);
         editor.apply();
     }
 

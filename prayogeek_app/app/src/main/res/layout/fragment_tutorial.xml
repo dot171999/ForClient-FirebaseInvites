@@ -12,6 +12,7 @@
         android:layout_height="70dp"
         android:layout_marginStart="100dp"
         android:layout_marginTop="60dp"
+        android:theme="@style/AppTheme.Button"
         android:text="Basic electronics"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -20,11 +21,11 @@
         android:id="@+id/btnProjects"
         android:layout_width="120dp"
         android:layout_height="70dp"
-        android:layout_marginStart="88dp"
+        android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
+        android:theme="@style/AppTheme.Button"
         android:text="Projects"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/btnBasicElectronic"
         app:layout_constraintTop_toTopOf="@+id/btnBasicElectronic" />
 
@@ -33,6 +34,7 @@
         android:layout_width="120dp"
         android:layout_height="70dp"
         android:layout_marginTop="40dp"
+        android:theme="@style/AppTheme.Button"
         android:text="Demo Projects"
         app:layout_constraintStart_toStartOf="@+id/btnBasicElectronic"
         app:layout_constraintTop_toBottomOf="@+id/btnBasicElectronic" />

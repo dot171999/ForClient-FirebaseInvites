@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingRight="64dp"
+        android:paddingLeft="64dp"
+        android:orientation="vertical" >
+
+
+        <Button
+            android:id="@+id/btnBreadBoard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Breadboard usage"
+            android:theme="@style/AppTheme.Button"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/btnLedOnOFF"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:theme="@style/AppTheme.Button"
+            android:text="LED ON/OFF usingDIODE"
+            app:layout_constraintEnd_toEndOf="@+id/btnBreadBoard"
+            app:layout_constraintStart_toStartOf="@+id/btnBreadBoard"
+            app:layout_constraintTop_toBottomOf="@+id/btnBreadBoard" />
+
+        <Button
+            android:id="@+id/btnPowerSupply"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:theme="@style/AppTheme.Button"
+            android:text="+5v Power Supply Using Bridge Rectifier"
+            app:layout_constraintEnd_toEndOf="@+id/btnLedOnOFF"
+            app:layout_constraintStart_toStartOf="@+id/btnLedOnOFF"
+            app:layout_constraintTop_toBottomOf="@+id/btnLedOnOFF" />
+
+        <Button
+            android:id="@+id/btnTransistorSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:theme="@style/AppTheme.Button"
+            android:text="Transistor Switch circuit to Operate Relay"
+            app:layout_constraintEnd_toEndOf="@+id/btnPowerSupply"
+            app:layout_constraintStart_toStartOf="@+id/btnPowerSupply"
+            app:layout_constraintTop_toBottomOf="@+id/btnPowerSupply" />
+
+        <Button
+            android:id="@+id/btnIC741"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:theme="@style/AppTheme.Button"
+            android:text="IC 741 Integrator / Comparator Circuit"
+            app:layout_constraintEnd_toEndOf="@+id/btnTransistorSwitch"
+            app:layout_constraintStart_toStartOf="@+id/btnTransistorSwitch"
+            app:layout_constraintTop_toBottomOf="@+id/btnTransistorSwitch" />
+
+        <Button
+            android:id="@+id/btnIC555"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Operate Loud Speaker using IC 555 Timer"
+            android:theme="@style/AppTheme.Button"
+            app:layout_constraintEnd_toEndOf="@+id/btnIC741"
+            app:layout_constraintStart_toStartOf="@+id/btnIC741"
+            app:layout_constraintTop_toBottomOf="@+id/btnIC741" />
+    </LinearLayout>
+</ScrollView>
