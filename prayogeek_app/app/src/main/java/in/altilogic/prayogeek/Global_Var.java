@@ -162,6 +162,12 @@ public class Global_Var extends Application {
         mValidity = validity;
     }
 
+    public boolean isValidity() {
+        if(mValidity == null)
+            return false;
+        Timestamp current = Timestamp.now();
+        return mValidity.getSeconds() > current.getSeconds();
+    }
     public Timestamp Get_Validity() {
         return mValidity;
     }

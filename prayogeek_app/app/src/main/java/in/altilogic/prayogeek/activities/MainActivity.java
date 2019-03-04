@@ -320,6 +320,9 @@ public class MainActivity extends AppCompatActivity
                                                 Timestamp dataMod = (Timestamp) dataModules.get((Object) "validity");
                                                 if (dataMod != null) {
                                                     GlobalVar.Set_Validity(dataMod);
+                                                    if (GlobalVar.isValidity()) {
+                                                        Toast.makeText(getApplicationContext(),getString(R.string.subsciption_expired), Toast.LENGTH_SHORT ).show();
+                                                    }
                                                 }
                                             }
                                         }
@@ -359,16 +362,16 @@ public class MainActivity extends AppCompatActivity
                     adapterList2.notifyDataSetChanged();
                     StringBuilder sb = new StringBuilder();
                     if(dataList2 != null && dataList2.size() > 0) {
-                        Timestamp current = Timestamp.now();
                         if(individual) {
-                            Timestamp validity = GlobalVar.Get_Validity();
-                            if (validity != null && validity.getSeconds() > current.getSeconds())
-                                sb.append("Subscription valid until : ").append(validity.toDate().toString()).append("\n");
+                            if (GlobalVar.isValidity()) {
+                                sb.append("Subscription valid until : ").append(GlobalVar.Get_Validity().toDate().toString()).append("\n");
+                                sb.append("App will connect to Module ").append(dataList2.get(0));
+                            }
                             else
-                                sb.append("Subscription Expired. Kindly Renew").append("\n");
+                                sb.append(getString(R.string.subsciption_expired)).append("\n");
                         }
-
-                        sb.append("App will connect to Module ").append(dataList2.get(0));
+                        else
+                            sb.append("App will connect to Module ").append(dataList2.get(0));
 
                         mList2.setSelection(0);
                     }
@@ -380,7 +383,7 @@ public class MainActivity extends AppCompatActivity
                     Log.w(MainActivity.TAG, "Error getting documents.", task.getException());
                 }
 
-                update_validacity();
+//                update_validacity();
             }
         });
     }
@@ -635,18 +638,26 @@ public class MainActivity extends AppCompatActivity
             case R.id.btn_button1:
                 printInfoMessage("press button 1");
                 updateLocation();
-                ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_CONNECTED);
-                saveGlobals();
-                check_validity();
-                startActivityForResult(new Intent(MainActivity.this, Button1Activity.class), RC_BUTTON1);
+                if( !( (Global_Var) getApplicationContext() ).isValidity() ) {
+                    Toast.makeText(getApplicationContext(),getString(R.string.subsciption_expired), Toast.LENGTH_SHORT ).show();
+                }
+                else{
+                    ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_CONNECTED);
+                    saveGlobals();
+                    startActivityForResult(new Intent(MainActivity.this, Button1Activity.class), RC_BUTTON1);
+                }
                 break;
             case R.id.btn_button2:
-                printInfoMessage("press button 2");
-                updateLocation();
-                ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_CONNECTED);
-                saveGlobals();
-                check_validity();
-                startActivityForResult(new Intent(MainActivity.this, Button2Activity.class), RC_BUTTON2);
+                if( !( (Global_Var) getApplicationContext() ).isValidity() ) {
+                    Toast.makeText(getApplicationContext(),getString(R.string.subsciption_expired), Toast.LENGTH_SHORT ).show();
+                }
+                else {
+                    printInfoMessage("press button 2");
+                    updateLocation();
+                    ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_CONNECTED);
+                    saveGlobals();
+                    startActivityForResult(new Intent(MainActivity.this, Button2Activity.class), RC_BUTTON2);
+                }
                 break;
             case R.id.btn_button3:
                 printInfoMessage("press button 3");
