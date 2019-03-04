@@ -274,7 +274,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                 if (task.isSuccessful()) {
-                    boolean individual = false;
+                    boolean mIndividual = false;
                     Global_Var GlobalVar = (Global_Var) getApplicationContext();
                     dataList2.clear();
                     DocumentSnapshot docum = task.getResult();
@@ -290,7 +290,7 @@ public class MainActivity extends AppCompatActivity
                                 break;
                             }
                             case "Individual": {
-                                individual = true;
+                                mIndividual = true;
                                 Map<String, Object> dataMap = (Map<String, Object>) docum.getData();
                                 if (dataMap != null) {
                                     if (dataMap.containsKey(mEmailId)) {
@@ -320,7 +320,7 @@ public class MainActivity extends AppCompatActivity
                                                 Timestamp dataMod = (Timestamp) dataModules.get((Object) "validity");
                                                 if (dataMod != null) {
                                                     GlobalVar.Set_Validity(dataMod);
-                                                    if (GlobalVar.isValidity()) {
+                                                    if (!GlobalVar.isValidity()) {
                                                         Toast.makeText(getApplicationContext(),getString(R.string.subsciption_expired), Toast.LENGTH_SHORT ).show();
                                                     }
                                                 }
@@ -360,72 +360,38 @@ public class MainActivity extends AppCompatActivity
                     }
 
                     adapterList2.notifyDataSetChanged();
-                    StringBuilder sb = new StringBuilder();
+                    String message = "";
                     if(dataList2 != null && dataList2.size() > 0) {
-                        if(individual) {
-                            if (GlobalVar.isValidity()) {
-                                sb.append("Subscription valid until : ").append(GlobalVar.Get_Validity().toDate().toString()).append("\n");
-                                sb.append("App will connect to Module ").append(dataList2.get(0));
-                            }
-                            else
-                                sb.append(getString(R.string.subsciption_expired)).append("\n");
+                        if(mIndividual) {
+                            message = getValidityString();
                         }
                         else
-                            sb.append("App will connect to Module ").append(dataList2.get(0));
+                            message = "App will connect to Module " + ( mList2 != null && mList2.getSelectedItem() != null ? mList2.getSelectedItem().toString() : "");
 
                         mList2.setSelection(0);
                     }
 
-                    printInfoMessage(sb.toString());
+                    printInfoMessage(message);
 
                     Log.d(MainActivity.TAG, (docum != null ? docum.getId() : "NULL") + " => " + (docum != null ? docum.getData() : "NULL"));
                 } else {
                     Log.w(MainActivity.TAG, "Error getting documents.", task.getException());
                 }
-
-//                update_validacity();
             }
         });
     }
 
-    private void check_validity() {
+    private String getValidityString() {
+        StringBuilder sb = new StringBuilder();
         Global_Var GlobalVar = (Global_Var) getApplicationContext();
-        Timestamp validity = GlobalVar.Get_Validity();
-        if(validity != null){
-            Timestamp current = Timestamp.now();
-            if (validity.getSeconds() < current.getSeconds()){
-                Toast.makeText(getApplicationContext(),"Subscription Expired. Kindly Renew", Toast.LENGTH_SHORT ).show();
-            }
+        if (GlobalVar.isValidity()) {
+            sb.append("Subscription valid until : ").append(GlobalVar.Get_Validity().toDate().toString()).append("\n");
+            sb.append("App will connect to Module ").append(dataList2.get(0));
         }
-    }
+        else
+            sb.append(getString(R.string.subsciption_expired)).append("\n");
 
-    private void update_validacity() {
-        if(((Global_Var) getApplicationContext()).Get_Validity() != null)
-            return;
-
-        mFireBaseHelper.read("Colleges", "Individual", new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                DocumentSnapshot docum = task.getResult();
-                Map<String, Object> dataMap = (Map<String, Object>) docum.getData();
-                if (dataMap != null) {
-                    if (dataMap.containsKey(mEmailId)) {
-                        Map<String, Object> dataModules = (Map<String, Object>) dataMap.get((Object) mEmailId);
-                        if (dataModules != null) {
-                            if (dataModules.containsKey("validity")) {
-                                Timestamp dataMod = (Timestamp) dataModules.get((Object) "validity");
-                                if (dataMod != null) {
-                                    ((Global_Var) getApplicationContext()).Set_Validity(dataMod);
-                                }
-                            }
-                        }
-                    } else {
-                        printErrorMessage("You have not Subscribed");
-                    }
-                    Log.d(TAG, " Select Individual " + dataMap.toString());
-                }
-            }
-        });
+        return sb.toString();
     }
 
     @Override
@@ -538,6 +504,9 @@ public class MainActivity extends AppCompatActivity
                     mFireBaseHelper.read("Colleges", mList1.getSelectedItem().toString(), new OnCompleteListener<DocumentSnapshot>() {
                         @Override
                         public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                            if(mList1.getSelectedItem().toString().equals("Individual"))  {
+                                printInfoMessage(getValidityString());
+                            }
                             if(task != null){
                                 DocumentSnapshot docum = task.getResult();
                                 Map<String, Object> hw =  (Map<String, Object>) docum.get(mList2.getSelectedItem().toString());
@@ -634,11 +603,12 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onClick(View view) {
+        boolean individual = mList1.getSelectedItem().toString().equals("Individual");
         switch (view.getId()) {
             case R.id.btn_button1:
                 printInfoMessage("press button 1");
                 updateLocation();
-                if( !( (Global_Var) getApplicationContext() ).isValidity() ) {
+                if(individual && !( (Global_Var) getApplicationContext() ).isValidity() ) {
                     Toast.makeText(getApplicationContext(),getString(R.string.subsciption_expired), Toast.LENGTH_SHORT ).show();
                 }
                 else{
@@ -648,7 +618,7 @@ public class MainActivity extends AppCompatActivity
                 }
                 break;
             case R.id.btn_button2:
-                if( !( (Global_Var) getApplicationContext() ).isValidity() ) {
+                if(individual && !( (Global_Var) getApplicationContext() ).isValidity() ) {
                     Toast.makeText(getApplicationContext(),getString(R.string.subsciption_expired), Toast.LENGTH_SHORT ).show();
                 }
                 else {
