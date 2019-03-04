@@ -61,6 +61,8 @@ import javax.annotation.Nullable;
 
 import pub.devrel.easypermissions.EasyPermissions;
 
+import static in.altilogic.prayogeek.utils.Utils.saveSharedSetting;
+
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener, EasyPermissions.PermissionCallbacks, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
@@ -119,6 +121,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onStart() {
         super.onStart();
+        saveSharedSetting(this, TutorialActivity.CURRENT_SCREEN_SETTINGS, 0);
         isOnline = Utils.isOnline(this);
         if (!isOnline) {
             Toast.makeText(this, "Network is not available ", Toast.LENGTH_SHORT).show();

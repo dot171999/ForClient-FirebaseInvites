@@ -19,6 +19,8 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
+import com.ablanco.zoomy.Zoomy;
+
 import in.altilogic.prayogeek.R;
 import in.altilogic.prayogeek.utils.Utils;
 
@@ -121,7 +123,6 @@ public class OnBoardingActivity extends AppCompatActivity {
 
             @Override
             public void onPageSelected(int position) {
-
                 page = position;
 
                 updateIndicators(page);
@@ -138,11 +139,8 @@ public class OnBoardingActivity extends AppCompatActivity {
                         break;
                 }
 
-
                 mNextBtn.setVisibility(position == 2 ? View.GONE : View.VISIBLE);
                 mFinishBtn.setVisibility(position == 2 ? View.VISIBLE : View.GONE);
-
-
             }
 
             @Override
@@ -174,7 +172,6 @@ public class OnBoardingActivity extends AppCompatActivity {
                 finishActivity();
             }
         });
-
     }
 
     private void finishActivity(){
@@ -189,9 +186,7 @@ public class OnBoardingActivity extends AppCompatActivity {
 
     void updateIndicators(int position) {
         for (int i = 0; i < indicators.length; i++) {
-            indicators[i].setBackgroundResource(
-                    i == position ? R.drawable.indicator_selected : R.drawable.indicator_unselected
-            );
+            indicators[i].setBackgroundResource( i == position ? R.drawable.indicator_selected : R.drawable.indicator_unselected );
         }
     }
 
@@ -200,6 +195,7 @@ public class OnBoardingActivity extends AppCompatActivity {
      */
     public static class PlaceholderFragment extends Fragment {
         static final int[] gif_image_ids = new int []{R.drawable.onboard_gif1, R.drawable.onboard_gif2, R.drawable.onboard_gif3};
+        private GifImageView mGif;
         /**
          * The fragment argument representing the section number for this
          * fragment.
@@ -225,14 +221,19 @@ public class OnBoardingActivity extends AppCompatActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_onboarding, container, false);
-            GifImageView gif = rootView.findViewById(R.id.gif_on_board);
+            mGif = rootView.findViewById(R.id.gif_on_board);
             int num_screen = getArguments() != null ? getArguments().getInt(ARG_SECTION_NUMBER) : 1;
             if ((num_screen < 1 || num_screen > 3)) throw new AssertionError();
-            gif.setImageResource(gif_image_ids[num_screen-1]);
-
+            mGif.setImageResource(gif_image_ids[num_screen-1]);
+            Zoomy.Builder builder = new Zoomy.Builder(getActivity()).target(mGif);
+            builder.register();
             return rootView;
         }
-
+        @Override
+        public void onStop() {
+            super.onStop();
+            Zoomy.unregister(mGif);
+        }
 
     }
 

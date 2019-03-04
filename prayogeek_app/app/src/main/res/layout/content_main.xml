@@ -60,7 +60,7 @@
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
             android:background="@drawable/textview_border"
-            android:text="Info" />
+            android:text="Select the Correct Module to Connect" />
 
         <LinearLayout
             android:layout_width="match_parent"

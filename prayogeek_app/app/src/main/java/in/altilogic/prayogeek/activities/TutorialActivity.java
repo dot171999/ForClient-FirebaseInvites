@@ -35,17 +35,20 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     private ShowProjectsFragment mProjectsFragment;
     private ShowDemoProjectsFragment mDemoProjectsFragment;
 
-    private final static String CURRENT_SCREEN_SETTINGS = "TUTORIAL-SETTINGS-CURRENT-SCREEN";
-    private final static int SCREEN_ID_BREADBOARD_USAGE = 1;
-    private final static int SCREEN_ID_LED_ON_OFF = 2;
-    private final static int SCREEN_ID_POWER_SUPPLY = 3;
-    private final static int SCREEN_ID_TRANSISTOR_SWITCH = 4;
-    private final static int SCREEN_ID_IC741 = 5;
-    private final static int SCREEN_ID_IC555 = 6;
-    private final static int SCREEN_ID_PROJECT1 = 7;
-    private final static int SCREEN_ID_PROJECT2 = 8;
-    private final static int SCREEN_ID_DEMO_PROJECT1 = 9;
-    private final static int SCREEN_ID_DEMO_PROJECT2 = 10;
+    public final static String CURRENT_SCREEN_SETTINGS = "TUTORIAL-SETTINGS-CURRENT-SCREEN";
+    private final static int SCREEN_ID_BASIC_ELECTRONIC = 1;
+    private final static int SCREEN_ID_PROJECTS = 2;
+    private final static int SCREEN_ID_DEMO_PROJECTS = 3;
+    private final static int SCREEN_ID_BREADBOARD_USAGE = 4;
+    private final static int SCREEN_ID_LED_ON_OFF = 5;
+    private final static int SCREEN_ID_POWER_SUPPLY = 6;
+    private final static int SCREEN_ID_TRANSISTOR_SWITCH = 7;
+    private final static int SCREEN_ID_IC741 = 8;
+    private final static int SCREEN_ID_IC555 = 9;
+    private final static int SCREEN_ID_PROJECT1 = 10;
+    private final static int SCREEN_ID_PROJECT2 = 11;
+    private final static int SCREEN_ID_DEMO_PROJECT1 = 12;
+    private final static int SCREEN_ID_DEMO_PROJECT2 = 13;
     private int mScreenStatus = 0;
 
     /**
@@ -91,7 +94,22 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
 
     @Override
     public void onBackPressed() {
-        finishActivity();
+        if(mScreenStatus == 0) {
+            saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
+            finishActivity();
+        }
+        else if(mScreenStatus > SCREEN_ID_DEMO_PROJECTS && mScreenStatus <= SCREEN_ID_IC555){
+            mScreenStatus = SCREEN_ID_BASIC_ELECTRONIC; showBasicElectronic();
+        }
+        else if(mScreenStatus == SCREEN_ID_PROJECT1 || mScreenStatus == SCREEN_ID_PROJECT2) {
+            mScreenStatus = SCREEN_ID_PROJECTS; showProjectsFragment();
+        }
+        else if(mScreenStatus == SCREEN_ID_DEMO_PROJECT1 || mScreenStatus == SCREEN_ID_DEMO_PROJECT2) {
+            mScreenStatus = SCREEN_ID_DEMO_PROJECTS; showDemoProjectsFragment();
+        }
+        else if(mScreenStatus > 0 && mScreenStatus < SCREEN_ID_BREADBOARD_USAGE) {
+            mScreenStatus = 0; showTutorialFragment();
+        }
     }
 
     private void finishActivity(){
@@ -107,15 +125,15 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void onClick(View view) {
         switch (view.getId()){
-            case R.id.btnBasicElectronic: showBasicElectronic(); break;
+            case R.id.btnBasicElectronic: mScreenStatus = SCREEN_ID_BASIC_ELECTRONIC; showBasicElectronic(); break;
             case R.id.btnProjects:
-                mScreenStatus = 0;
+                mScreenStatus = SCREEN_ID_PROJECTS;
                 if(((Global_Var) getApplicationContext()).isProject_Access())
                     showProjectsFragment();
                 else
                     Toast.makeText(getApplicationContext(), "Please Subscribe to access Projects", Toast.LENGTH_SHORT).show();
                 break;
-            case R.id.btnDemoProjects: mScreenStatus = 0;  showDemoProjectsFragment(); break;
+            case R.id.btnDemoProjects: mScreenStatus = SCREEN_ID_DEMO_PROJECTS;  showDemoProjectsFragment(); break;
             case R.id.btnBreadBoard: mScreenStatus = SCREEN_ID_BREADBOARD_USAGE; showGifFragment(mBreadboardImages); break;
             case R.id.btnLedOnOFF: mScreenStatus = SCREEN_ID_LED_ON_OFF;  showGifFragment(mLedOnOffImages);  break;
             case R.id.btnPowerSupply: mScreenStatus = SCREEN_ID_POWER_SUPPLY; showGifFragment(mPowerSupplyImages); break;
@@ -126,9 +144,9 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
             case R.id.btnProject2: mScreenStatus = SCREEN_ID_PROJECT2; showGifFragment(mProject2Images); break;
             case R.id.btnDemoProject1: mScreenStatus = SCREEN_ID_DEMO_PROJECT1;  showGifFragment(mDemoProject1Images); break;
             case R.id.btnDemoProject2:  mScreenStatus = SCREEN_ID_DEMO_PROJECT2; showGifFragment(mDemoProject2Images); break;
-            case R.id.btnHome: showTutorialFragment(); break;
+            case R.id.btnHome: mScreenStatus = 0; showTutorialFragment(); break;
             case R.id.btnMinimize: saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, mScreenStatus); finishActivity(); break;
-            case R.id.btnDone: saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0); finishActivity(); break;
+            case R.id.btnDone: mScreenStatus = 0; saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0); finishActivity(); break;
         }
     }
 
