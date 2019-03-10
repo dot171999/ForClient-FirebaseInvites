@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
@@ -14,16 +15,17 @@ import in.altilogic.prayogeek.Global_Var;
 import in.altilogic.prayogeek.R;
 import in.altilogic.prayogeek.fragments.BasicElectronicFragment;
 import in.altilogic.prayogeek.fragments.DemoProjectsFragment;
-import in.altilogic.prayogeek.fragments.GifShowFragment;
+import in.altilogic.prayogeek.fragments.ImageFragment;
 import in.altilogic.prayogeek.fragments.ProjectsFragment;
 import in.altilogic.prayogeek.fragments.TutorialFragment;
 
 import static in.altilogic.prayogeek.utils.Utils.*;
 
-public class TutorialActivity extends AppCompatActivity implements View.OnClickListener {
+public class TutorialActivity extends AppCompatActivity implements View.OnClickListener, ImageFragment.OnClickListener {
     private FragmentManager mFragmentManager;
 
     public final static String CURRENT_SCREEN_SETTINGS = "TUTORIAL-SETTINGS-CURRENT-SCREEN";
+    public final static String CURRENT_SCREEN_SETTINGS_PAGE = "TUTORIAL-SETTINGS-CURRENT-PAGE";
     private final static int SCREEN_ID_BASIC_ELECTRONIC = 1;
     private final static int SCREEN_ID_PROJECTS = 2;
     private final static int SCREEN_ID_DEMO_PROJECTS = 3;
@@ -86,6 +88,7 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     public void onBackPressed() {
         if(mScreenStatus == 0) {
             saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
+            saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
             finishActivity();
         }
         else if(mScreenStatus > SCREEN_ID_DEMO_PROJECTS && mScreenStatus <= SCREEN_ID_IC555){
@@ -116,8 +119,7 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     public void onClick(View view) {
         switch (view.getId()){
             case R.id.btnBasicElectronic: mScreenStatus = SCREEN_ID_BASIC_ELECTRONIC; showBasicElectronic(); break;
-            case R.id.btnProjects:
-                mScreenStatus = SCREEN_ID_PROJECTS;
+            case R.id.btnProjects: mScreenStatus = SCREEN_ID_PROJECTS;
                 if(((Global_Var) getApplicationContext()).isProject_Access())
                     showProjectsFragment();
                 else
@@ -132,30 +134,36 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
             case R.id.btnIC555: mScreenStatus = SCREEN_ID_IC555; showGifFragment(mIC555Images); break;
             case R.id.btnProject1: mScreenStatus = SCREEN_ID_PROJECT1; showGifFragment(mProject1Images); break;
             case R.id.btnProject2: mScreenStatus = SCREEN_ID_PROJECT2; showGifFragment(mProject2Images); break;
-            case R.id.btnDemoProject1: mScreenStatus = SCREEN_ID_DEMO_PROJECT1;
-                showGifFragment(mDemoProject1Images);
-                break;
-            case R.id.btnDemoProject2:  mScreenStatus = SCREEN_ID_DEMO_PROJECT2;
-                showGifFragment(mDemoProject2Images);
-                break;
-            case R.id.btnHome:
-                mScreenStatus = 0;
-                FragmentManager fm = getSupportFragmentManager();
-                for(int i = 0; i < fm.getBackStackEntryCount(); ++i) {
-                    fm.popBackStack();
-                }
-                showTutorialFragment();
-                break;
-            case R.id.btnMinimize:
-                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, mScreenStatus);
-                finishActivity();
-                break;
-            case R.id.btnDone: mScreenStatus = 0; saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0); finishActivity(); break;
+            case R.id.btnDemoProject1: mScreenStatus = SCREEN_ID_DEMO_PROJECT1; showGifFragment(mDemoProject1Images); break;
+            case R.id.btnDemoProject2:  mScreenStatus = SCREEN_ID_DEMO_PROJECT2; showGifFragment(mDemoProject2Images); break;
         }
     }
 
+    @Override
+    public void onClick(View view, int page) {
+        Log.d("APP-TUTORIAL", "mScreenStatus = " + mScreenStatus + "; page = " + page);
+        switch (view.getId()){
+            case R.id.btnHome: mScreenStatus = 0;
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
+                showTutorialFragment();
+                break;
+            case R.id.btnDone: mScreenStatus = 0;
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
+                finishActivity();
+            break;
+            case R.id.btnMinimize:
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, mScreenStatus);
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, page);
+                finishActivity();
+                break;
+        }
+    }
+
+
     private void showGifFragment(int[] drawable_id) {
-        GifShowFragment mShowGifFragment = GifShowFragment.newInstance(drawable_id, mFragmentManager, mStatusBarColor);
+        int last_page = readSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
+        ImageFragment mShowGifFragment = ImageFragment.newInstance(drawable_id, mStatusBarColor, last_page);
         mShowGifFragment.setOnClickListener(this);
         FragmentTransaction transaction = mFragmentManager.beginTransaction();
         transaction.replace(R.id.fragmentContent, mShowGifFragment)

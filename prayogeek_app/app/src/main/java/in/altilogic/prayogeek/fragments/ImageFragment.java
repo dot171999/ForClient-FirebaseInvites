@@ -3,7 +3,6 @@ package in.altilogic.prayogeek.fragments;
 import android.animation.ArgbEvaluator;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,30 +16,35 @@ import java.util.List;
 
 import in.altilogic.prayogeek.R;
 
-public class GifShowFragment extends Fragment implements View.OnClickListener {
+public class ImageFragment extends Fragment implements View.OnClickListener {
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
     private List<ImageView> mIndicatorList;
     private int[] mDrawableId;
     private int mStatusBarColor;
 
-    public GifShowFragment(){
+    public ImageFragment(){
     }
 
-    public static GifShowFragment newInstance(int[] drawable_id, FragmentManager fragmentManager, int color) {
-        Log.d("APP-", "GifShowFragment::newInstance");
-        GifShowFragment gifFragment = new GifShowFragment();
+    public interface OnClickListener {
+        void onClick(View view, int page);
+    }
+
+    private OnClickListener mOnClickListener;
+
+    public static ImageFragment newInstance(int[] drawable_id, int color, int page) {
+        Log.d("APP-", "ImageFragment::newInstance");
+        ImageFragment gifFragment = new ImageFragment();
         Bundle args = new Bundle();
         args.putIntArray("show-gif-id", drawable_id);
         args.putInt("show-gif-color", color);
+        args.putInt("show-gif-page", page);
         gifFragment.setArguments(args);
         return gifFragment;
     }
 
-    private View.OnClickListener mListener;
-
-    public void setOnClickListener(View.OnClickListener listener){
-        mListener = listener;
+    public void setOnClickListener(OnClickListener listener){
+        mOnClickListener = listener;
     }
 
     @Override
@@ -51,7 +55,7 @@ public class GifShowFragment extends Fragment implements View.OnClickListener {
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
-        Log.d("APP-", "GifShowFragment::onViewCreated");
+        Log.d("APP-", "ImageFragment::onViewCreated");
         Button btnHome = (Button) view.findViewById(R.id.btnHome);
         Button btnMinimize = (Button) view.findViewById(R.id.btnMinimize);
         Button btnDone = (Button) view.findViewById(R.id.btnDone);
@@ -60,13 +64,14 @@ public class GifShowFragment extends Fragment implements View.OnClickListener {
         btnDone.setOnClickListener(this);
         mDrawableId = getArguments().getIntArray("show-gif-id");
         mStatusBarColor = getArguments().getInt("show-gif-color");
+        int page = getArguments().getInt("show-gif-page");
         mSectionsPagerAdapter = new SectionsPagerAdapter(R.layout.fragment_onboarding, getActivity().getSupportFragmentManager(), mDrawableId);
         mIndicatorList = new ArrayList<>();
         mIndicatorList.add((ImageView) view.findViewById(R.id.gif_content));
-
+        assert (page < mDrawableId.length);
         mViewPager = (ViewPager) view.findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
-        mViewPager.setCurrentItem(0);
+        mViewPager.setCurrentItem(page);
         if(mDrawableId == null || mDrawableId.length == 0)
             throw new AssertionError();
 
@@ -101,8 +106,8 @@ public class GifShowFragment extends Fragment implements View.OnClickListener {
 
     @Override
     public void onClick(View view) {
-        if(mListener != null)
-            mListener.onClick(view);
+        if(mOnClickListener != null)
+            mOnClickListener.onClick(view, mViewPager.getCurrentItem());
     }
 
     @Override
@@ -111,6 +116,6 @@ public class GifShowFragment extends Fragment implements View.OnClickListener {
         if(mSectionsPagerAdapter != null)
             mSectionsPagerAdapter.notifyChangeInPosition(mDrawableId.length);
 
-        Log.d("APP-", "GifShowFragment::onStop");
+        Log.d("APP-", "ImageFragment::onStop");
     }
 }
