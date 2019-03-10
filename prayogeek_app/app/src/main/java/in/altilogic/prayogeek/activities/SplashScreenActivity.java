@@ -11,13 +11,6 @@ public class SplashScreenActivity extends AppCompatActivity {
         if(savedInstanceState == null)
         {
             super.onCreate(savedInstanceState);
-
-//            try{
-//                Thread.sleep(1000);
-//            }
-//            catch (Exception e) {
-//                e.printStackTrace();
-//            }
         }
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
