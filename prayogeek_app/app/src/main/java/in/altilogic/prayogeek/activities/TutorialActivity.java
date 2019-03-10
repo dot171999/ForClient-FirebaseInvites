@@ -1,39 +1,39 @@
 package in.altilogic.prayogeek.activities;
 
+import android.animation.ArgbEvaluator;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v7.app.ActionBar;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.TextView;
+import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.ablanco.zoomy.DoubleTapListener;
-import com.ablanco.zoomy.Zoomy;
-
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import in.altilogic.prayogeek.Global_Var;
 import in.altilogic.prayogeek.R;
-import pl.droidsonroids.gif.GifDrawable;
-import pl.droidsonroids.gif.GifImageView;
+import in.altilogic.prayogeek.fragments.BasicElectronicFragment;
+import in.altilogic.prayogeek.fragments.DemoProjectsFragment;
+import in.altilogic.prayogeek.fragments.GifShowFragment;
+import in.altilogic.prayogeek.fragments.ProjectsFragment;
+import in.altilogic.prayogeek.fragments.SectionsPagerAdapter;
+import in.altilogic.prayogeek.fragments.TutorialFragment;
 
 import static in.altilogic.prayogeek.utils.Utils.*;
 
 public class TutorialActivity extends AppCompatActivity implements View.OnClickListener {
-    private TutorialFragment mTutorialFragment;
-    private BasicElectronicFragment mBasicElectronicFragment;
     private FragmentManager mFragmentManager;
-    private GifShowFragment mShowGifFragment;
-    private ShowProjectsFragment mProjectsFragment;
-    private ShowDemoProjectsFragment mDemoProjectsFragment;
 
     public final static String CURRENT_SCREEN_SETTINGS = "TUTORIAL-SETTINGS-CURRENT-SCREEN";
     private final static int SCREEN_ID_BASIC_ELECTRONIC = 1;
@@ -64,8 +64,10 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     private final static int[] mIC555Images = {R.drawable.ic555};
     private final static int[] mProject1Images = {R.drawable.project1};
     private final static int[] mProject2Images = {R.drawable.project2};
-    private final static int[] mDemoProject1Images = {R.drawable.demo_project1};
+    private final static int[] mDemoProject1Images = {R.drawable.demo_project1, R.drawable.demo_project1_2, R.drawable.demo_project1_3};
     private final static int[] mDemoProject2Images = {R.drawable.demo_project1, R.drawable.demo_project2};
+
+    private static int mStatusBarColor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,8 +75,8 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(R.layout.activity_tutolial);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,WindowManager.LayoutParams.FLAG_SECURE); // disable snapshots
+        mStatusBarColor = getWindow().getStatusBarColor();
         mFragmentManager = getSupportFragmentManager();
-
         int last_screen_id = readSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
         switch(last_screen_id){
             case 0: mScreenStatus = 0; showTutorialFragment(); break;
@@ -142,257 +144,57 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
             case R.id.btnIC555: mScreenStatus = SCREEN_ID_IC555; showGifFragment(mIC555Images); break;
             case R.id.btnProject1: mScreenStatus = SCREEN_ID_PROJECT1; showGifFragment(mProject1Images); break;
             case R.id.btnProject2: mScreenStatus = SCREEN_ID_PROJECT2; showGifFragment(mProject2Images); break;
-            case R.id.btnDemoProject1: mScreenStatus = SCREEN_ID_DEMO_PROJECT1;  showGifFragment(mDemoProject1Images); break;
-            case R.id.btnDemoProject2:  mScreenStatus = SCREEN_ID_DEMO_PROJECT2; showGifFragment(mDemoProject2Images); break;
-            case R.id.btnHome: mScreenStatus = 0; showTutorialFragment(); break;
-            case R.id.btnMinimize: saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, mScreenStatus); finishActivity(); break;
+            case R.id.btnDemoProject1: mScreenStatus = SCREEN_ID_DEMO_PROJECT1;
+                showGifFragment(mDemoProject1Images);
+                break;
+            case R.id.btnDemoProject2:  mScreenStatus = SCREEN_ID_DEMO_PROJECT2;
+                showGifFragment(mDemoProject2Images);
+                break;
+            case R.id.btnHome:
+                mScreenStatus = 0;
+                FragmentManager fm = getSupportFragmentManager();
+                for(int i = 0; i < fm.getBackStackEntryCount(); ++i) {
+                    fm.popBackStack();
+                }
+                showTutorialFragment();
+                break;
+            case R.id.btnMinimize:
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, mScreenStatus);
+                finishActivity();
+                break;
             case R.id.btnDone: mScreenStatus = 0; saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0); finishActivity(); break;
         }
     }
 
     private void showGifFragment(int[] drawable_id) {
-        mShowGifFragment = GifShowFragment.newInstance(drawable_id);
+        GifShowFragment mShowGifFragment = GifShowFragment.newInstance(drawable_id, mFragmentManager, mStatusBarColor);
         mShowGifFragment.setOnClickListener(this);
-        mFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContent, mShowGifFragment)
+        FragmentTransaction transaction = mFragmentManager.beginTransaction();
+        transaction.replace(R.id.fragmentContent, mShowGifFragment)
                 .commit();
     }
 
     private void showBasicElectronic(){
-        mBasicElectronicFragment = new BasicElectronicFragment();
+        BasicElectronicFragment mBasicElectronicFragment = new BasicElectronicFragment();
         mBasicElectronicFragment.setOnClickListener(this);
-        mFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContent, mBasicElectronicFragment)
-                .commit();
+        mFragmentManager.beginTransaction().replace(R.id.fragmentContent, mBasicElectronicFragment).commit();
     }
 
     private void showTutorialFragment() {
-        mTutorialFragment = new TutorialFragment();
-        mTutorialFragment.setOnClickListener(this, ((Global_Var) getApplicationContext()).isProject_Access());
-        mFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContent, mTutorialFragment)
-                .commit();
+        TutorialFragment mTutorialFragment = new TutorialFragment();
+        mTutorialFragment.setOnClickListener(this);
+        mFragmentManager.beginTransaction().replace(R.id.fragmentContent, mTutorialFragment).commit();
     }
 
     private void showProjectsFragment() {
-        mProjectsFragment = new ShowProjectsFragment();
+        ProjectsFragment mProjectsFragment = new ProjectsFragment();
         mProjectsFragment.setOnClickListener(this);
-        mFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContent, mProjectsFragment)
-                .commit();
+        mFragmentManager.beginTransaction().replace(R.id.fragmentContent, mProjectsFragment).commit();
     }
 
     private void showDemoProjectsFragment() {
-        mDemoProjectsFragment = new ShowDemoProjectsFragment();
+        DemoProjectsFragment mDemoProjectsFragment = new DemoProjectsFragment();
         mDemoProjectsFragment.setOnClickListener(this);
-        mFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContent, mDemoProjectsFragment)
-                .commit();
-    }
-
-    public static class TutorialFragment extends Fragment implements View.OnClickListener {
-
-        private View.OnClickListener mListener;
-        private boolean mProjectAccess= false;
-
-        public void setOnClickListener(View.OnClickListener listener, boolean project_access){
-            mListener = listener;
-            mProjectAccess = project_access;
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            return inflater.inflate(R.layout.fragment_tutorial, null);
-        }
-
-        @Override
-        public void onViewCreated(View view, Bundle savedInstanceState) {
-            Button btnBasicElectronic = (Button) view.findViewById(R.id.btnBasicElectronic);
-            Button btnProjects = (Button) view.findViewById(R.id.btnProjects);
-            Button btnDemo = (Button) view.findViewById(R.id.btnDemoProjects);
-            btnBasicElectronic.setOnClickListener(this);
-            btnProjects.setOnClickListener(this);
-            btnDemo.setOnClickListener(this);
-        }
-
-        @Override
-        public void onClick(View view) {
-            if(mListener != null)
-                mListener.onClick(view);
-        }
-    }
-
-    public static class BasicElectronicFragment extends Fragment implements View.OnClickListener {
-
-        private View.OnClickListener mListener;
-
-        public void setOnClickListener(View.OnClickListener listener){
-            mListener = listener;
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            return inflater.inflate(R.layout.fragment_basic_electronic, null);
-        }
-
-        @Override
-        public void onViewCreated(View view, Bundle savedInstanceState) {
-            Button btnBreadBoard = (Button) view.findViewById(R.id.btnBreadBoard);
-            Button btnLedOnOFF = (Button) view.findViewById(R.id.btnLedOnOFF);
-            Button btnPowerSupply = (Button) view.findViewById(R.id.btnPowerSupply);
-            Button btnTransistorSwitch = (Button) view.findViewById(R.id.btnTransistorSwitch);
-            Button btnIC741 = (Button) view.findViewById(R.id.btnIC741);
-            Button btnIC555 = (Button) view.findViewById(R.id.btnIC555);
-            btnBreadBoard.setOnClickListener(this);
-            btnLedOnOFF.setOnClickListener(this);
-            btnPowerSupply.setOnClickListener(this);
-            btnTransistorSwitch.setOnClickListener(this);
-            btnIC741.setOnClickListener(this);
-            btnIC555.setOnClickListener(this);
-        }
-
-        @Override
-        public void onClick(View view) {
-            if(mListener != null)
-                mListener.onClick(view);
-        }
-    }
-
-    public static class GifShowFragment extends Fragment implements View.OnClickListener {
-        private GifImageView mGif;
-        private GifDrawable mGifDrawable;
-        private int[] mDrawableId;
-        private int mDrawCount = 0;
-
-        public static GifShowFragment newInstance(int[] drawable_id) {
-            GifShowFragment myFragment = new GifShowFragment();
-
-            Bundle args = new Bundle();
-            args.putIntArray("show-gif-id", drawable_id);
-            myFragment.setArguments(args);
-
-            return myFragment;
-        }
-
-        private View.OnClickListener mListener;
-
-        public void setOnClickListener(View.OnClickListener listener){
-            mListener = listener;
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            return inflater.inflate(R.layout.fragment_show_gif, null);
-        }
-
-        @Override
-        public void onViewCreated(View view, Bundle savedInstanceState) {
-            Button btnHome = (Button) view.findViewById(R.id.btnHome);
-            Button btnMinimize = (Button) view.findViewById(R.id.btnMinimize);
-            Button btnDone = (Button) view.findViewById(R.id.btnDone);
-            btnHome.setOnClickListener(this);
-            btnMinimize.setOnClickListener(this);
-            btnDone.setOnClickListener(this);
-            mGif = view.findViewById(R.id.gif_content);
-            mDrawableId = getArguments().getIntArray("show-gif-id");
-            if(mDrawableId == null || mDrawableId.length == 0)
-                return;
-
-            try {
-                mGifDrawable = new GifDrawable(getResources(), mDrawableId[mDrawCount]);
-                if(++mDrawCount >= mDrawableId.length )
-                    mDrawCount = 0;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            mGif.setImageDrawable(mGifDrawable);
-            Zoomy.Builder builder = new Zoomy.Builder(getActivity()).target(mGif).doubleTapListener(new DoubleTapListener() {
-                @Override
-                public void onDoubleTap(View v) {
-                    try {
-                        mGifDrawable = new GifDrawable(getResources(), mDrawableId[mDrawCount]);
-                        mGif.setImageDrawable(mGifDrawable);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    if(++mDrawCount >= mDrawableId.length )
-                        mDrawCount = 0;
-                }
-            });
-            builder.register();
-        }
-
-        @Override
-        public void onClick(View view) {
-            if(mListener != null)
-                mListener.onClick(view);
-        }
-
-        @Override
-        public void onStop(){
-            super.onStop();
-            Zoomy.unregister(mGif);
-        }
-    }
-
-    public static class ShowProjectsFragment extends Fragment implements View.OnClickListener {
-
-        private View.OnClickListener mListener;
-
-        public void setOnClickListener(View.OnClickListener listener){
-            mListener = listener;
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            return inflater.inflate(R.layout.fragment_projects, null);
-        }
-
-        @Override
-        public void onViewCreated(View view, Bundle savedInstanceState) {
-            Button btnProject1 = (Button) view.findViewById(R.id.btnProject1);
-            Button btnProject2 = (Button) view.findViewById(R.id.btnProject2);
-            btnProject1.setOnClickListener(this);
-            btnProject2.setOnClickListener(this);
-        }
-
-        @Override
-        public void onClick(View view) {
-            if(mListener != null)
-                mListener.onClick(view);
-        }
-    }
-
-    public static class ShowDemoProjectsFragment extends Fragment implements View.OnClickListener {
-
-        private View.OnClickListener mListener;
-
-        public void setOnClickListener(View.OnClickListener listener){
-            mListener = listener;
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            return inflater.inflate(R.layout.fragment_demoprojects, null);
-        }
-
-        @Override
-        public void onViewCreated(View view, Bundle savedInstanceState) {
-            Button btnDemoProject1 = (Button) view.findViewById(R.id.btnDemoProject1);
-            Button btnDemoProject2 = (Button) view.findViewById(R.id.btnDemoProject2);
-            btnDemoProject1.setOnClickListener(this);
-            btnDemoProject2.setOnClickListener(this);
-        }
-
-        @Override
-        public void onClick(View view) {
-            if(mListener != null)
-                mListener.onClick(view);
-        }
+        mFragmentManager.beginTransaction().replace(R.id.fragmentContent, mDemoProjectsFragment).commit();
     }
 }
