@@ -147,9 +147,14 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
             case R.id.btnDemoProject1: mScreenStatus = SCREEN_ID_DEMO_PROJECT1; showGifFragment(mDemoProject1Images, last_page); break;
             case R.id.btnDemoProject2:  mScreenStatus = SCREEN_ID_DEMO_PROJECT2; showGifFragment(mDemoProject2Images, last_page); break;
             case R.id.btnResume:
+                int screen_id = readSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
+                int screen_page = readSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
                 int last_screen_id = readSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, 0);
                 int last_screen_page = readSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, 0);
-                showFragment(last_screen_id, last_screen_page);
+                if(screen_id == 0 && screen_page == 0 && last_screen_id == 0 && last_screen_page == 0)
+                    Toast.makeText(getApplicationContext(), "Nothing to Resume", Toast.LENGTH_SHORT).show();
+                else
+                    showFragment(last_screen_id, last_screen_page);
                 break;
         }
     }
