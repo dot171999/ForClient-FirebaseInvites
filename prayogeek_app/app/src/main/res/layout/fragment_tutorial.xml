@@ -38,4 +38,15 @@
         android:text="Demo Projects"
         app:layout_constraintStart_toStartOf="@+id/btnBasicElectronic"
         app:layout_constraintTop_toBottomOf="@+id/btnBasicElectronic" />
+
+    <Button
+        android:id="@+id/btnResume"
+        android:layout_width="120dp"
+        android:layout_height="70dp"
+        android:layout_marginEnd="8dp"
+        android:text="Resume"
+        android:theme="@style/AppTheme.Button"
+        app:layout_constraintEnd_toEndOf="@+id/btnProjects"
+        app:layout_constraintStart_toStartOf="@+id/btnProjects"
+        app:layout_constraintTop_toTopOf="@+id/btnDemoProjects" />
 </android.support.constraint.ConstraintLayout>

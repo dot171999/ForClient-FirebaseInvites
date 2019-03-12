@@ -1,6 +1,7 @@
 package in.altilogic.prayogeek.fragments;
 
 import android.animation.ArgbEvaluator;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
@@ -8,8 +9,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +24,7 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
     private List<ImageView> mIndicatorList;
     private int[] mDrawableId;
     private int mStatusBarColor;
-
+    private TextView tvPageNumber;
     public ImageFragment(){
     }
 
@@ -56,9 +58,10 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         Log.d("APP-", "ImageFragment::onViewCreated");
-        Button btnHome = (Button) view.findViewById(R.id.btnHome);
-        Button btnMinimize = (Button) view.findViewById(R.id.btnMinimize);
-        Button btnDone = (Button) view.findViewById(R.id.btnDone);
+        ImageButton btnHome = view.findViewById(R.id.btnHome);
+        ImageButton btnMinimize = view.findViewById(R.id.btnMinimize);
+        ImageButton btnDone = view.findViewById(R.id.btnDone);
+        tvPageNumber = view.findViewById(R.id.tvPageNumber);
         btnHome.setOnClickListener(this);
         btnMinimize.setOnClickListener(this);
         btnDone.setOnClickListener(this);
@@ -74,7 +77,7 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
         mViewPager.setCurrentItem(page);
         if(mDrawableId == null || mDrawableId.length == 0)
             throw new AssertionError();
-
+        tvPageNumber.setText(" "+ (page+1)+"/" +mDrawableId.length + " ");
         final ArgbEvaluator evaluator = new ArgbEvaluator();
 
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
@@ -82,6 +85,7 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 int colorUpdate = (Integer) evaluator.evaluate(positionOffset, getCurrentColor(position), getCurrentColor(position == 2 ? position : position + 1));
                 mViewPager.setBackgroundColor(colorUpdate);
+                tvPageNumber.setText(" " + (position+1)+"/" +mDrawableId.length + " ");
             }
 
             @Override

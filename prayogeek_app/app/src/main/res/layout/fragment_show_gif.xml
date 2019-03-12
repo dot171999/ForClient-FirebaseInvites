@@ -13,44 +13,45 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-    <!--<pl.droidsonroids.gif.GifImageView-->
-        <!--android:id="@+id/gif_content"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="match_parent"-->
-        <!--android:src="@drawable/onboard_gif1"-->
-        <!--app:layout_constraintBottom_toBottomOf="parent"-->
-        <!--app:layout_constraintTop_toTopOf="parent"-->
-        <!--app:layout_constraintVertical_bias="0.466"-->
-        <!--tools:layout_editor_absoluteX="86dp" />-->
+    <TextView
+        android:id="@+id/tvPageNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="1/10"
+        android:background="#bebebe"
+        app:layout_constraintBottom_toTopOf="@+id/btnHome"
+        app:layout_constraintEnd_toEndOf="@+id/btnHome"
+        app:layout_constraintStart_toStartOf="@+id/btnHome" />
 
-    <Button
+    <ImageButton
         android:id="@+id/btnHome"
         android:layout_width="57dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:background="@null"
-        android:drawableBottom="@drawable/baseline_home_black_24"
+        android:layout_marginTop="56dp"
+        android:src="@drawable/baseline_home_black_24"
+        android:theme="@style/AppTheme.Button"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
+    <ImageButton
         android:id="@+id/btnMinimize"
         android:layout_width="57dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:background="@null"
-        android:drawableBottom="@drawable/baseline_minimize_black_24"
+        android:theme="@style/AppTheme.Button"
+        android:src="@drawable/baseline_minimize_black_24"
         app:layout_constraintStart_toStartOf="@+id/btnHome"
         app:layout_constraintTop_toBottomOf="@+id/btnHome" />
 
-    <Button
+    <ImageButton
         android:id="@+id/btnDone"
         android:layout_width="57dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:background="@null"
-        android:drawableBottom="@drawable/baseline_close_black_24"
+        android:theme="@style/AppTheme.Button"
+        android:src="@drawable/baseline_close_black_24"
         app:layout_constraintStart_toStartOf="@+id/btnMinimize"
         app:layout_constraintTop_toBottomOf="@+id/btnMinimize" />
 
