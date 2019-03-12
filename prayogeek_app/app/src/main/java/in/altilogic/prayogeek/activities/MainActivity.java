@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity
 
     boolean isOnline = false;
 
-    public static final String TAG = "YOUSCOPE-DB";
+    public static final String TAG = "YOUSCOPE-DB-MAIN";
     private Toolbar mToolbar = null;
 
     private Spinner mList1, mList2;
@@ -112,6 +112,8 @@ public class MainActivity extends AppCompatActivity
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
         ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_APP_OPENED);
+        Log.d(TAG, "onCreate()");
+
         mFireBaseHelper = new FireBaseHelper();
         firebase_auth_init();
 
@@ -121,6 +123,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onStart() {
         super.onStart();
+        Log.d(TAG, "onStart()");
         saveSharedSetting(this, TutorialActivity.CURRENT_SCREEN_SETTINGS, 0);
         isOnline = Utils.isOnline(this);
         if (!isOnline) {
@@ -134,6 +137,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onPause() {
         super.onPause();
+        Log.d(TAG, "onPause()");
         if (mAuthStateListener != null) {
             mFirebaseAuth.removeAuthStateListener(mAuthStateListener);
         }
@@ -141,6 +145,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
+        Log.d(TAG, "onBackPressed()");
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
@@ -152,6 +157,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
+        Log.d(TAG, "onResume()");
         if (mFirebaseAuth != null)
             mFirebaseAuth.addAuthStateListener(mAuthStateListener);
     }
@@ -159,12 +165,14 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
+        Log.d(TAG, "onCreateOptionsMenu()");
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        Log.d(TAG, "onOptionsItemSelected()");
         switch (item.getItemId()) {
             case R.id.sign_out_menu:
                 //sign out
@@ -217,19 +225,43 @@ public class MainActivity extends AppCompatActivity
                 return false;
 
             for(int i=0; i<list.size(); i++){
-                boolean equals = false;
-                for(int j=0; j<arrayList.size();j++) {
-                    if(list.get(i).equals(arrayList.get(j))){
-                        equals = true;
-                        break;
-                    }
-                }
-                if(!equals)
+                if(!list.get(i).equals(arrayList.get(i))){
                     return false;
+                }
             }
             return true;
         }
         return false;
+    }
+
+    private void checkSelectedList1() {
+        String varList1 = ((Global_Var) getApplicationContext()).Get_Category();
+        if( varList1 != null && dataList1 != null && dataList1.contains(varList1))
+        {
+            for(int i=0; i<dataList1.size(); i++){
+                if(dataList1.get(i).equals(varList1)){
+                    mList1.setSelection(i);
+                    Log.d(TAG, " Set Selected LIST1 : " + varList1);
+                    break;
+                }
+            }
+        }
+    }
+
+    private void checkSelectedList2() {
+        String varList2 = ((Global_Var) getApplicationContext()).Get_Module_Name();
+        int idxSelected = 0;
+        if( varList2 != null && dataList2 != null && dataList2.contains(varList2))
+        {
+            for(int i=0; i<dataList2.size(); i++){
+                if(dataList2.get(i).equals(varList2)){
+                    idxSelected = i;
+                    break;
+                }
+            }
+        }
+        mList2.setSelection(idxSelected);
+        Log.d(TAG, " Set Selected LIST2 : " + mList2.getSelectedItem().toString());
     }
 
     private void list1_check_for_update() {
@@ -243,8 +275,10 @@ public class MainActivity extends AppCompatActivity
                 if (documentSnapshot != null && documentSnapshot.exists()) {
                     List<String> colleges = (List<String>) documentSnapshot.get("Colleges");
 
-                    if(isListsEquals(colleges, dataList1))
+                    if(isListsEquals(colleges, dataList1)) {
+                        checkSelectedList1();
                         return;
+                    }
 
                     Log.d(TAG, "Updating List1");
 
@@ -269,6 +303,7 @@ public class MainActivity extends AppCompatActivity
     private String mDocumentName;
 
     private void list2_update(String document) {
+        Log.d(TAG, " list2_update: " + document);
         mDocumentName = document;
         mFireBaseHelper.read("Colleges", document, new OnCompleteListener<DocumentSnapshot>() {
             @Override
@@ -368,7 +403,7 @@ public class MainActivity extends AppCompatActivity
                         else
                             message = "App will connect to Module " + ( mList2 != null && mList2.getSelectedItem() != null ? mList2.getSelectedItem().toString() : "");
 
-                        mList2.setSelection(0);
+                        checkSelectedList2();
                     }
 
                     printInfoMessage(message);
@@ -397,6 +432,8 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        Log.d(TAG, "onActivityResult()");
+
         switch (requestCode) {
             case RC_SIGN_IN:
                 if (resultCode == RESULT_OK) {
@@ -436,14 +473,16 @@ public class MainActivity extends AppCompatActivity
             case RC_BUTTON2:
                 ((Global_Var) getApplicationContext()).Set_ConnectionStatus(Global_Var.CS_DISCONNECTED);
                 saveGlobals();
+                Log.d(TAG, "onActivityResult: " + ((Global_Var) getApplicationContext()).Get_Category() + " - " + ((Global_Var) getApplicationContext()).Get_Module_Name());
+                list1_check_for_update();
                 break;
-
         }
     }
 
     boolean is_init = false;
 
     private void ui_init() {
+        Log.d(TAG, "ui_init()");
         if (is_init)
             return;
         is_init = true;
@@ -603,6 +642,8 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onClick(View view) {
+        Log.d(TAG, "onClick()");
+
         boolean individual = mList1.getSelectedItem().toString().equals("Individual");
         switch (view.getId()) {
             case R.id.btn_button1:
@@ -738,6 +779,10 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void saveGlobals(){
+        if(mList1 != null && mList1.getSelectedItem()!= null) {
+            String list1 = mList1.getSelectedItem().toString();
+            ((Global_Var) getApplicationContext()).Set_Category(list1);
+        }
         if(mList2 != null && mList2.getSelectedItem()!= null) {
             String module = mList2.getSelectedItem().toString();
             ((Global_Var) getApplicationContext()).Set_Module_Name(module);
