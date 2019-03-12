@@ -30,6 +30,7 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
 
     public interface OnClickListener {
         void onClick(View view, int page);
+        void onPageChanged(int page);
     }
 
     private OnClickListener mOnClickListener;
@@ -86,6 +87,8 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
                 int colorUpdate = (Integer) evaluator.evaluate(positionOffset, getCurrentColor(position), getCurrentColor(position == 2 ? position : position + 1));
                 mViewPager.setBackgroundColor(colorUpdate);
                 tvPageNumber.setText(" " + (position+1)+"/" +mDrawableId.length + " ");
+                if(mOnClickListener != null)
+                    mOnClickListener.onPageChanged(position);
             }
 
             @Override

@@ -26,6 +26,8 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
 
     public final static String CURRENT_SCREEN_SETTINGS = "TUTORIAL-SETTINGS-CURRENT-SCREEN";
     public final static String CURRENT_SCREEN_SETTINGS_PAGE = "TUTORIAL-SETTINGS-CURRENT-PAGE";
+    public final static String CURRENT_SCREEN_SETTINGS_RESUME = "TUTORIAL-SETTINGS-CURRENT-SCREEN-RESUME";
+    public final static String CURRENT_SCREEN_SETTINGS_PAGE_RESUME = "TUTORIAL-SETTINGS-CURRENT-PAGE-RESUME";
     private final static int SCREEN_ID_BASIC_ELECTRONIC = 1;
     private final static int SCREEN_ID_PROJECTS = 2;
     private final static int SCREEN_ID_DEMO_PROJECTS = 3;
@@ -68,18 +70,23 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         mStatusBarColor = getWindow().getStatusBarColor();
         mFragmentManager = getSupportFragmentManager();
         int last_screen_id = readSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
+        int last_page = readSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
+        showFragment(last_screen_id, last_page);
+    }
+
+    private void showFragment(int last_screen_id, int last_page) {
         switch(last_screen_id){
             case 0: mScreenStatus = 0; showTutorialFragment(); break;
-            case SCREEN_ID_BREADBOARD_USAGE: mScreenStatus = SCREEN_ID_BREADBOARD_USAGE; showGifFragment(mBreadboardImages); break;
-            case SCREEN_ID_LED_ON_OFF: mScreenStatus = SCREEN_ID_LED_ON_OFF; showGifFragment(mLedOnOffImages); break;
-            case SCREEN_ID_POWER_SUPPLY: mScreenStatus = SCREEN_ID_POWER_SUPPLY; showGifFragment(mPowerSupplyImages); break;
-            case SCREEN_ID_TRANSISTOR_SWITCH: mScreenStatus = SCREEN_ID_TRANSISTOR_SWITCH;  showGifFragment(mTransistorSwitchImages);  break;
-            case SCREEN_ID_IC741: mScreenStatus = SCREEN_ID_IC741; showGifFragment(mIC741Images); break;
-            case SCREEN_ID_IC555: mScreenStatus = SCREEN_ID_IC555; showGifFragment(mIC555Images); break;
-            case SCREEN_ID_PROJECT1: mScreenStatus = SCREEN_ID_PROJECT1; showGifFragment(mProject1Images); break;
-            case SCREEN_ID_PROJECT2: mScreenStatus = SCREEN_ID_PROJECT2; showGifFragment(mProject2Images); break;
-            case SCREEN_ID_DEMO_PROJECT1: mScreenStatus = SCREEN_ID_DEMO_PROJECT1; showGifFragment(mDemoProject1Images); break;
-            case SCREEN_ID_DEMO_PROJECT2: mScreenStatus = SCREEN_ID_DEMO_PROJECT2; showGifFragment(mDemoProject2Images); break;
+            case SCREEN_ID_BREADBOARD_USAGE: mScreenStatus = SCREEN_ID_BREADBOARD_USAGE; showGifFragment(mBreadboardImages, last_page); break;
+            case SCREEN_ID_LED_ON_OFF: mScreenStatus = SCREEN_ID_LED_ON_OFF; showGifFragment(mLedOnOffImages, last_page); break;
+            case SCREEN_ID_POWER_SUPPLY: mScreenStatus = SCREEN_ID_POWER_SUPPLY; showGifFragment(mPowerSupplyImages, last_page); break;
+            case SCREEN_ID_TRANSISTOR_SWITCH: mScreenStatus = SCREEN_ID_TRANSISTOR_SWITCH;  showGifFragment(mTransistorSwitchImages, last_page);  break;
+            case SCREEN_ID_IC741: mScreenStatus = SCREEN_ID_IC741; showGifFragment(mIC741Images, last_page); break;
+            case SCREEN_ID_IC555: mScreenStatus = SCREEN_ID_IC555; showGifFragment(mIC555Images, last_page); break;
+            case SCREEN_ID_PROJECT1: mScreenStatus = SCREEN_ID_PROJECT1; showGifFragment(mProject1Images, last_page); break;
+            case SCREEN_ID_PROJECT2: mScreenStatus = SCREEN_ID_PROJECT2; showGifFragment(mProject2Images, last_page); break;
+            case SCREEN_ID_DEMO_PROJECT1: mScreenStatus = SCREEN_ID_DEMO_PROJECT1; showGifFragment(mDemoProject1Images, last_page); break;
+            case SCREEN_ID_DEMO_PROJECT2: mScreenStatus = SCREEN_ID_DEMO_PROJECT2; showGifFragment(mDemoProject2Images, last_page); break;
             default: mScreenStatus = 0; showTutorialFragment(); break;
         }
     }
@@ -89,6 +96,7 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         if(mScreenStatus == 0) {
             saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
             saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
+            saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
             finishActivity();
         }
         else if(mScreenStatus > SCREEN_ID_DEMO_PROJECTS && mScreenStatus <= SCREEN_ID_IC555){
@@ -117,6 +125,8 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
 
     @Override
     public void onClick(View view) {
+        int last_page = readSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
+
         switch (view.getId()){
             case R.id.btnBasicElectronic: mScreenStatus = SCREEN_ID_BASIC_ELECTRONIC; showBasicElectronic(); break;
             case R.id.btnProjects: mScreenStatus = SCREEN_ID_PROJECTS;
@@ -126,16 +136,21 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
                     Toast.makeText(getApplicationContext(), "Please Subscribe to access Projects", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.btnDemoProjects: mScreenStatus = SCREEN_ID_DEMO_PROJECTS;  showDemoProjectsFragment(); break;
-            case R.id.btnBreadBoard: mScreenStatus = SCREEN_ID_BREADBOARD_USAGE; showGifFragment(mBreadboardImages); break;
-            case R.id.btnLedOnOFF: mScreenStatus = SCREEN_ID_LED_ON_OFF;  showGifFragment(mLedOnOffImages);  break;
-            case R.id.btnPowerSupply: mScreenStatus = SCREEN_ID_POWER_SUPPLY; showGifFragment(mPowerSupplyImages); break;
-            case R.id.btnTransistorSwitch: mScreenStatus = SCREEN_ID_TRANSISTOR_SWITCH;  showGifFragment(mTransistorSwitchImages); break;
-            case R.id.btnIC741: mScreenStatus = SCREEN_ID_IC741; showGifFragment(mIC741Images); break;
-            case R.id.btnIC555: mScreenStatus = SCREEN_ID_IC555; showGifFragment(mIC555Images); break;
-            case R.id.btnProject1: mScreenStatus = SCREEN_ID_PROJECT1; showGifFragment(mProject1Images); break;
-            case R.id.btnProject2: mScreenStatus = SCREEN_ID_PROJECT2; showGifFragment(mProject2Images); break;
-            case R.id.btnDemoProject1: mScreenStatus = SCREEN_ID_DEMO_PROJECT1; showGifFragment(mDemoProject1Images); break;
-            case R.id.btnDemoProject2:  mScreenStatus = SCREEN_ID_DEMO_PROJECT2; showGifFragment(mDemoProject2Images); break;
+            case R.id.btnBreadBoard: mScreenStatus = SCREEN_ID_BREADBOARD_USAGE; showGifFragment(mBreadboardImages, last_page); break;
+            case R.id.btnLedOnOFF: mScreenStatus = SCREEN_ID_LED_ON_OFF;  showGifFragment(mLedOnOffImages, last_page);  break;
+            case R.id.btnPowerSupply: mScreenStatus = SCREEN_ID_POWER_SUPPLY; showGifFragment(mPowerSupplyImages, last_page); break;
+            case R.id.btnTransistorSwitch: mScreenStatus = SCREEN_ID_TRANSISTOR_SWITCH;  showGifFragment(mTransistorSwitchImages, last_page); break;
+            case R.id.btnIC741: mScreenStatus = SCREEN_ID_IC741; showGifFragment(mIC741Images, last_page); break;
+            case R.id.btnIC555: mScreenStatus = SCREEN_ID_IC555; showGifFragment(mIC555Images, last_page); break;
+            case R.id.btnProject1: mScreenStatus = SCREEN_ID_PROJECT1; showGifFragment(mProject1Images, last_page); break;
+            case R.id.btnProject2: mScreenStatus = SCREEN_ID_PROJECT2; showGifFragment(mProject2Images, last_page); break;
+            case R.id.btnDemoProject1: mScreenStatus = SCREEN_ID_DEMO_PROJECT1; showGifFragment(mDemoProject1Images, last_page); break;
+            case R.id.btnDemoProject2:  mScreenStatus = SCREEN_ID_DEMO_PROJECT2; showGifFragment(mDemoProject2Images, last_page); break;
+            case R.id.btnResume:
+                int last_screen_id = readSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, 0);
+                int last_screen_page = readSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, 0);
+                showFragment(last_screen_id, last_screen_page);
+                break;
         }
     }
 
@@ -143,16 +158,27 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     public void onClick(View view, int page) {
         Log.d("APP-TUTORIAL", "mScreenStatus = " + mScreenStatus + "; page = " + page);
         switch (view.getId()){
-            case R.id.btnHome: mScreenStatus = 0;
+            case R.id.btnHome:
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
+
+                mScreenStatus = 0;
                 saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
                 showTutorialFragment();
                 break;
-            case R.id.btnDone: mScreenStatus = 0;
+            case R.id.btnDone:
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
+
+                mScreenStatus = 0;
                 saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
                 saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
                 finishActivity();
             break;
             case R.id.btnMinimize:
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
+
                 saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, mScreenStatus);
                 saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, page);
                 finishActivity();
@@ -160,9 +186,14 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         }
     }
 
+    @Override
+    public void onPageChanged(int page) {
+        saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, page);
+        saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
+    }
 
-    private void showGifFragment(int[] drawable_id) {
-        int last_page = readSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
+
+    private void showGifFragment(int[] drawable_id, int last_page) {
         ImageFragment mShowGifFragment = ImageFragment.newInstance(drawable_id, mStatusBarColor, last_page);
         mShowGifFragment.setOnClickListener(this);
         FragmentTransaction transaction = mFragmentManager.beginTransaction();
