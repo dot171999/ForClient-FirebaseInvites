@@ -15,7 +15,11 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import in.altilogic.prayogeek.activities.MainActivity;
 import in.altilogic.prayogeek.utils.Utils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+
+import javax.annotation.Nullable;
 
 public class FireBaseHelper {
     private final static String GLOBAL_VARIABLE_ID = "GLOBAL_VARIABLE_ID";
@@ -82,5 +86,37 @@ public class FireBaseHelper {
         else{
             Log.d(MainActivity.TAG, "Global_Vars were not saved");
         }
+    }
+
+    public List<String> getArray(@Nullable DocumentSnapshot documentSnapshot, String folder, String array) {
+        if (documentSnapshot != null && documentSnapshot.exists()) {
+            Map<String, Object> dataMap = (Map<String, Object>) documentSnapshot.getData();
+
+            if(dataMap == null)
+                return null;
+
+            if(dataMap.containsKey(folder)) {
+                Map<String, Object> breadboard = (Map<String, Object>) dataMap.get(folder);
+
+                if(breadboard == null)
+                    return null;
+
+                return (List<String>) breadboard.get(array);
+            }
+
+        }
+        return null;
+    }
+
+    public List<String> getArray(@Nullable DocumentSnapshot documentSnapshot) {
+        if (documentSnapshot != null && documentSnapshot.exists()) {
+            Map<String, Object> dataMap = (Map<String, Object>) documentSnapshot.getData();
+
+            if(dataMap == null)
+                return null;
+
+            return new ArrayList<>(dataMap.keySet());
+        }
+        return null;
     }
 }
