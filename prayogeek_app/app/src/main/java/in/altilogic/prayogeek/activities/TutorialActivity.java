@@ -5,10 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
-import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
@@ -18,23 +15,6 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.storage.FileDownloadTask;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.util.List;
-
-import javax.annotation.Nullable;
-
-import in.altilogic.prayogeek.FireBaseHelper;
 import in.altilogic.prayogeek.Global_Var;
 import in.altilogic.prayogeek.R;
 import in.altilogic.prayogeek.fragments.BasicElectronicFragment;
@@ -47,10 +27,7 @@ import in.altilogic.prayogeek.service.ImageDownloadService;
 import static in.altilogic.prayogeek.utils.Utils.*;
 
 public class TutorialActivity extends AppCompatActivity implements View.OnClickListener, ImageFragment.OnClickListener {
-    private final String TAG = "YOUSCOPE-DB-TUTORIAL";
     private FragmentManager mFragmentManager;
-    private BroadcastReceiver mBroadcastReceiver;
-    private FireBaseHelper mFireBaseHelper;
 
     public final static String CURRENT_SCREEN_SETTINGS = "TUTORIAL-SETTINGS-CURRENT-SCREEN";
     public final static String CURRENT_SCREEN_SETTINGS_PAGE = "TUTORIAL-SETTINGS-CURRENT-PAGE";
@@ -76,7 +53,7 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
      * To change screen pictures, you need to add these pictures to the DRAWABLE folder,
      * then add the ID of each image to the corresponding array below.
      */
-    private final static int[] mBreadboardImages = {R.drawable.breadboard};
+    private final static int[] mBreadboardImages = {R.drawable.breadboard, R.drawable.breadboard_01, R.drawable.breadboard_02};
     private final static int[] mLedOnOffImages = {R.drawable.led_on_off};
     private final static int[] mPowerSupplyImages = {R.drawable.power_supply};
     private final static int[] mTransistorSwitchImages = {R.drawable.transistor_switch};
@@ -97,11 +74,9 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,WindowManager.LayoutParams.FLAG_SECURE); // disable snapshots
         mStatusBarColor = getWindow().getStatusBarColor();
         mFragmentManager = getSupportFragmentManager();
-        mFireBaseHelper = new FireBaseHelper();
         int last_screen_id = readSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
         int last_page = readSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
         showFragment(last_screen_id, last_page);
-        initBroadcastReceiver();
     }
 
     private void showFragment(int last_screen_id, int last_page) {
@@ -125,8 +100,7 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void onStart() {
         super.onStart();
-        LocalBroadcastManager.getInstance(this).registerReceiver((mBroadcastReceiver),
-                new IntentFilter(ImageDownloadService.HW_SERVICE_BROADCAST_VALUE));
+        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, new IntentFilter(ImageDownloadService.HW_SERVICE_BROADCAST_VALUE));
     }
 
     @Override
@@ -249,7 +223,12 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
 
 
     private void showGifFragment(int[] drawable_id, int last_page) {
-        startDownloadImage("Breadboard", "Documents");
+//        startDownloadImage("Breadboard", "Documents");
+//        download(fireStorePath);
+        startService(new Intent(this,ImageDownloadService.class)
+                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES)
+                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE, "Breadboard")
+                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_PHONE,""));
         ImageFragment mShowGifFragment = ImageFragment.newInstance(drawable_id, mStatusBarColor, last_page);
         mShowGifFragment.setOnClickListener(this);
         FragmentTransaction transaction = mFragmentManager.beginTransaction();
@@ -279,107 +258,5 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         DemoProjectsFragment mDemoProjectsFragment = new DemoProjectsFragment();
         mDemoProjectsFragment.setOnClickListener(this);
         mFragmentManager.beginTransaction().replace(R.id.fragmentContent, mDemoProjectsFragment).commit();
-    }
-
-    private void startDownloadImage(final String base_electronis_type, String phonePath) {
-        Log.d(TAG, "Start download " + base_electronis_type);
-
-        mFireBaseHelper.read("Tutorials", "basic_electronics", new EventListener<DocumentSnapshot>() {
-            @Override
-            public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
-                if (e != null) {
-                    Log.w(TAG, "Listen failed.", e);
-                    return;
-                }
-                List<String> basic_electronics = mFireBaseHelper.getArray(documentSnapshot);
-
-                if(basic_electronics.contains(base_electronis_type)) {
-                    List<String> breadboard_urls = mFireBaseHelper.getArray(documentSnapshot, base_electronis_type, "imageURL");
-                    if(breadboard_urls == null)
-                        return;
-
-                    int count = 1;
-//                    for(String path: breadboard_urls)
-                        downloadUri(breadboard_urls.get(0), "Breadboard", count++);
-
-                }
-            }
-        });
-
-//        download(fireStorePath);
-//        startService(new Intent(this,ImageDownloadService.class)
-//                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES)
-//                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE,fireStorePath)
-//                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_PHONE,phonePath));
-    }
-
-    private void downloadUri(String path, String filename, final int num){
-        Log.d(TAG,"Start download: " + path);
-        StorageReference mStorageRef;
-        mStorageRef = FirebaseStorage.getInstance().getReferenceFromUrl(path);
-
-        File localFile = null;
-        try {
-            localFile = File.createTempFile(filename + num, "jpg", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        if (localFile != null) {
-            mStorageRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                    Log.d(TAG, "File download complete: " + num);
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    Log.d(TAG, "Exception: " + e.toString());
-                }
-            });
-        }
-////        StorageReference pathReference = mStorageRef.child(path);
-//
-//        mStorageRef.getFile(path).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-//            @Override
-//            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-//                Log.d(TAG, "Exception: " + exception.toString());
-//
-//            }
-//        }).addOnFailureListener(new OnFailureListener() {
-//            @Override
-//            public void onFailure(@NonNull Exception exception) {
-//                Log.d(TAG, "Exception: " + exception.toString());
-//                // Handle any errors
-//            }
-//        });
-//
-//        pathReference.getBytes(1024*1024*20).addOnSuccessListener(new OnSuccessListener<byte[]>() {
-//            @Override
-//            public void onSuccess(byte[] bytes) {
-//                Log.d(TAG, "Notify activity about downloaded images");
-//            }
-//        }).addOnFailureListener(new OnFailureListener() {
-//            @Override
-//            public void onFailure(@NonNull Exception e) {
-//                Log.d(TAG, "Download fail, " +e.getMessage());
-//            }
-//        });
-    }
-
-    private void initBroadcastReceiver() {
-        mBroadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                int result = intent.getIntExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, -1);
-                switch (result){
-                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES:
-                        Log.d(TAG, "Download complete");
-                        break;
-                    default:
-                        break;
-                }
-            }
-        };
     }
 }

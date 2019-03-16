@@ -1,6 +1,9 @@
 package in.altilogic.prayogeek.fragments;
 
 import android.animation.ArgbEvaluator;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -17,14 +20,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 import in.altilogic.prayogeek.R;
+import in.altilogic.prayogeek.service.ImageDownloadService;
 
 public class ImageFragment extends Fragment implements View.OnClickListener {
+    private final String TAG = "YOUSCOPE-DB-IMAGE";
+
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
     private List<ImageView> mIndicatorList;
     private int[] mDrawableId;
     private int mStatusBarColor;
     private TextView tvPageNumber;
+    private BroadcastReceiver mBroadcastReceiver;
+
+
     public ImageFragment(){
     }
 
@@ -53,6 +62,8 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        initBroadcastReceiver();
+
         return inflater.inflate(R.layout.fragment_show_gif, null);
     }
 
@@ -124,5 +135,21 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
             mSectionsPagerAdapter.notifyChangeInPosition(mDrawableId.length);
 
         Log.d("APP-", "ImageFragment::onStop");
+    }
+
+    private void initBroadcastReceiver() {
+        mBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                int result = intent.getIntExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, -1);
+                switch (result){
+                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES:
+                        Log.d(TAG, "Download complete");
+                        break;
+                    default:
+                        break;
+                }
+            }
+        };
     }
 }
