@@ -46,12 +46,13 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
 
     private OnClickListener mOnClickListener;
 
-    public static ImageFragment newInstance(String images_type, int color, int page) {
+    public static ImageFragment newInstance(String experiment_folder, String images_type, int color, int page) {
         Log.d(TAG, "ImageFragment::newInstance");
         ImageFragment gifFragment = new ImageFragment();
         Bundle args = new Bundle();
         args.putInt("show-gif-color", color);
         args.putInt("show-gif-page", page);
+        args.putString("show-images-folder", experiment_folder);
         args.putString("show-images-type", images_type);
         gifFragment.setArguments(args);
         return gifFragment;
@@ -78,16 +79,18 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
         ImageButton btnDone = view.findViewById(R.id.btnDone);
         tvPageNumber = view.findViewById(R.id.tvPageNumber);
         mViewPager = (ViewPager) view.findViewById(R.id.container);
+        tvPageNumber.setText(" - / - ");
 
         btnHome.setOnClickListener(this);
         btnMinimize.setOnClickListener(this);
         btnDone.setOnClickListener(this);
+        String mExperimentFolder = getArguments().getString("show-images-folder");
         mImagesType = getArguments().getString("show-images-type");
         mStatusBarColor = getArguments().getInt("show-gif-color");
         mPage = getArguments().getInt("show-gif-page");
         mImageFiles = new ArrayList<>();
 
-        startDownload(mImagesType);
+        startDownload(mExperimentFolder, mImagesType);
     }
 
     private void initViewPager() {
@@ -98,7 +101,7 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
         mViewPager.setCurrentItem(mPage);
         if(mImagesType == null)
             throw new AssertionError();
-        tvPageNumber.setText(" "+ (mPage+1)+"/" +"-"+ " ");
+        tvPageNumber.setText(" "+ (mPage+1)+"/" +"-"+ mImageFiles.size());
         final ArgbEvaluator evaluator = new ArgbEvaluator();
 
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
@@ -184,9 +187,10 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
         }
     }
 
-    private void startDownload(String name) {
+    private void startDownload(String experimentFolder, String name) {
         getActivity().startService(new Intent(getActivity(),ImageDownloadService.class)
                 .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES)
+                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT, experimentFolder)
                 .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE, name)
                 .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_PHONE,""));
     }

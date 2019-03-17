@@ -1,5 +1,6 @@
 package in.altilogic.prayogeek.fragments;
 
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -54,13 +55,20 @@ public class PlaceholderFragment extends Fragment {
         }
         else
             Log.d(TAG, "PlaceholderFragment::onCreateView() arg = 0");
-        GifDrawable gifFromPath = null;
-        try {
-            gifFromPath = new GifDrawable( mFilepath);
-        } catch (IOException e) {
-            Log.d(TAG, e.getMessage());
+
+        if(mFilepath.contains(".gif")) {
+            try {
+                GifDrawable gifFromPath = new GifDrawable( mFilepath);
+                mGif.setImageDrawable(gifFromPath);
+            } catch (IOException e) {
+                Log.d(TAG, e.getMessage());
+            }
         }
-        mGif.setImageDrawable(gifFromPath);
+        else {
+            Drawable jpegFromPath = Drawable.createFromPath(mFilepath);
+            mGif.setImageDrawable(jpegFromPath);
+        }
+
         Zoomy.Builder builder = new Zoomy.Builder(getActivity()).target(mGif);
         builder.register();
         return rootView;

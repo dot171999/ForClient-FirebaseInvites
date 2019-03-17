@@ -44,31 +44,19 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     private final static int SCREEN_ID_DEMO_PROJECT2 = 13;
     private int mScreenStatus = 0;
 
-    /**
-     * TODO UPDATE pictures
-     * To change screen pictures, you need to add these pictures to the DRAWABLE folder,
-     * then add the ID of each image to the corresponding array below.
-     */
-//    private final static int[] mBreadboardImages = {R.drawable.breadboard, R.drawable.breadboard_01, R.drawable.breadboard_02};
-//    private final static int[] mLedOnOffImages = {R.drawable.led_on_off};
-//    private final static int[] mPowerSupplyImages = {R.drawable.power_supply};
-//    private final static int[] mTransistorSwitchImages = {R.drawable.transistor_switch};
-//    private final static int[] mIC741Images = {R.drawable.ic741};
-//    private final static int[] mIC555Images = {R.drawable.ic555};
-//    private final static int[] mProject1Images = {R.drawable.project1};
-//    private final static int[] mProject2Images = {R.drawable.project2};
-//    private final static int[] mDemoProject1Images = {R.drawable.demo_project1, R.drawable.demo_project1_2, R.drawable.demo_project1_3};
-//    private final static int[] mDemoProject2Images = {R.drawable.demo_project1, R.drawable.demo_project2};
+    private final static String mBasicElectronic = "basic_electronics";
+    private final static String mDemoWorkshops = "demo_workshops";
+    private final static String mWorkshops = "workshops";
     private final static String mBreadboardImages = "Breadboard";
     private final static String mLedOnOffImages = "led_on_off";
     private final static String mPowerSupplyImages = "Bridge_Rectifier";
     private final static String mTransistorSwitchImages = "Transistor_Relay";
     private final static String mIC741Images = "Ic741_Integrator";
     private final static String mIC555Images = "Timer555";
-    private final static String mProject1Images = "Timer555";
-    private final static String mProject2Images = "Timer555";
-    private final static String mDemoProject1Images = "Timer555";
-    private final static String mDemoProject2Images = "Timer555";
+    private final static String mProject1Images = "ldr_relay";
+    private final static String mProject2Images = "fire_alarm_555_timer";
+    private final static String mDemoProject1Images = "ldr_sensor";
+    private final static String mDemoProject2Images = "arduino_pwm";
 
     private static int mStatusBarColor;
 
@@ -88,16 +76,16 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     private void showFragment(int last_screen_id, int last_page) {
         switch(last_screen_id){
             case 0: mScreenStatus = 0; showTutorialFragment(); break;
-            case SCREEN_ID_BREADBOARD_USAGE: mScreenStatus = SCREEN_ID_BREADBOARD_USAGE; showGifFragment(mBreadboardImages, last_page); break;
-            case SCREEN_ID_LED_ON_OFF: mScreenStatus = SCREEN_ID_LED_ON_OFF; showGifFragment(mLedOnOffImages, last_page); break;
-            case SCREEN_ID_POWER_SUPPLY: mScreenStatus = SCREEN_ID_POWER_SUPPLY; showGifFragment(mPowerSupplyImages, last_page); break;
-            case SCREEN_ID_TRANSISTOR_SWITCH: mScreenStatus = SCREEN_ID_TRANSISTOR_SWITCH;  showGifFragment(mTransistorSwitchImages, last_page);  break;
-            case SCREEN_ID_IC741: mScreenStatus = SCREEN_ID_IC741; showGifFragment(mIC741Images, last_page); break;
-            case SCREEN_ID_IC555: mScreenStatus = SCREEN_ID_IC555; showGifFragment(mIC555Images, last_page); break;
-            case SCREEN_ID_PROJECT1: mScreenStatus = SCREEN_ID_PROJECT1; showGifFragment(mProject1Images, last_page); break;
-            case SCREEN_ID_PROJECT2: mScreenStatus = SCREEN_ID_PROJECT2; showGifFragment(mProject2Images, last_page); break;
-            case SCREEN_ID_DEMO_PROJECT1: mScreenStatus = SCREEN_ID_DEMO_PROJECT1; showGifFragment(mDemoProject1Images, last_page); break;
-            case SCREEN_ID_DEMO_PROJECT2: mScreenStatus = SCREEN_ID_DEMO_PROJECT2; showGifFragment(mDemoProject2Images, last_page); break;
+            case SCREEN_ID_BREADBOARD_USAGE: mScreenStatus = SCREEN_ID_BREADBOARD_USAGE; showGifFragment(mBasicElectronic, mBreadboardImages, last_page); break;
+            case SCREEN_ID_LED_ON_OFF: mScreenStatus = SCREEN_ID_LED_ON_OFF; showGifFragment(mBasicElectronic, mLedOnOffImages, last_page); break;
+            case SCREEN_ID_POWER_SUPPLY: mScreenStatus = SCREEN_ID_POWER_SUPPLY; showGifFragment(mBasicElectronic, mPowerSupplyImages, last_page); break;
+            case SCREEN_ID_TRANSISTOR_SWITCH: mScreenStatus = SCREEN_ID_TRANSISTOR_SWITCH;  showGifFragment(mBasicElectronic, mTransistorSwitchImages, last_page);  break;
+            case SCREEN_ID_IC741: mScreenStatus = SCREEN_ID_IC741; showGifFragment(mBasicElectronic, mIC741Images, last_page); break;
+            case SCREEN_ID_IC555: mScreenStatus = SCREEN_ID_IC555; showGifFragment(mBasicElectronic, mIC555Images, last_page); break;
+            case SCREEN_ID_PROJECT1: mScreenStatus = SCREEN_ID_PROJECT1; showGifFragment(mWorkshops, mProject1Images, last_page); break;
+            case SCREEN_ID_PROJECT2: mScreenStatus = SCREEN_ID_PROJECT2; showGifFragment(mWorkshops, mProject2Images, last_page); break;
+            case SCREEN_ID_DEMO_PROJECT1: mScreenStatus = SCREEN_ID_DEMO_PROJECT1; showGifFragment(mDemoWorkshops, mDemoProject1Images, last_page); break;
+            case SCREEN_ID_DEMO_PROJECT2: mScreenStatus = SCREEN_ID_DEMO_PROJECT2; showGifFragment(mDemoWorkshops, mDemoProject2Images, last_page); break;
             default: mScreenStatus = 0; showTutorialFragment(); break;
         }
     }
@@ -164,16 +152,16 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
                     Toast.makeText(getApplicationContext(), "Please Subscribe to access Projects", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.btnDemoProjects: mScreenStatus = SCREEN_ID_DEMO_PROJECTS;  showDemoProjectsFragment(); break;
-            case R.id.btnBreadBoard: mScreenStatus = SCREEN_ID_BREADBOARD_USAGE; showGifFragment(mBreadboardImages, last_page); break;
-            case R.id.btnLedOnOFF: mScreenStatus = SCREEN_ID_LED_ON_OFF;  showGifFragment(mLedOnOffImages, last_page);  break;
-            case R.id.btnPowerSupply: mScreenStatus = SCREEN_ID_POWER_SUPPLY; showGifFragment(mPowerSupplyImages, last_page); break;
-            case R.id.btnTransistorSwitch: mScreenStatus = SCREEN_ID_TRANSISTOR_SWITCH;  showGifFragment(mTransistorSwitchImages, last_page); break;
-            case R.id.btnIC741: mScreenStatus = SCREEN_ID_IC741; showGifFragment(mIC741Images, last_page); break;
-            case R.id.btnIC555: mScreenStatus = SCREEN_ID_IC555; showGifFragment(mIC555Images, last_page); break;
-            case R.id.btnProject1: mScreenStatus = SCREEN_ID_PROJECT1; showGifFragment(mProject1Images, last_page); break;
-            case R.id.btnProject2: mScreenStatus = SCREEN_ID_PROJECT2; showGifFragment(mProject2Images, last_page); break;
-            case R.id.btnDemoProject1: mScreenStatus = SCREEN_ID_DEMO_PROJECT1; showGifFragment(mDemoProject1Images, last_page); break;
-            case R.id.btnDemoProject2:  mScreenStatus = SCREEN_ID_DEMO_PROJECT2; showGifFragment(mDemoProject2Images, last_page); break;
+            case R.id.btnBreadBoard: mScreenStatus = SCREEN_ID_BREADBOARD_USAGE; showGifFragment(mBasicElectronic, mBreadboardImages, last_page); break;
+            case R.id.btnLedOnOFF: mScreenStatus = SCREEN_ID_LED_ON_OFF;  showGifFragment(mBasicElectronic, mLedOnOffImages, last_page);  break;
+            case R.id.btnPowerSupply: mScreenStatus = SCREEN_ID_POWER_SUPPLY; showGifFragment(mBasicElectronic, mPowerSupplyImages, last_page); break;
+            case R.id.btnTransistorSwitch: mScreenStatus = SCREEN_ID_TRANSISTOR_SWITCH;  showGifFragment(mBasicElectronic, mTransistorSwitchImages, last_page); break;
+            case R.id.btnIC741: mScreenStatus = SCREEN_ID_IC741; showGifFragment(mBasicElectronic, mIC741Images, last_page); break;
+            case R.id.btnIC555: mScreenStatus = SCREEN_ID_IC555; showGifFragment(mBasicElectronic, mIC555Images, last_page); break;
+            case R.id.btnProject1: mScreenStatus = SCREEN_ID_PROJECT1; showGifFragment(mWorkshops, mProject1Images, last_page); break;
+            case R.id.btnProject2: mScreenStatus = SCREEN_ID_PROJECT2; showGifFragment(mWorkshops, mProject2Images, last_page); break;
+            case R.id.btnDemoProject1: mScreenStatus = SCREEN_ID_DEMO_PROJECT1; showGifFragment(mDemoWorkshops, mDemoProject1Images, last_page); break;
+            case R.id.btnDemoProject2:  mScreenStatus = SCREEN_ID_DEMO_PROJECT2; showGifFragment(mDemoWorkshops, mDemoProject2Images, last_page); break;
             case R.id.btnResume:
                 int screen_id = readSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
                 int screen_page = readSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
@@ -226,8 +214,8 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     }
 
 
-    private void showGifFragment(String electronic_type, int last_page) {
-        ImageFragment mShowGifFragment = ImageFragment.newInstance(electronic_type, mStatusBarColor, last_page);
+    private void showGifFragment(String experiment_folder, String type_folder, int last_page) {
+        ImageFragment mShowGifFragment = ImageFragment.newInstance(experiment_folder, type_folder, mStatusBarColor, last_page);
         mShowGifFragment.setOnClickListener(this);
         FragmentTransaction transaction = mFragmentManager.beginTransaction();
         transaction.replace(R.id.fragmentContent, mShowGifFragment)

@@ -2,6 +2,7 @@ package in.altilogic.prayogeek.service;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.os.ConditionVariable;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
@@ -32,6 +33,7 @@ public class ImageDownloadService  extends IntentService {
     public static final int HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES = 1;
     public static final int HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES = 2;
 
+    public static final String HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT = "MESSAGE_TYPE_EXPERIMENT";
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE = "MESSAGE_TYPE_PATH_FIRESTORE";
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_PATH_PHONE = "MESSAGE_TYPE_PATH_PHONE";
     public static final String HW_SERVICE_MESSAGE_IMAGE_FILES = "MESSAGE_TYPE_IMAGE_FILES";
@@ -49,24 +51,26 @@ public class ImageDownloadService  extends IntentService {
         int message_type = intent.getIntExtra(HW_SERVICE_MESSAGE_TYPE_ID, -1);
         switch (message_type) {
             case HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES:
+                String experimentPath = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT);
                 String fireStorePath = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE);
                 String phonePath = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_PATH_PHONE);
                 Log.d(TAG, "Start download image from " + fireStorePath + " to " + phonePath);
 
                 mFilesNumber = 0;
-                startDownloadImage(fireStorePath, "");
+                startDownloadImage(experimentPath, fireStorePath, "");
                 break;
             default:
                 break;
         }
     }
+    ConditionVariable mConditionVariable;
 
-    private void startDownloadImage(final String base_electronis_type, String phonePath) {
-        Log.d(TAG, "Start download " + base_electronis_type);
+    private void startDownloadImage(final String experiment_folder, final String base_electronis_type, String phonePath) {
+        Log.d(TAG, "Start download "+ experiment_folder +"/"+ base_electronis_type);
         if(mFireBaseHelper == null)
             mFireBaseHelper = new FireBaseHelper();
 
-        mFireBaseHelper.read("Tutorials", "basic_electronics", new EventListener<DocumentSnapshot>() {
+        mFireBaseHelper.read("Tutorials", experiment_folder, new EventListener<DocumentSnapshot>() {
             @Override
             public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
                 if (e != null) {
@@ -88,9 +92,16 @@ public class ImageDownloadService  extends IntentService {
                         mFilesNumber = breadboard_urls.size();
                         saveImagesVersion(base_electronis_type, firestore_images_version);
                         saveFilesNumber(base_electronis_type, breadboard_urls.size() );
-
-                        for(String path: breadboard_urls)
+                        mConditionVariable = new ConditionVariable();
+                        for(String path: breadboard_urls) {
                             downloadUri(path, base_electronis_type, count++);
+//                            mConditionVariable.block();
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e1) {
+                                e1.printStackTrace();
+                            }
+                        }
                     }
 //                    else {
 //                        notifyActivityAboutNewFiles();
@@ -102,7 +113,7 @@ public class ImageDownloadService  extends IntentService {
 
     private void downloadUri(String path, final String electronic_type, final int num){
         Log.d(TAG,"Start download: " + path);
-        StorageReference mStorageRef;
+        final StorageReference mStorageRef;
         mStorageRef = FirebaseStorage.getInstance().getReferenceFromUrl(path);
         final String fileName = mStorageRef.getName();
         File localFile = null;
@@ -114,23 +125,30 @@ public class ImageDownloadService  extends IntentService {
 
         if (localFile != null) {
             final File finalLocalFile = localFile;
-            mStorageRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+            new Thread(new Runnable() {
                 @Override
-                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                    Log.d(TAG, "Notify activity about downloaded images " + finalLocalFile.getName());
-                    saveFileName(electronic_type + num, finalLocalFile.getAbsolutePath());
+                public void run() {
+                    mStorageRef.getFile(finalLocalFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                            Log.d(TAG, "Notify activity about downloaded images " + finalLocalFile.getName());
+                            saveFileName(electronic_type + num, finalLocalFile.getAbsolutePath());
 
-                    if(num >= mFilesNumber) {
-                        mFilesNumber = 0;
-                        notifyActivityAboutNewFiles();
-                    }
+                            if(num >= mFilesNumber) {
+                                mFilesNumber = 0;
+                                notifyActivityAboutNewFiles();
+                            }
+//                            mConditionVariable.open();
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Log.d(TAG, "Exception: " + e.toString());
+//                            mConditionVariable.open();
+                        }
+                    });
                 }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    Log.d(TAG, "Exception: " + e.toString());
-                }
-            });
+            }).start();
         }
     }
 
