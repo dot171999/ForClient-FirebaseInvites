@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -165,6 +166,13 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
                 Log.d(TAG, "BroadcastReceiver:");
                 int result = intent.getIntExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, -1);
                 switch (result){
+                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_START_DOWNLOAD:
+                        Toast.makeText(getActivity(), "Downloading Experiment. Please wait..", Toast.LENGTH_SHORT ).show();
+                        break;
+                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET:
+                        Toast.makeText(getActivity(), "No Network Connection. Turn ON network and Retry", Toast.LENGTH_SHORT ).show();
+                        mOnClickListener.onClick(getView(), R.id.btnDone);
+                        break;
                     case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES:
                         Log.d(TAG, "Download complete");
 

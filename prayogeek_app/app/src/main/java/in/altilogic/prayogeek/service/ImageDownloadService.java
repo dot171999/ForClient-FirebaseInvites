@@ -32,6 +32,8 @@ public class ImageDownloadService  extends IntentService {
     public static final String HW_SERVICE_MESSAGE_TYPE_ID = "MESSAGE_TYPE_ID";
     public static final int HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES = 1;
     public static final int HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES = 2;
+    public static final int HW_SERVICE_MESSAGE_TYPE_IMAGE_START_DOWNLOAD = 3;
+    public static final int HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET = 4;
 
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT = "MESSAGE_TYPE_EXPERIMENT";
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE = "MESSAGE_TYPE_PATH_FIRESTORE";
@@ -41,7 +43,7 @@ public class ImageDownloadService  extends IntentService {
     private FireBaseHelper mFireBaseHelper;
 
     private int mFilesNumber = 0;
-
+    private boolean mIsOnline;
     public ImageDownloadService() {
         super("ImageDownloadService");
     }
@@ -57,6 +59,8 @@ public class ImageDownloadService  extends IntentService {
                 Log.d(TAG, "Start download image from " + fireStorePath + " to " + phonePath);
 
                 mFilesNumber = 0;
+                mIsOnline = Utils.isOnline(this);
+
                 startDownloadImage(experimentPath, fireStorePath, "");
                 break;
             default:
@@ -75,6 +79,10 @@ public class ImageDownloadService  extends IntentService {
             public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
                 if (e != null) {
                     Log.w(TAG, "Listen failed.", e);
+
+                    if(!mIsOnline)
+                        notifyActivityAboutNoInternetConnection();
+
                     return;
                 }
                 List<String> basic_electronics = mFireBaseHelper.getArray(documentSnapshot);
@@ -86,9 +94,16 @@ public class ImageDownloadService  extends IntentService {
 
                     int firestore_images_version = mFireBaseHelper.getLong(documentSnapshot, base_electronis_type, "version");
 
+                    if(firestore_images_version <= 0 && !mIsOnline)
+                    {
+                        notifyActivityAboutNoInternetConnection();
+                        return;
+                    }
+
 //                    if(( getLocaleImagesVersion(base_electronis_type) != firestore_images_version) || getLocaleImagesVersion(base_electronis_type) == 0 )
                     {
                         int count = 1;
+                        notifyActivityAboutStartDownload();
                         mFilesNumber = breadboard_urls.size();
                         saveImagesVersion(base_electronis_type, firestore_images_version);
                         saveFilesNumber(base_electronis_type, breadboard_urls.size() );
@@ -172,6 +187,18 @@ public class ImageDownloadService  extends IntentService {
     private void notifyActivityAboutNewFiles() {
         Intent intentAnswer = new Intent(HW_SERVICE_BROADCAST_VALUE);
         intentAnswer.putExtra(HW_SERVICE_MESSAGE_TYPE_ID, HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intentAnswer);
+    }
+
+    private void notifyActivityAboutStartDownload() {
+        Intent intentAnswer = new Intent(HW_SERVICE_BROADCAST_VALUE);
+        intentAnswer.putExtra(HW_SERVICE_MESSAGE_TYPE_ID, HW_SERVICE_MESSAGE_TYPE_IMAGE_START_DOWNLOAD);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intentAnswer);
+    }
+
+    private void notifyActivityAboutNoInternetConnection() {
+        Intent intentAnswer = new Intent(HW_SERVICE_BROADCAST_VALUE);
+        intentAnswer.putExtra(HW_SERVICE_MESSAGE_TYPE_ID, HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intentAnswer);
     }
 }
