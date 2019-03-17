@@ -41,6 +41,7 @@ public class ImageDownloadService  extends IntentService {
     private FireBaseHelper mFireBaseHelper;
 
     private int mFilesNumber = 0;
+    private int mFilesCounter = 0;
     private boolean mIsOnline;
     private boolean mStartDownloadNotify;
     public ImageDownloadService() {
@@ -60,6 +61,7 @@ public class ImageDownloadService  extends IntentService {
 
                 mExperimentType = fireStorePath;
                 mFilesNumber = 0;
+                mFilesCounter = 0;
                 mIsOnline = Utils.isOnline(this);
                 mStartDownloadNotify = false;
                 mIsLocFilesNotFound = isLocalFilesNotFound();
@@ -114,7 +116,6 @@ public class ImageDownloadService  extends IntentService {
                         notifyActivityAboutNoInternetConnection();
                         return;
                     }
-                    firestore_images_version = 2;
                     boolean isNewVersion = false;
                     if( getLocaleImagesVersion() != firestore_images_version)  {
                         isNewVersion = true;
@@ -179,6 +180,7 @@ public class ImageDownloadService  extends IntentService {
         final String fileName = mStorageRef.getName();
         File localFile = null;
         try {
+//            localFile = File.createTempFile(fileName, "");
             localFile = File.createTempFile(fileName, "", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS));
         } catch (IOException e) {
             e.printStackTrace();
@@ -189,11 +191,11 @@ public class ImageDownloadService  extends IntentService {
             mStorageRef.getFile(finalLocalFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                    Log.d(TAG, "Notify activity about downloaded images " + finalLocalFile.getName());
                     saveFileName(electronic_type + num, finalLocalFile.getAbsolutePath());
 
-                    if(num >= mFilesNumber) {
+                    if(++mFilesCounter >= mFilesNumber) {
                         mFilesNumber = 0;
+                        mFilesCounter = 0;
                         notifyActivityAboutNewFiles();
                     }
                 }
@@ -234,6 +236,7 @@ public class ImageDownloadService  extends IntentService {
     }
 
     private void notifyActivityAboutNewFiles() {
+        Log.d(TAG, "Notify activity about downloaded images " + mExperimentType);
         Intent intentAnswer = new Intent(HW_SERVICE_BROADCAST_VALUE);
         intentAnswer.putExtra(HW_SERVICE_MESSAGE_TYPE_ID, HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES_COMPLETE);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intentAnswer);
