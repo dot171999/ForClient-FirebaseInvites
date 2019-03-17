@@ -63,7 +63,7 @@ public class PlaceholderFragment extends Fragment {
                 GifDrawable gifFromPath = new GifDrawable( mFilepath);
                 mGif.setImageDrawable(gifFromPath);
             } catch (IOException e) {
-                Log.d(TAG, e.getMessage());
+                Log.d(TAG, e.getMessage() + "; " + mFilepath);
             }
         }
         else {
@@ -88,7 +88,8 @@ public class PlaceholderFragment extends Fragment {
     public void onStop() {
         super.onStop();
         Log.d(TAG, "PlaceholderFragment::onStop()");
-        Zoomy.unregister(mGif);
+        if(mGif != null)
+            Zoomy.unregister(mGif);
         mFilepath = null;
         mGif = null;
     }

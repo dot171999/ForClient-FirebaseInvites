@@ -72,6 +72,8 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
 
     private BroadcastReceiver mBroadcastReceiver;
 
+    private boolean isStartShowingImage;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -240,6 +242,14 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     private List<String> mImagePath;
 
     private void showGifFragment(String experiment_folder, String type_folder, int last_page) {
+        Log.d(TAG, "showGifFragment : " + experiment_folder + "/" + type_folder + ":" + last_page);
+        if(isStartShowingImage) {
+            Toast.makeText(this, "Download in progress. Please wait", Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "Cancel: showGifFragment: " + experiment_folder + "/" + type_folder + ":" + last_page );
+            return;
+        }
+
+        isStartShowingImage = true;
         mExperimentFolder = experiment_folder;
         mExperimentType = type_folder;
         mLastPage = last_page;
@@ -289,9 +299,11 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
                     case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET:
                         Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET");
                         Toast.makeText(getApplicationContext(), "No Network Connection.\nTurn ON network and Retry", Toast.LENGTH_SHORT ).show();
+                        isStartShowingImage = false;
                         break;
                     case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES_COMPLETE:
                         Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES_COMPLETE");
+                        isStartShowingImage = false;
                         startImageFragment();
                         break;
                     default:

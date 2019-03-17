@@ -48,7 +48,7 @@ public class ImageDownloadService  extends IntentService {
     }
     private Thread mDownloadImagesThread;
     private String mExperimentType;
-
+    private boolean mIsLocFilesNotFound;
     @Override
     protected void onHandleIntent(Intent intent) {
         int message_type = intent.getIntExtra(HW_SERVICE_MESSAGE_TYPE_ID, -1);
@@ -62,7 +62,8 @@ public class ImageDownloadService  extends IntentService {
                 mFilesNumber = 0;
                 mIsOnline = Utils.isOnline(this);
                 mStartDownloadNotify = false;
-                if(getLocaleImagesVersion() <= 0 || isLocalFilesNotFound())
+                mIsLocFilesNotFound = isLocalFilesNotFound();
+                if(getLocaleImagesVersion() <= 0 || mIsLocFilesNotFound)
                     notifyActivityAboutStartDownload();
 
 
@@ -113,9 +114,15 @@ public class ImageDownloadService  extends IntentService {
                         notifyActivityAboutNoInternetConnection();
                         return;
                     }
+                    firestore_images_version = 2;
+                    boolean isNewVersion = false;
+                    if( getLocaleImagesVersion() != firestore_images_version)  {
+                        isNewVersion = true;
+                        deleteOldImages();
+                    }
 
-                    if(( getLocaleImagesVersion() != firestore_images_version) || isLocalFilesNotFound() ) {
-                        int count = 1;
+                    if(isNewVersion || mIsLocFilesNotFound ) {
+                            int count = 1;
                         notifyActivityAboutStartDownload();
                         mFilesNumber = breadboard_urls.size();
                         saveImagesVersion(mExperimentType, firestore_images_version);
@@ -130,6 +137,24 @@ public class ImageDownloadService  extends IntentService {
                 }
             }
         });
+    }
+
+    private void deleteOldImages() {
+        int number = getFilesNumber(mExperimentType);
+
+        for(int i=0; i<number; i++) {
+            String filePath = getFilePath(mExperimentType + (i+1));
+            if(filePath == null)
+                continue;
+
+            File file = new File(filePath);
+            if(file.exists()) {
+                String fName = file.getName();
+                boolean deleted = file.delete();
+                if(deleted)
+                    Log.d(TAG, "Delete: " + fName);
+            }
+        }
     }
 
     private boolean isLocalFilesNotFound() {
