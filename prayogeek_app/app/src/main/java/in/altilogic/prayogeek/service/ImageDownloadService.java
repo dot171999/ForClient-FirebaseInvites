@@ -2,8 +2,6 @@ package in.altilogic.prayogeek.service;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.os.ConditionVariable;
-import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -180,8 +178,8 @@ public class ImageDownloadService  extends IntentService {
         final String fileName = mStorageRef.getName();
         File localFile = null;
         try {
-//            localFile = File.createTempFile(fileName, "");
-            localFile = File.createTempFile(fileName, "", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS));
+            localFile = File.createTempFile(fileName, "");
+//            localFile = File.createTempFile(fileName, "", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS));
         } catch (IOException e) {
             e.printStackTrace();
         }
