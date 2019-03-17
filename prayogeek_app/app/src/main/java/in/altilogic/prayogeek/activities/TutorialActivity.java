@@ -1,10 +1,14 @@
 package in.altilogic.prayogeek.activities;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -19,11 +23,13 @@ import in.altilogic.prayogeek.fragments.ImageFragment;
 import in.altilogic.prayogeek.fragments.ProjectsFragment;
 import in.altilogic.prayogeek.fragments.TutorialFragment;
 import in.altilogic.prayogeek.service.ImageDownloadService;
+import in.altilogic.prayogeek.utils.Utils;
 
 import static in.altilogic.prayogeek.utils.Utils.*;
 
 public class TutorialActivity extends AppCompatActivity implements View.OnClickListener, ImageFragment.OnClickListener {
     private FragmentManager mFragmentManager;
+    private final static String TAG = "YOUSCOPE-DB-TUTORIAL";
 
     public final static String CURRENT_SCREEN_SETTINGS = "TUTORIAL-SETTINGS-CURRENT-SCREEN";
     public final static String CURRENT_SCREEN_SETTINGS_PAGE = "TUTORIAL-SETTINGS-CURRENT-PAGE";
@@ -60,6 +66,8 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
 
     private static int mStatusBarColor;
 
+    private BroadcastReceiver mBroadcastReceiver;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,6 +79,7 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         int last_screen_id = readSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
         int last_page = readSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
         showFragment(last_screen_id, last_page);
+        initBroadcastReceiver();
     }
 
     private void showFragment(int last_screen_id, int last_page) {
@@ -94,11 +103,16 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void onStart() {
         super.onStart();
+        Log.d(TAG, "onStart");
+        IntentFilter statusIntentFilter = new IntentFilter(ImageDownloadService.HW_SERVICE_BROADCAST_VALUE);
+        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, statusIntentFilter);
     }
 
     @Override
     public void onStop(){
         super.onStop();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
+        Log.d(TAG, "ImageFragment::onStop");
     }
 
     @Override
@@ -215,6 +229,8 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
 
 
     private void showGifFragment(String experiment_folder, String type_folder, int last_page) {
+        startDownload(experiment_folder, type_folder);
+        // TODO need check the current version and check contain the local files
         ImageFragment mShowGifFragment = ImageFragment.newInstance(experiment_folder, type_folder, mStatusBarColor, last_page);
         mShowGifFragment.setOnClickListener(this);
         FragmentTransaction transaction = mFragmentManager.beginTransaction();
@@ -244,5 +260,56 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         DemoProjectsFragment mDemoProjectsFragment = new DemoProjectsFragment();
         mDemoProjectsFragment.setOnClickListener(this);
         mFragmentManager.beginTransaction().replace(R.id.fragmentContent, mDemoProjectsFragment).commit();
+    }
+
+    private void initBroadcastReceiver() {
+        mBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.d(TAG, "BroadcastReceiver:");
+                int result = intent.getIntExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, -1);
+                switch (result){
+                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_START_DOWNLOAD:
+                        Toast.makeText(getApplicationContext(), "Downloading Experiment. Please wait..", Toast.LENGTH_SHORT ).show();
+                        break;
+                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET:
+                        Toast.makeText(getApplicationContext(), "No Network Connection. Turn ON network and Retry", Toast.LENGTH_SHORT ).show();
+                        mOnClickListener.onClick(getView(), R.id.btnDone);
+                        break;
+                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES:
+                        Log.d(TAG, "Download complete");
+                        downloadImagesFromFile();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        };
+    }
+
+    private void downloadImagesFromFile() {
+        int number = getFilesNumber(mImagesType);
+        for(int i=0; i<number; i++) {
+            String name = getFilePath(mImagesType+(i+1));
+            mImageFiles.add(name);
+        }
+    }
+
+    private void startDownload(String experimentFolder, String name) {
+        startService(new Intent(this,ImageDownloadService.class)
+                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES)
+                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT, experimentFolder)
+                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE, name)
+                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_PHONE,""));
+    }
+
+    private int getFilesNumber(String settings_key) {
+        return Utils.readSharedSetting(this, settings_key + "_number", 0);
+    }
+
+    private String getFilePath(String settings_key){
+        String fileName = Utils.readSharedSetting(this, settings_key, null);
+        Log.d(TAG, "Get file key: " + settings_key + "; name: " + fileName);
+        return fileName;
     }
 }
