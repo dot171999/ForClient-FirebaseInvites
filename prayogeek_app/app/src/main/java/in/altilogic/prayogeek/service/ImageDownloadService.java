@@ -31,46 +31,61 @@ public class ImageDownloadService  extends IntentService {
     public static final String HW_SERVICE_BROADCAST_VALUE = "prayogeek.altilogic.in";
     public static final String HW_SERVICE_MESSAGE_TYPE_ID = "MESSAGE_TYPE_ID";
     public static final int HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES = 1;
-    public static final int HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES = 2;
+    public static final int HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES_COMPLETE = 2;
     public static final int HW_SERVICE_MESSAGE_TYPE_IMAGE_START_DOWNLOAD = 3;
     public static final int HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET = 4;
 
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT = "MESSAGE_TYPE_EXPERIMENT";
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE = "MESSAGE_TYPE_PATH_FIRESTORE";
-    public static final String HW_SERVICE_MESSAGE_DOWNLOAD_PATH_PHONE = "MESSAGE_TYPE_PATH_PHONE";
-    public static final String HW_SERVICE_MESSAGE_IMAGE_FILES = "MESSAGE_TYPE_IMAGE_FILES";
 
     private FireBaseHelper mFireBaseHelper;
 
     private int mFilesNumber = 0;
     private boolean mIsOnline;
+    private boolean mStartDownloadNotify;
     public ImageDownloadService() {
         super("ImageDownloadService");
     }
+    private Thread mDownloadImagesThread;
+    private String mExperimentType;
 
     @Override
     protected void onHandleIntent(Intent intent) {
         int message_type = intent.getIntExtra(HW_SERVICE_MESSAGE_TYPE_ID, -1);
         switch (message_type) {
             case HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES:
-                String experimentPath = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT);
+                final String experimentPath = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT);
                 String fireStorePath = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE);
-                String phonePath = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_PATH_PHONE);
-                Log.d(TAG, "Start download image from " + fireStorePath + " to " + phonePath);
+                Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES: " + experimentPath + "/"+fireStorePath);
 
+                mExperimentType = fireStorePath;
                 mFilesNumber = 0;
                 mIsOnline = Utils.isOnline(this);
+                mStartDownloadNotify = false;
+                if(getLocaleImagesVersion() <= 0 || isLocalFilesNotFound())
+                    notifyActivityAboutStartDownload();
 
-                startDownloadImage(experimentPath, fireStorePath, "");
+
+                if(mDownloadImagesThread != null)
+                    mDownloadImagesThread = null;
+
+                mDownloadImagesThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        startDownloadImage(experimentPath);
+                    }
+                });
+
+                mDownloadImagesThread.start();
+
                 break;
             default:
                 break;
         }
     }
-    ConditionVariable mConditionVariable;
 
-    private void startDownloadImage(final String experiment_folder, final String base_electronis_type, String phonePath) {
-        Log.d(TAG, "Start download "+ experiment_folder +"/"+ base_electronis_type);
+    private void startDownloadImage(final String experiment_folder) {
+        Log.d(TAG, "Start download "+ experiment_folder +"/"+ mExperimentType);
         if(mFireBaseHelper == null)
             mFireBaseHelper = new FireBaseHelper();
 
@@ -87,43 +102,49 @@ public class ImageDownloadService  extends IntentService {
                 }
                 List<String> basic_electronics = mFireBaseHelper.getArray(documentSnapshot);
 
-                if(basic_electronics.contains(base_electronis_type)) {
-                    List<String> breadboard_urls = mFireBaseHelper.getArray(documentSnapshot, base_electronis_type, "imageURL");
+                if(basic_electronics.contains(mExperimentType)) {
+                    List<String> breadboard_urls = mFireBaseHelper.getArray(documentSnapshot, mExperimentType, "imageURL");
                     if(breadboard_urls == null)
                         return;
 
-                    int firestore_images_version = mFireBaseHelper.getLong(documentSnapshot, base_electronis_type, "version");
+                    int firestore_images_version = mFireBaseHelper.getLong(documentSnapshot, mExperimentType, "version");
 
-                    if(firestore_images_version <= 0 && !mIsOnline)
-                    {
+                    if(firestore_images_version <= 0 && !mIsOnline) {
                         notifyActivityAboutNoInternetConnection();
                         return;
                     }
 
-//                    if(( getLocaleImagesVersion(base_electronis_type) != firestore_images_version) || getLocaleImagesVersion(base_electronis_type) == 0 )
-                    {
+                    if(( getLocaleImagesVersion() != firestore_images_version) || isLocalFilesNotFound() ) {
                         int count = 1;
                         notifyActivityAboutStartDownload();
                         mFilesNumber = breadboard_urls.size();
-                        saveImagesVersion(base_electronis_type, firestore_images_version);
-                        saveFilesNumber(base_electronis_type, breadboard_urls.size() );
-                        mConditionVariable = new ConditionVariable();
+                        saveImagesVersion(mExperimentType, firestore_images_version);
+                        saveFilesNumber(mExperimentType, breadboard_urls.size() );
                         for(String path: breadboard_urls) {
-                            downloadUri(path, base_electronis_type, count++);
-//                            mConditionVariable.block();
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException e1) {
-                                e1.printStackTrace();
-                            }
+                            downloadUri(path, mExperimentType, count++);
                         }
                     }
-//                    else {
-//                        notifyActivityAboutNewFiles();
-//                    }
+                    else {
+                        notifyActivityAboutNewFiles();
+                    }
                 }
             }
         });
+    }
+
+    private boolean isLocalFilesNotFound() {
+        int number = getFilesNumber(mExperimentType);
+
+        for(int i=0; i<number; i++) {
+            String filePath = getFilePath(mExperimentType + (i+1));
+            if(filePath == null)
+                return true;
+            File file = new File(filePath);
+            if(!file.exists())
+                return true;
+        }
+
+        return false;
     }
 
     private void downloadUri(String path, final String electronic_type, final int num){
@@ -140,30 +161,23 @@ public class ImageDownloadService  extends IntentService {
 
         if (localFile != null) {
             final File finalLocalFile = localFile;
-            new Thread(new Runnable() {
+            mStorageRef.getFile(finalLocalFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                 @Override
-                public void run() {
-                    mStorageRef.getFile(finalLocalFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                        @Override
-                        public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                            Log.d(TAG, "Notify activity about downloaded images " + finalLocalFile.getName());
-                            saveFileName(electronic_type + num, finalLocalFile.getAbsolutePath());
+                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                    Log.d(TAG, "Notify activity about downloaded images " + finalLocalFile.getName());
+                    saveFileName(electronic_type + num, finalLocalFile.getAbsolutePath());
 
-                            if(num >= mFilesNumber) {
-                                mFilesNumber = 0;
-                                notifyActivityAboutNewFiles();
-                            }
-//                            mConditionVariable.open();
-                        }
-                    }).addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Log.d(TAG, "Exception: " + e.toString());
-//                            mConditionVariable.open();
-                        }
-                    });
+                    if(num >= mFilesNumber) {
+                        mFilesNumber = 0;
+                        notifyActivityAboutNewFiles();
+                    }
                 }
-            }).start();
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                Log.d(TAG, "Exception: " + e.toString());
+                }
+            });
         }
     }
 
@@ -180,20 +194,37 @@ public class ImageDownloadService  extends IntentService {
         Utils.saveSharedSetting(this, imagesType, version);
     }
 
-    private int getLocaleImagesVersion(String imagesType) {
-        return Utils.readSharedSetting(this, imagesType, 0);
+    private int getLocaleImagesVersion() {
+        return Utils.readSharedSetting(this, mExperimentType, 0);
+    }
+
+    private int getFilesNumber(String settings_key) {
+        return Utils.readSharedSetting(this, settings_key + "_number", 0);
+    }
+
+    private String getFilePath(String settings_key){
+        String fileName = Utils.readSharedSetting(this, settings_key, null);
+        Log.d(TAG, "Get file key: " + settings_key + "; name: " + fileName);
+        return fileName;
     }
 
     private void notifyActivityAboutNewFiles() {
         Intent intentAnswer = new Intent(HW_SERVICE_BROADCAST_VALUE);
-        intentAnswer.putExtra(HW_SERVICE_MESSAGE_TYPE_ID, HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES);
+        intentAnswer.putExtra(HW_SERVICE_MESSAGE_TYPE_ID, HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES_COMPLETE);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intentAnswer);
     }
 
     private void notifyActivityAboutStartDownload() {
+        if(!mIsOnline) {
+            notifyActivityAboutNoInternetConnection();
+            return;
+        }
+        if(mStartDownloadNotify)
+            return;
         Intent intentAnswer = new Intent(HW_SERVICE_BROADCAST_VALUE);
         intentAnswer.putExtra(HW_SERVICE_MESSAGE_TYPE_ID, HW_SERVICE_MESSAGE_TYPE_IMAGE_START_DOWNLOAD);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intentAnswer);
+        mStartDownloadNotify = true;
     }
 
     private void notifyActivityAboutNoInternetConnection() {

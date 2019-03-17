@@ -9,7 +9,10 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
+import pl.droidsonroids.gif.GifDrawable;
+
 public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
+    private final static String TAG = "YOUSCOPE-DB-SECTIONS-PA";
     private List<String> mImages;
     private int mLayoutId = -1;
     private long baseId = 0;
@@ -22,7 +25,7 @@ public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
 
     public SectionsPagerAdapter(int layout_id, FragmentManager fm, List<String> imagesPaths) {
         super(fm);
-        Log.d("APP-", "SectionsPagerAdapter() " + getCount());
+        Log.d(TAG, "SectionsPagerAdapter() " + getCount());
 
         mImages = imagesPaths;
         mLayoutId = layout_id;
@@ -32,17 +35,17 @@ public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
         mFragmentList = new ArrayList<>();
         for(int i=0; i<mImages.size(); i++) {
             mFragmentList.add(PlaceholderFragment.newInstance(mLayoutId,i+1, mImages.get(i)));
-            Log.d("APP-", "SectionsPagerAdapter.add " + i);
+            Log.d(TAG, "SectionsPagerAdapter.add " + i);
         }
         notifyDataSetChanged();
     }
 
     @Override
     public Fragment getItem(int position) {
-        Log.d("APP-", "SectionsPagerAdapter.getItem " + position);
+        Log.d(TAG, "SectionsPagerAdapter.getItem " + position);
         if(mImages.size() != getCount())
         {
-            Log.d("APP-", "SectionsPagerAdapter.getItem mDrawable.length = " + mImages.size() + "; getCount = " + getCount());
+            Log.d(TAG, "SectionsPagerAdapter.getItem mDrawable.length = " + mImages.size() + "; getCount = " + getCount());
         }
         return mFragmentList.get(position);
     }

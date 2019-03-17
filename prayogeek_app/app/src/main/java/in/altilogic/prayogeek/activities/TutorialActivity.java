@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
@@ -14,6 +15,9 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import in.altilogic.prayogeek.Global_Var;
 import in.altilogic.prayogeek.R;
@@ -227,15 +231,25 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
     }
 
+    private void startShowGifFragment(){
+    }
+
+    private String mExperimentFolder;
+    private String mExperimentType;
+    private int mLastPage;
+    private List<String> mImagePath;
 
     private void showGifFragment(String experiment_folder, String type_folder, int last_page) {
-        startDownload(experiment_folder, type_folder);
-        // TODO need check the current version and check contain the local files
-        ImageFragment mShowGifFragment = ImageFragment.newInstance(experiment_folder, type_folder, mStatusBarColor, last_page);
-        mShowGifFragment.setOnClickListener(this);
-        FragmentTransaction transaction = mFragmentManager.beginTransaction();
-        transaction.replace(R.id.fragmentContent, mShowGifFragment)
-                .commit();
+        mExperimentFolder = experiment_folder;
+        mExperimentType = type_folder;
+        mLastPage = last_page;
+        if(mImagePath != null) {
+            mImagePath.clear();
+            mImagePath = null;
+        }
+
+        mImagePath = new ArrayList<>();
+        startDownload();
     }
 
     private void showBasicElectronic(){
@@ -266,19 +280,19 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Log.d(TAG, "BroadcastReceiver:");
                 int result = intent.getIntExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, -1);
                 switch (result){
                     case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_START_DOWNLOAD:
+                        Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_IMAGE_START_DOWNLOAD");
                         Toast.makeText(getApplicationContext(), "Downloading Experiment. Please wait..", Toast.LENGTH_SHORT ).show();
                         break;
                     case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET:
-                        Toast.makeText(getApplicationContext(), "No Network Connection. Turn ON network and Retry", Toast.LENGTH_SHORT ).show();
-                        mOnClickListener.onClick(getView(), R.id.btnDone);
+                        Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET");
+                        Toast.makeText(getApplicationContext(), "No Network Connection.\nTurn ON network and Retry", Toast.LENGTH_SHORT ).show();
                         break;
-                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES:
-                        Log.d(TAG, "Download complete");
-                        downloadImagesFromFile();
+                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES_COMPLETE:
+                        Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES_COMPLETE");
+                        startImageFragment();
                         break;
                     default:
                         break;
@@ -287,20 +301,29 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         };
     }
 
-    private void downloadImagesFromFile() {
-        int number = getFilesNumber(mImagesType);
-        for(int i=0; i<number; i++) {
-            String name = getFilePath(mImagesType+(i+1));
-            mImageFiles.add(name);
+    private void startImageFragment() {
+        for (Fragment fragment:getSupportFragmentManager().getFragments()) {
+            getSupportFragmentManager().beginTransaction().remove(fragment).commit();
         }
+
+        int number = getFilesNumber(mExperimentType);
+        for(int i=0; i<number; i++) {
+            String name = getFilePath(mExperimentType+(i+1));
+            mImagePath.add(name);
+        }
+
+        ImageFragment mShowGifFragment = ImageFragment.newInstance((ArrayList<String>) mImagePath, mStatusBarColor, mLastPage);
+        mShowGifFragment.setOnClickListener(this);
+        FragmentTransaction transaction = mFragmentManager.beginTransaction();
+        transaction.replace(R.id.fragmentContent, mShowGifFragment)
+                .commit();
     }
 
-    private void startDownload(String experimentFolder, String name) {
+    private void startDownload() {
         startService(new Intent(this,ImageDownloadService.class)
                 .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES)
-                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT, experimentFolder)
-                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE, name)
-                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_PHONE,""));
+                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT, mExperimentFolder)
+                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE, mExperimentType));
     }
 
     private int getFilesNumber(String settings_key) {

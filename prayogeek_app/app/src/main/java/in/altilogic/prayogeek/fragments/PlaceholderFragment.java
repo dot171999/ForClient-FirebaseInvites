@@ -7,8 +7,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 
 import com.ablanco.zoomy.Zoomy;
+import com.ablanco.zoomy.ZoomyConfig;
 
 import java.io.IOException;
 
@@ -65,11 +67,20 @@ public class PlaceholderFragment extends Fragment {
             }
         }
         else {
-            Drawable jpegFromPath = Drawable.createFromPath(mFilepath);
-            mGif.setImageDrawable(jpegFromPath);
+            try {
+                Drawable jpegFromPath = Drawable.createFromPath(mFilepath);
+                mGif.setImageDrawable(jpegFromPath);
+            }
+            catch (Exception e) {
+                Log.d(TAG, e.getMessage());
+            }
         }
+        ZoomyConfig config = new ZoomyConfig();
+        config.setZoomAnimationEnabled(true);
+        config.setImmersiveModeEnabled(true);
 
-        Zoomy.Builder builder = new Zoomy.Builder(getActivity()).target(mGif);
+        Zoomy.Builder builder = new Zoomy.Builder(getActivity()).target(mGif).interpolator(new DecelerateInterpolator());
+        Zoomy.setDefaultConfig(config);
         builder.register();
         return rootView;
     }
@@ -78,5 +89,7 @@ public class PlaceholderFragment extends Fragment {
         super.onStop();
         Log.d(TAG, "PlaceholderFragment::onStop()");
         Zoomy.unregister(mGif);
+        mFilepath = null;
+        mGif = null;
     }
 }
