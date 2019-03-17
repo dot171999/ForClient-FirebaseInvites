@@ -20,6 +20,9 @@ import in.altilogic.prayogeek.R;
 import in.altilogic.prayogeek.fragments.SectionsPagerAdapter;
 import in.altilogic.prayogeek.utils.Utils;
 
+/**
+ * TODO for updating onboarding images you need use "onboard_" name prefix and add onboarding images to assets folder
+ */
 public class OnBoardingActivity extends AppCompatActivity {
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
@@ -27,9 +30,9 @@ public class OnBoardingActivity extends AppCompatActivity {
     private Button mSkipBtn, mFinishBtn;
     private final static int[] mOnBoardingImageViews = {R.id.intro_indicator_0, R.id.intro_indicator_1, R.id.intro_indicator_2};
     private final static int[] mOnBoardingColors = {R.color.cyan, R.color.orange, R.color.green};
-    private final static int[] mOnBoardingGifImages = new int []{R.drawable.onboard_gif1, R.drawable.onboard_gif2, R.drawable.onboard_gif3};
 
     private List<ImageView> mIndicatorList;
+    private List<String> mImagesPath;
     int page = 0;   //  to track page position
 
     @Override
@@ -43,8 +46,23 @@ public class OnBoardingActivity extends AppCompatActivity {
             getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.black_trans80));
         }
 
+        mImagesPath = new ArrayList<>();
+
+        String[] assets = Utils.getAssetsList(this);
+
+        if(assets != null) {
+            for(String onboard :assets){
+                if(onboard.contains("onboard_")){
+                    mImagesPath.add(onboard);
+                }
+            }
+        }
+
+        assert(mImagesPath.size() == mOnBoardingColors.length);
+        assert(mImagesPath.size() == mOnBoardingImageViews.length);
+
         setContentView(R.layout.activity_onboarding);
-        mSectionsPagerAdapter = new SectionsPagerAdapter(R.layout.fragment_onboarding, getSupportFragmentManager(), mOnBoardingGifImages);
+        mSectionsPagerAdapter = new SectionsPagerAdapter(R.layout.fragment_onboarding, getSupportFragmentManager(), mImagesPath, true);
 
         mNextBtn = (ImageButton) findViewById(R.id.intro_btn_next);
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP)
@@ -67,7 +85,7 @@ public class OnBoardingActivity extends AppCompatActivity {
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-                int colorUpdate = (Integer) evaluator.evaluate(positionOffset, getCurrentColor(position), getCurrentColor(position == 2 ? position : position + 1));
+                int colorUpdate = (Integer) evaluator.evaluate(positionOffset, getCurrentColor(position), getCurrentColor(position == (mOnBoardingImageViews.length-1) ? position : position + 1));
                 mViewPager.setBackgroundColor(colorUpdate);
             }
 
@@ -76,8 +94,8 @@ public class OnBoardingActivity extends AppCompatActivity {
                 page = position;
                 updateIndicators(page);
 
-                mNextBtn.setVisibility(position == 2 ? View.GONE : View.VISIBLE);
-                mFinishBtn.setVisibility(position == 2 ? View.VISIBLE : View.GONE);
+                mNextBtn.setVisibility(position == (mOnBoardingImageViews.length-1)  ? View.GONE : View.VISIBLE);
+                mFinishBtn.setVisibility(position == (mOnBoardingImageViews.length-1)  ? View.VISIBLE : View.GONE);
             }
 
             @Override

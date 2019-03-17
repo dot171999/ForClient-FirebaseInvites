@@ -1,32 +1,42 @@
 package in.altilogic.prayogeek.fragments;
 
+import android.content.res.AssetFileDescriptor;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 
 import com.ablanco.zoomy.Zoomy;
+import com.ablanco.zoomy.ZoomyConfig;
+
+import java.io.IOException;
 
 import in.altilogic.prayogeek.R;
+import pl.droidsonroids.gif.GifDrawable;
 import pl.droidsonroids.gif.GifImageView;
 
 public class PlaceholderFragment extends Fragment {
+    private final static String TAG = "YOUSCOPE-DB-PLACEHOLDER";
     private GifImageView mGif;
-    private int[] mGifImages;
+    private String mFilepath;
 
     private static final String ARG_SECTION_NUMBER = "section_number";
     private static final String ARG_IMAGES = "arg_images";
     private static final String ARG_LAYOUT_ID = "arg_layout_id";
+    private static final String ARG_IS_ASSETS = "arg_is_assets";
 
-    public static PlaceholderFragment newInstance(int layout_id, int sectionNumber, int[] images) {
-        Log.d("APP-", "PlaceholderFragment::newInstance()");
+    public static PlaceholderFragment newInstance(int layout_id, int sectionNumber, String path, boolean is_assets) {
+        Log.d(TAG, "PlaceholderFragment::newInstance()");
         PlaceholderFragment fragment = new PlaceholderFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_LAYOUT_ID, layout_id);
         args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-        args.putIntArray(ARG_IMAGES, images);
+        args.putString(ARG_IMAGES,path);
+        args.putInt(ARG_IS_ASSETS, is_assets ? 1 : 0);
         fragment.setArguments(args);
         return fragment;
     }
@@ -36,29 +46,70 @@ public class PlaceholderFragment extends Fragment {
                              Bundle savedInstanceState) {
         int num_screen = 1;
         View rootView = null;
+        int is_assets = 0;
         if(getArguments() != null) {
             int layout_id = getArguments().getInt(ARG_LAYOUT_ID);
             rootView = inflater.inflate(layout_id, container, false);
             mGif = rootView.findViewById(R.id.gif_content);
 
             num_screen = getArguments().getInt(ARG_SECTION_NUMBER);
-            mGifImages = getArguments().getIntArray(ARG_IMAGES);
-            if (mGifImages == null || num_screen < 1 || num_screen > mGifImages.length)
+            mFilepath  = getArguments().getString(ARG_IMAGES);
+            if (mFilepath == null || num_screen < 1 )
                 throw new AssertionError();
 
-            Log.d("APP-", "PlaceholderFragment::onCreateView() mGifImages.length = " + mGifImages.length);
+            is_assets = getArguments().getInt(ARG_IS_ASSETS);
+
+            Log.d(TAG, "PlaceholderFragment::onCreateView() mGifImage");
         }
         else
-            Log.d("APP-", "PlaceholderFragment::onCreateView() arg = 0");
-        mGif.setImageResource(mGifImages[num_screen-1]);
-        Zoomy.Builder builder = new Zoomy.Builder(getActivity()).target(mGif);
+            Log.d(TAG, "PlaceholderFragment::onCreateView() arg = 0");
+
+        if(mFilepath.contains(".gif")) {
+            try {
+                GifDrawable d;
+                if(is_assets == 1) {
+                    AssetFileDescriptor afd = getActivity().getAssets().openFd(mFilepath);
+                    d = new GifDrawable( afd );
+                }
+                else{
+                    d = new GifDrawable( mFilepath);
+                }
+                mGif.setImageDrawable(d);
+            } catch (IOException e) {
+                Log.d(TAG, e.getMessage() + "; " + mFilepath);
+            }
+        }
+        else {
+            try {
+                Drawable d;
+                if(is_assets == 1) {
+                    d = Drawable.createFromStream(getActivity().getAssets().open(mFilepath), null);
+                }
+                else {
+                    d = Drawable.createFromPath(mFilepath);
+                }
+                mGif.setImageDrawable(d);
+            }
+            catch (Exception e) {
+                Log.d(TAG, e.getMessage());
+            }
+        }
+        ZoomyConfig config = new ZoomyConfig();
+        config.setZoomAnimationEnabled(true);
+        config.setImmersiveModeEnabled(true);
+
+        Zoomy.Builder builder = new Zoomy.Builder(getActivity()).target(mGif).interpolator(new DecelerateInterpolator());
+        Zoomy.setDefaultConfig(config);
         builder.register();
         return rootView;
     }
     @Override
     public void onStop() {
         super.onStop();
-        Log.d("APP-", "PlaceholderFragment::onStop()");
-        Zoomy.unregister(mGif);
+        Log.d(TAG, "PlaceholderFragment::onStop()");
+        if(mGif != null)
+            Zoomy.unregister(mGif);
+        mFilepath = null;
+        mGif = null;
     }
 }

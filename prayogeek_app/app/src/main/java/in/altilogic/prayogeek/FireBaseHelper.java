@@ -108,6 +108,30 @@ public class FireBaseHelper {
         return null;
     }
 
+    public int getLong(@Nullable DocumentSnapshot documentSnapshot, String folder, String field) {
+        if (documentSnapshot != null && documentSnapshot.exists()) {
+            Map<String, Object> dataMap = (Map<String, Object>) documentSnapshot.getData();
+
+            if(dataMap == null)
+                return -1;
+
+            if(dataMap.containsKey(folder)) {
+                Map<String, Object> breadboard = (Map<String, Object>) dataMap.get(folder);
+
+                if(breadboard == null)
+                    return -1;
+
+                Long value = (Long) breadboard.get(field);
+                if(value == null)
+                    return -1;
+
+                return value.intValue();
+            }
+
+        }
+        return -1;
+    }
+
     public List<String> getArray(@Nullable DocumentSnapshot documentSnapshot) {
         if (documentSnapshot != null && documentSnapshot.exists()) {
             Map<String, Object> dataMap = (Map<String, Object>) documentSnapshot.getData();

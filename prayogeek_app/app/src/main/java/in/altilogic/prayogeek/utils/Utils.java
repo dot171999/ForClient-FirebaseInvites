@@ -8,6 +8,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.v4.graphics.drawable.DrawableCompat;
 
+import java.io.IOException;
+
 import in.altilogic.prayogeek.R;
 
 public class Utils {
@@ -62,6 +64,16 @@ public class Utils {
                 (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
         return netInfo != null && netInfo.isConnected();
+    }
+
+    public static String[] getAssetsList(Context context) {
+        String[] assetsList;
+        try {
+            assetsList = context.getAssets().list("");
+        } catch (IOException e) {
+            return null;
+        }
+        return assetsList;
     }
 }
 

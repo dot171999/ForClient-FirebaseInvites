@@ -51,9 +51,7 @@
             android:name=".activities.TutorialActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
 
-        <service android:name=".service.ImageDownloadService"
-            android:enabled="true"
-            android:exported="true">
+        <service android:name=".service.ImageDownloadService" android:exported="false">
         </service>
     </application>
 

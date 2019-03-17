@@ -1,10 +1,6 @@
 package in.altilogic.prayogeek.fragments;
 
 import android.animation.ArgbEvaluator;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
@@ -13,26 +9,23 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import in.altilogic.prayogeek.R;
-import in.altilogic.prayogeek.service.ImageDownloadService;
 
 public class ImageFragment extends Fragment implements View.OnClickListener {
-    private final String TAG = "YOUSCOPE-DB-IMAGE";
+    private final static String TAG = "YOUSCOPE-DB-IMAGE";
 
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
-    private List<ImageView> mIndicatorList;
-    private int[] mDrawableId;
     private int mStatusBarColor;
     private TextView tvPageNumber;
-    private BroadcastReceiver mBroadcastReceiver;
-
+    private List<String> mImageFiles;
+    private int mPage;
+    private boolean mIsAssets;
 
     public ImageFragment(){
     }
@@ -44,13 +37,14 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
 
     private OnClickListener mOnClickListener;
 
-    public static ImageFragment newInstance(int[] drawable_id, int color, int page) {
-        Log.d("APP-", "ImageFragment::newInstance");
+    public static ImageFragment newInstance(ArrayList<String> files_path, int color, int page, boolean is_asses) {
+        Log.d(TAG, "ImageFragment::newInstance");
         ImageFragment gifFragment = new ImageFragment();
         Bundle args = new Bundle();
-        args.putIntArray("show-gif-id", drawable_id);
         args.putInt("show-gif-color", color);
         args.putInt("show-gif-page", page);
+        args.putInt("show-gif-is-assets", is_asses ? 1 : 0);
+        args.putStringArrayList("show-images-list", files_path);
         gifFragment.setArguments(args);
         return gifFragment;
     }
@@ -62,34 +56,39 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        initBroadcastReceiver();
+        Log.d(TAG, "ImageFragment::onCreateView");
 
         return inflater.inflate(R.layout.fragment_show_gif, null);
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
-        Log.d("APP-", "ImageFragment::onViewCreated");
+        Log.d(TAG, "ImageFragment::onViewCreated");
         ImageButton btnHome = view.findViewById(R.id.btnHome);
         ImageButton btnMinimize = view.findViewById(R.id.btnMinimize);
         ImageButton btnDone = view.findViewById(R.id.btnDone);
         tvPageNumber = view.findViewById(R.id.tvPageNumber);
+        mViewPager = (ViewPager) view.findViewById(R.id.container);
+        tvPageNumber.setText(" - / - ");
+
         btnHome.setOnClickListener(this);
         btnMinimize.setOnClickListener(this);
         btnDone.setOnClickListener(this);
-        mDrawableId = getArguments().getIntArray("show-gif-id");
+        mImageFiles = getArguments().getStringArrayList("show-images-list");
         mStatusBarColor = getArguments().getInt("show-gif-color");
-        int page = getArguments().getInt("show-gif-page");
-        mSectionsPagerAdapter = new SectionsPagerAdapter(R.layout.fragment_onboarding, getActivity().getSupportFragmentManager(), mDrawableId);
-        mIndicatorList = new ArrayList<>();
-        mIndicatorList.add((ImageView) view.findViewById(R.id.gif_content));
-        assert (page < mDrawableId.length);
-        mViewPager = (ViewPager) view.findViewById(R.id.container);
-        mViewPager.setAdapter(mSectionsPagerAdapter);
-        mViewPager.setCurrentItem(page);
-        if(mDrawableId == null || mDrawableId.length == 0)
+        mIsAssets = getArguments().getInt("show-images-list") == 1;
+        mPage = getArguments().getInt("show-gif-page");
+        if(mImageFiles == null || mImageFiles.size() == 0)
             throw new AssertionError();
-        tvPageNumber.setText(" "+ (page+1)+"/" +mDrawableId.length + " ");
+
+        initViewPager();
+    }
+
+    private void initViewPager() {
+        mSectionsPagerAdapter = new SectionsPagerAdapter(R.layout.fragment_onboarding, getActivity().getSupportFragmentManager(), mImageFiles, mIsAssets);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+        mViewPager.setCurrentItem(mPage);
+        tvPageNumber.setText(" "+ (mPage+1)+"/" +"-"+ mImageFiles.size());
         final ArgbEvaluator evaluator = new ArgbEvaluator();
 
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
@@ -97,7 +96,7 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 int colorUpdate = (Integer) evaluator.evaluate(positionOffset, getCurrentColor(position), getCurrentColor(position == 2 ? position : position + 1));
                 mViewPager.setBackgroundColor(colorUpdate);
-                tvPageNumber.setText(" " + (position+1)+"/" +mDrawableId.length + " ");
+                tvPageNumber.setText(" " + (position+1)+"/" +mImageFiles.size() + " ");
                 if(mOnClickListener != null)
                     mOnClickListener.onPageChanged(position);
             }
@@ -132,24 +131,7 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
     public void onStop(){
         super.onStop();
         if(mSectionsPagerAdapter != null)
-            mSectionsPagerAdapter.notifyChangeInPosition(mDrawableId.length);
-
-        Log.d("APP-", "ImageFragment::onStop");
-    }
-
-    private void initBroadcastReceiver() {
-        mBroadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                int result = intent.getIntExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, -1);
-                switch (result){
-                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES:
-                        Log.d(TAG, "Download complete");
-                        break;
-                    default:
-                        break;
-                }
-            }
-        };
+            mSectionsPagerAdapter.notifyChangeInPosition(mImageFiles.size());
+        Log.d(TAG, "ImageFragment::onStop");
     }
 }
