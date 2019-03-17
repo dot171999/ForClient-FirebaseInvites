@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
-    private int[] mDrawable;
+    private List<String> mImages;
     private int mLayoutId = -1;
     private long baseId = 0;
 
@@ -20,18 +20,18 @@ public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
         super(null);
     }
 
-    public SectionsPagerAdapter(int layout_id, FragmentManager fm, int[] drawable) {
+    public SectionsPagerAdapter(int layout_id, FragmentManager fm, List<String> imagesPaths) {
         super(fm);
         Log.d("APP-", "SectionsPagerAdapter() " + getCount());
 
-        mDrawable = drawable;
+        mImages = imagesPaths;
         mLayoutId = layout_id;
-        if(mDrawable == null || mDrawable.length == 0)
+        if(mImages == null)
             throw new AssertionError();
 
         mFragmentList = new ArrayList<>();
-        for(int i=0; i<drawable.length; i++) {
-            mFragmentList.add(PlaceholderFragment.newInstance(mLayoutId,i+1, mDrawable));
+        for(int i=0; i<mImages.size(); i++) {
+            mFragmentList.add(PlaceholderFragment.newInstance(mLayoutId,i+1, mImages.get(i)));
             Log.d("APP-", "SectionsPagerAdapter.add " + i);
         }
         notifyDataSetChanged();
@@ -40,9 +40,9 @@ public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
     @Override
     public Fragment getItem(int position) {
         Log.d("APP-", "SectionsPagerAdapter.getItem " + position);
-        if(mDrawable.length != getCount())
+        if(mImages.size() != getCount())
         {
-            Log.d("APP-", "SectionsPagerAdapter.getItem mDrawable.length = " + mDrawable.length + "; getCount = " + getCount());
+            Log.d("APP-", "SectionsPagerAdapter.getItem mDrawable.length = " + mImages.size() + "; getCount = " + getCount());
         }
         return mFragmentList.get(position);
     }
@@ -52,15 +52,9 @@ public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
         return PagerAdapter.POSITION_NONE;
     }
 
-//    @Override
-//    public long getItemId(int position) {
-//        // give an ID different from position when position has been changed
-//        return baseId + position;
-//    }
-
     @Override
     public int getCount() {
-        return mDrawable == null ? 0 : mDrawable.length;
+        return mImages == null ? 0 : mImages.size();
     }
 
     @Override

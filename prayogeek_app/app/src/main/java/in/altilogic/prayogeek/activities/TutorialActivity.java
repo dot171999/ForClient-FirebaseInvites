@@ -1,14 +1,10 @@
 package in.altilogic.prayogeek.activities;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -53,16 +49,26 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
      * To change screen pictures, you need to add these pictures to the DRAWABLE folder,
      * then add the ID of each image to the corresponding array below.
      */
-    private final static int[] mBreadboardImages = {R.drawable.breadboard, R.drawable.breadboard_01, R.drawable.breadboard_02};
-    private final static int[] mLedOnOffImages = {R.drawable.led_on_off};
-    private final static int[] mPowerSupplyImages = {R.drawable.power_supply};
-    private final static int[] mTransistorSwitchImages = {R.drawable.transistor_switch};
-    private final static int[] mIC741Images = {R.drawable.ic741};
-    private final static int[] mIC555Images = {R.drawable.ic555};
-    private final static int[] mProject1Images = {R.drawable.project1};
-    private final static int[] mProject2Images = {R.drawable.project2};
-    private final static int[] mDemoProject1Images = {R.drawable.demo_project1, R.drawable.demo_project1_2, R.drawable.demo_project1_3};
-    private final static int[] mDemoProject2Images = {R.drawable.demo_project1, R.drawable.demo_project2};
+//    private final static int[] mBreadboardImages = {R.drawable.breadboard, R.drawable.breadboard_01, R.drawable.breadboard_02};
+//    private final static int[] mLedOnOffImages = {R.drawable.led_on_off};
+//    private final static int[] mPowerSupplyImages = {R.drawable.power_supply};
+//    private final static int[] mTransistorSwitchImages = {R.drawable.transistor_switch};
+//    private final static int[] mIC741Images = {R.drawable.ic741};
+//    private final static int[] mIC555Images = {R.drawable.ic555};
+//    private final static int[] mProject1Images = {R.drawable.project1};
+//    private final static int[] mProject2Images = {R.drawable.project2};
+//    private final static int[] mDemoProject1Images = {R.drawable.demo_project1, R.drawable.demo_project1_2, R.drawable.demo_project1_3};
+//    private final static int[] mDemoProject2Images = {R.drawable.demo_project1, R.drawable.demo_project2};
+    private final static String mBreadboardImages = "Breadboard";
+    private final static String mLedOnOffImages = "led_on_off";
+    private final static String mPowerSupplyImages = "Bridge_Rectifier";
+    private final static String mTransistorSwitchImages = "Transistor_Relay";
+    private final static String mIC741Images = "Ic741_Integrator";
+    private final static String mIC555Images = "Timer555";
+    private final static String mProject1Images = "Timer555";
+    private final static String mProject2Images = "Timer555";
+    private final static String mDemoProject1Images = "Timer555";
+    private final static String mDemoProject2Images = "Timer555";
 
     private static int mStatusBarColor;
 
@@ -100,13 +106,11 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void onStart() {
         super.onStart();
-        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, new IntentFilter(ImageDownloadService.HW_SERVICE_BROADCAST_VALUE));
     }
 
     @Override
     public void onStop(){
         super.onStop();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
     }
 
     @Override
@@ -222,14 +226,8 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     }
 
 
-    private void showGifFragment(int[] drawable_id, int last_page) {
-//        startDownloadImage("Breadboard", "Documents");
-//        download(fireStorePath);
-        startService(new Intent(this,ImageDownloadService.class)
-                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES)
-                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE, "Breadboard")
-                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_PHONE,""));
-        ImageFragment mShowGifFragment = ImageFragment.newInstance(drawable_id, mStatusBarColor, last_page);
+    private void showGifFragment(String electronic_type, int last_page) {
+        ImageFragment mShowGifFragment = ImageFragment.newInstance(electronic_type, mStatusBarColor, last_page);
         mShowGifFragment.setOnClickListener(this);
         FragmentTransaction transaction = mFragmentManager.beginTransaction();
         transaction.replace(R.id.fragmentContent, mShowGifFragment)

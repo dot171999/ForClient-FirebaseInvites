@@ -4,6 +4,7 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -22,17 +23,22 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import in.altilogic.prayogeek.FireBaseHelper;
+import in.altilogic.prayogeek.utils.Utils;
 
 public class ImageDownloadService  extends IntentService {
     private final String TAG = "YOUSCOPE-DB-SERVICE";
     public static final String HW_SERVICE_BROADCAST_VALUE = "prayogeek.altilogic.in";
     public static final String HW_SERVICE_MESSAGE_TYPE_ID = "MESSAGE_TYPE_ID";
     public static final int HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES = 1;
+    public static final int HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES = 2;
 
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE = "MESSAGE_TYPE_PATH_FIRESTORE";
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_PATH_PHONE = "MESSAGE_TYPE_PATH_PHONE";
+    public static final String HW_SERVICE_MESSAGE_IMAGE_FILES = "MESSAGE_TYPE_IMAGE_FILES";
 
     private FireBaseHelper mFireBaseHelper;
+
+    private int mFilesNumber = 0;
 
     public ImageDownloadService() {
         super("ImageDownloadService");
@@ -46,6 +52,8 @@ public class ImageDownloadService  extends IntentService {
                 String fireStorePath = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE);
                 String phonePath = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_PATH_PHONE);
                 Log.d(TAG, "Start download image from " + fireStorePath + " to " + phonePath);
+
+                mFilesNumber = 0;
                 startDownloadImage(fireStorePath, "");
                 break;
             default:
@@ -72,23 +80,34 @@ public class ImageDownloadService  extends IntentService {
                     if(breadboard_urls == null)
                         return;
 
-                    int count = 1;
-                    for(String path: breadboard_urls)
-                        downloadUri(path, base_electronis_type, count++);
+                    int firestore_images_version = mFireBaseHelper.getLong(documentSnapshot, base_electronis_type, "version");
 
+//                    if(( getLocaleImagesVersion(base_electronis_type) != firestore_images_version) || getLocaleImagesVersion(base_electronis_type) == 0 )
+                    {
+                        int count = 1;
+                        mFilesNumber = breadboard_urls.size();
+                        saveImagesVersion(base_electronis_type, firestore_images_version);
+                        saveFilesNumber(base_electronis_type, breadboard_urls.size() );
+
+                        for(String path: breadboard_urls)
+                            downloadUri(path, base_electronis_type, count++);
+                    }
+//                    else {
+//                        notifyActivityAboutNewFiles();
+//                    }
                 }
             }
         });
     }
 
-    private void downloadUri(String path, String filename, final int num){
+    private void downloadUri(String path, final String electronic_type, final int num){
         Log.d(TAG,"Start download: " + path);
         StorageReference mStorageRef;
         mStorageRef = FirebaseStorage.getInstance().getReferenceFromUrl(path);
-
+        final String fileName = mStorageRef.getName();
         File localFile = null;
         try {
-            localFile = File.createTempFile(filename + num, "jpg", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS));
+            localFile = File.createTempFile(fileName, "", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -98,12 +117,13 @@ public class ImageDownloadService  extends IntentService {
             mStorageRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                    finalLocalFile.getAbsolutePath();
                     Log.d(TAG, "Notify activity about downloaded images " + finalLocalFile.getName());
-                    Intent intentAnswer = new Intent(HW_SERVICE_BROADCAST_VALUE);
-                    intentAnswer.putExtra(HW_SERVICE_MESSAGE_TYPE_ID, HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES);
-                    intentAnswer.putExtra(HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE, 1);
-                    sendBroadcast(intentAnswer);
+                    saveFileName(electronic_type + num, finalLocalFile.getAbsolutePath());
+
+                    if(num >= mFilesNumber) {
+                        mFilesNumber = 0;
+                        notifyActivityAboutNewFiles();
+                    }
                 }
             }).addOnFailureListener(new OnFailureListener() {
                 @Override
@@ -112,5 +132,28 @@ public class ImageDownloadService  extends IntentService {
                 }
             });
         }
+    }
+
+    private void saveFileName(String settings_key, String filename) {
+        Log.d(TAG, "Save file name: " + settings_key + "; " + filename);
+        Utils.saveSharedSetting(this, settings_key, filename);
+    }
+
+    private void saveFilesNumber(String settings_key, int number) {
+        Utils.saveSharedSetting(this, settings_key + "_number", number);
+    }
+
+    private void saveImagesVersion(String imagesType, int version) {
+        Utils.saveSharedSetting(this, imagesType, version);
+    }
+
+    private int getLocaleImagesVersion(String imagesType) {
+        return Utils.readSharedSetting(this, imagesType, 0);
+    }
+
+    private void notifyActivityAboutNewFiles() {
+        Intent intentAnswer = new Intent(HW_SERVICE_BROADCAST_VALUE);
+        intentAnswer.putExtra(HW_SERVICE_MESSAGE_TYPE_ID, HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intentAnswer);
     }
 }

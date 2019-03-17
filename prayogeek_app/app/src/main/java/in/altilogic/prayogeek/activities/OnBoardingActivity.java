@@ -2,6 +2,8 @@ package in.altilogic.prayogeek.activities;
 
 import android.animation.ArgbEvaluator;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,6 +32,7 @@ public class OnBoardingActivity extends AppCompatActivity {
     private final static int[] mOnBoardingGifImages = new int []{R.drawable.onboard_gif1, R.drawable.onboard_gif2, R.drawable.onboard_gif3};
 
     private List<ImageView> mIndicatorList;
+    private List<Bitmap> mBitmaps;
     int page = 0;   //  to track page position
 
     @Override
@@ -43,8 +46,12 @@ public class OnBoardingActivity extends AppCompatActivity {
             getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.black_trans80));
         }
 
+        mBitmaps = new ArrayList<>();
+        for (int id: mOnBoardingGifImages) {
+            mBitmaps.add( BitmapFactory.decodeResource(getResources(), id));
+        }
         setContentView(R.layout.activity_onboarding);
-        mSectionsPagerAdapter = new SectionsPagerAdapter(R.layout.fragment_onboarding, getSupportFragmentManager(), mOnBoardingGifImages);
+//        mSectionsPagerAdapter = new SectionsPagerAdapter(R.layout.fragment_onboarding, getSupportFragmentManager(), mBitmaps);
 
         mNextBtn = (ImageButton) findViewById(R.id.intro_btn_next);
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP)
