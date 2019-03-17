@@ -324,7 +324,7 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
             mImagePath.add(name);
         }
 
-        ImageFragment mShowGifFragment = ImageFragment.newInstance((ArrayList<String>) mImagePath, mStatusBarColor, mLastPage);
+        ImageFragment mShowGifFragment = ImageFragment.newInstance((ArrayList<String>) mImagePath, mStatusBarColor, mLastPage, false);
         mShowGifFragment.setOnClickListener(this);
         FragmentTransaction transaction = mFragmentManager.beginTransaction();
         transaction.replace(R.id.fragmentContent, mShowGifFragment)

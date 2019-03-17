@@ -1,5 +1,6 @@
 package in.altilogic.prayogeek.fragments;
 
+import android.content.res.AssetFileDescriptor;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -26,14 +27,16 @@ public class PlaceholderFragment extends Fragment {
     private static final String ARG_SECTION_NUMBER = "section_number";
     private static final String ARG_IMAGES = "arg_images";
     private static final String ARG_LAYOUT_ID = "arg_layout_id";
+    private static final String ARG_IS_ASSETS = "arg_is_assets";
 
-    public static PlaceholderFragment newInstance(int layout_id, int sectionNumber, String path) {
+    public static PlaceholderFragment newInstance(int layout_id, int sectionNumber, String path, boolean is_assets) {
         Log.d(TAG, "PlaceholderFragment::newInstance()");
         PlaceholderFragment fragment = new PlaceholderFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_LAYOUT_ID, layout_id);
         args.putInt(ARG_SECTION_NUMBER, sectionNumber);
         args.putString(ARG_IMAGES,path);
+        args.putInt(ARG_IS_ASSETS, is_assets ? 1 : 0);
         fragment.setArguments(args);
         return fragment;
     }
@@ -43,6 +46,7 @@ public class PlaceholderFragment extends Fragment {
                              Bundle savedInstanceState) {
         int num_screen = 1;
         View rootView = null;
+        int is_assets = 0;
         if(getArguments() != null) {
             int layout_id = getArguments().getInt(ARG_LAYOUT_ID);
             rootView = inflater.inflate(layout_id, container, false);
@@ -53,6 +57,8 @@ public class PlaceholderFragment extends Fragment {
             if (mFilepath == null || num_screen < 1 )
                 throw new AssertionError();
 
+            is_assets = getArguments().getInt(ARG_IS_ASSETS);
+
             Log.d(TAG, "PlaceholderFragment::onCreateView() mGifImage");
         }
         else
@@ -60,16 +66,29 @@ public class PlaceholderFragment extends Fragment {
 
         if(mFilepath.contains(".gif")) {
             try {
-                GifDrawable gifFromPath = new GifDrawable( mFilepath);
-                mGif.setImageDrawable(gifFromPath);
+                GifDrawable d;
+                if(is_assets == 1) {
+                    AssetFileDescriptor afd = getActivity().getAssets().openFd(mFilepath);
+                    d = new GifDrawable( afd );
+                }
+                else{
+                    d = new GifDrawable( mFilepath);
+                }
+                mGif.setImageDrawable(d);
             } catch (IOException e) {
                 Log.d(TAG, e.getMessage() + "; " + mFilepath);
             }
         }
         else {
             try {
-                Drawable jpegFromPath = Drawable.createFromPath(mFilepath);
-                mGif.setImageDrawable(jpegFromPath);
+                Drawable d;
+                if(is_assets == 1) {
+                    d = Drawable.createFromStream(getActivity().getAssets().open(mFilepath), null);
+                }
+                else {
+                    d = Drawable.createFromPath(mFilepath);
+                }
+                mGif.setImageDrawable(d);
             }
             catch (Exception e) {
                 Log.d(TAG, e.getMessage());

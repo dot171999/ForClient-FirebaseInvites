@@ -9,8 +9,6 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
-import pl.droidsonroids.gif.GifDrawable;
-
 public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
     private final static String TAG = "YOUSCOPE-DB-SECTIONS-PA";
     private List<String> mImages;
@@ -23,7 +21,7 @@ public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
         super(null);
     }
 
-    public SectionsPagerAdapter(int layout_id, FragmentManager fm, List<String> imagesPaths) {
+    public SectionsPagerAdapter(int layout_id, FragmentManager fm, List<String> imagesPaths, boolean is_asses) {
         super(fm);
         Log.d(TAG, "SectionsPagerAdapter() " + getCount());
 
@@ -34,7 +32,7 @@ public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
 
         mFragmentList = new ArrayList<>();
         for(int i=0; i<mImages.size(); i++) {
-            mFragmentList.add(PlaceholderFragment.newInstance(mLayoutId,i+1, mImages.get(i)));
+            mFragmentList.add(PlaceholderFragment.newInstance(mLayoutId,i+1, mImages.get(i), is_asses));
             Log.d(TAG, "SectionsPagerAdapter.add " + i);
         }
         notifyDataSetChanged();

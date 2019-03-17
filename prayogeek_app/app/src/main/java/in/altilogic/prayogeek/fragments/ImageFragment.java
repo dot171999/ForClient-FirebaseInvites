@@ -25,6 +25,7 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
     private TextView tvPageNumber;
     private List<String> mImageFiles;
     private int mPage;
+    private boolean mIsAssets;
 
     public ImageFragment(){
     }
@@ -36,12 +37,13 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
 
     private OnClickListener mOnClickListener;
 
-    public static ImageFragment newInstance(ArrayList<String> files_path, int color, int page) {
+    public static ImageFragment newInstance(ArrayList<String> files_path, int color, int page, boolean is_asses) {
         Log.d(TAG, "ImageFragment::newInstance");
         ImageFragment gifFragment = new ImageFragment();
         Bundle args = new Bundle();
         args.putInt("show-gif-color", color);
         args.putInt("show-gif-page", page);
+        args.putInt("show-gif-is-assets", is_asses ? 1 : 0);
         args.putStringArrayList("show-images-list", files_path);
         gifFragment.setArguments(args);
         return gifFragment;
@@ -74,6 +76,7 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
         btnDone.setOnClickListener(this);
         mImageFiles = getArguments().getStringArrayList("show-images-list");
         mStatusBarColor = getArguments().getInt("show-gif-color");
+        mIsAssets = getArguments().getInt("show-images-list") == 1;
         mPage = getArguments().getInt("show-gif-page");
         if(mImageFiles == null || mImageFiles.size() == 0)
             throw new AssertionError();
@@ -82,7 +85,7 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
     }
 
     private void initViewPager() {
-        mSectionsPagerAdapter = new SectionsPagerAdapter(R.layout.fragment_onboarding, getActivity().getSupportFragmentManager(), mImageFiles);
+        mSectionsPagerAdapter = new SectionsPagerAdapter(R.layout.fragment_onboarding, getActivity().getSupportFragmentManager(), mImageFiles, mIsAssets);
         mViewPager.setAdapter(mSectionsPagerAdapter);
         mViewPager.setCurrentItem(mPage);
         tvPageNumber.setText(" "+ (mPage+1)+"/" +"-"+ mImageFiles.size());
