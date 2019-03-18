@@ -14,6 +14,8 @@ import com.ablanco.zoomy.Zoomy;
 import com.ablanco.zoomy.ZoomyConfig;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import in.altilogic.prayogeek.R;
 import pl.droidsonroids.gif.GifDrawable;
@@ -23,6 +25,8 @@ public class PlaceholderFragment extends Fragment {
     private final static String TAG = "YOUSCOPE-DB-PLACEHOLDER";
     private GifImageView mGif;
     private String mFilepath;
+
+    private List<GifImageView> mListImages;
 
     private static final String ARG_SECTION_NUMBER = "section_number";
     private static final String ARG_IMAGES = "arg_images";
@@ -101,6 +105,9 @@ public class PlaceholderFragment extends Fragment {
         Zoomy.Builder builder = new Zoomy.Builder(getActivity()).target(mGif).interpolator(new DecelerateInterpolator());
         Zoomy.setDefaultConfig(config);
         builder.register();
+
+        mListImages = new ArrayList<>();
+        mListImages.add(mGif);
         return rootView;
     }
     @Override

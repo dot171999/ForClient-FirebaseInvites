@@ -6,11 +6,11 @@ import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -18,8 +18,6 @@ import com.google.firebase.storage.StorageReference;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-
-import javax.annotation.Nullable;
 
 import in.altilogic.prayogeek.FireBaseHelper;
 import in.altilogic.prayogeek.utils.Utils;
@@ -90,15 +88,20 @@ public class ImageDownloadService  extends IntentService {
         if(mFireBaseHelper == null)
             mFireBaseHelper = new FireBaseHelper();
 
-        mFireBaseHelper.read("Tutorials", experiment_folder, new EventListener<DocumentSnapshot>() {
+        mFireBaseHelper.read("Tutorials", experiment_folder, new OnCompleteListener<DocumentSnapshot>() {
+
             @Override
-            public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
-                if (e != null) {
-                    Log.w(TAG, "Listen failed.", e);
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (!task.isSuccessful()) {
+                    Log.w(TAG, "Listen failed." + task.getException());
 
                     if(!mIsOnline)
                         notifyActivityAboutNoInternetConnection();
-
+                        return;
+                }
+                DocumentSnapshot documentSnapshot = task.getResult();
+                if (!documentSnapshot.exists()) {
+                    Log.d(TAG, "No such document");
                     return;
                 }
                 List<String> basic_electronics = mFireBaseHelper.getArray(documentSnapshot);
@@ -180,6 +183,8 @@ public class ImageDownloadService  extends IntentService {
         try {
             localFile = File.createTempFile(fileName, "");
 //            localFile = File.createTempFile(fileName, "", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS));
+            String abspath = localFile.getAbsolutePath();
+            Log.d(TAG,"Start download: AbsPath: " + abspath);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -189,6 +194,7 @@ public class ImageDownloadService  extends IntentService {
             mStorageRef.getFile(finalLocalFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+
                     saveFileName(electronic_type + num, finalLocalFile.getAbsolutePath());
 
                     if(++mFilesCounter >= mFilesNumber) {
