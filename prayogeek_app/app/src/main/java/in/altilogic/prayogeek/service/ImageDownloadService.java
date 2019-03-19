@@ -184,8 +184,9 @@ public class ImageDownloadService  extends IntentService {
         final String fileName = mStorageRef.getName();
         File localFile = null;
         try {
-//            localFile = File.createTempFile(fileName, "");
-            localFile = File.createTempFile(fileName, "", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS));
+            localFile = File.createTempFile(fileName, ""); // TODO Default app folder
+//            localFile = File.createTempFile(fileName, "", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)); // TODO for debugging the documents folder
+
             String abspath = localFile.getAbsolutePath();
             Log.d(TAG,"Start download: AbsPath: " + abspath);
         } catch (IOException e) {
