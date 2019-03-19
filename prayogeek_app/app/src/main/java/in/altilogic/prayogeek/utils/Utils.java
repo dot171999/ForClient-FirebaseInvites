@@ -7,7 +7,6 @@ import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.v4.graphics.drawable.DrawableCompat;
-
 import java.io.IOException;
 
 import in.altilogic.prayogeek.R;
@@ -75,5 +74,6 @@ public class Utils {
         }
         return assetsList;
     }
+
 }
 

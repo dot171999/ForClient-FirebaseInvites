@@ -1,9 +1,12 @@
 package in.altilogic.prayogeek.fragments;
 
 import android.content.res.AssetFileDescriptor;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +16,10 @@ import android.view.animation.DecelerateInterpolator;
 import com.ablanco.zoomy.Zoomy;
 import com.ablanco.zoomy.ZoomyConfig;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +32,6 @@ public class PlaceholderFragment extends Fragment {
     private final static String TAG = "YOUSCOPE-DB-PLACEHOLDER";
     private GifImageView mGif;
     private String mFilepath;
-
     private List<GifImageView> mListImages;
 
     private static final String ARG_SECTION_NUMBER = "section_number";
@@ -76,7 +82,8 @@ public class PlaceholderFragment extends Fragment {
                     d = new GifDrawable( afd );
                 }
                 else{
-                    d = new GifDrawable( mFilepath);
+                    byte[] data = getData(mFilepath);
+                    d = new GifDrawable(data);
                 }
                 mGif.setImageDrawable(d);
             } catch (IOException e) {
@@ -90,7 +97,8 @@ public class PlaceholderFragment extends Fragment {
                     d = Drawable.createFromStream(getActivity().getAssets().open(mFilepath), null);
                 }
                 else {
-                    d = Drawable.createFromPath(mFilepath);
+                    byte[] b = getData(mFilepath);
+                    d = new BitmapDrawable(BitmapFactory.decodeByteArray(b, 0, b.length));
                 }
                 mGif.setImageDrawable(d);
             }
@@ -118,5 +126,31 @@ public class PlaceholderFragment extends Fragment {
             Zoomy.unregister(mGif);
         mFilepath = null;
         mGif = null;
+    }
+
+    private byte[] getData(String path) {
+        File file = new File(path);
+        int size = (int) file.length();
+        byte[] bytes = new byte[size];
+        try {
+            BufferedInputStream buf = new BufferedInputStream(new FileInputStream(file));
+            int sz = 1;
+            int offset = 0;
+            while(sz > 0 ) {
+                sz = buf.read(bytes, offset, bytes.length);
+                offset += sz;
+                if(offset >= size)
+                    break;
+            }
+            buf.close();
+            return Base64.decode(bytes, Base64.NO_WRAP);
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null;
     }
 }
