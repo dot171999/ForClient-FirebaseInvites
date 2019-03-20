@@ -127,6 +127,13 @@ public class OnBoardingActivity extends AppCompatActivity {
         });
     }
 
+
+    @Override
+    public void onBackPressed() {
+        Utils.saveSharedSetting(OnBoardingActivity.this, MainActivity.PREF_USER_FIRST_TIME, "false");
+        finishActivity();
+    }
+
     private void finishActivity(){
         if (getParent() == null) {
             setResult(RESULT_OK, new Intent());

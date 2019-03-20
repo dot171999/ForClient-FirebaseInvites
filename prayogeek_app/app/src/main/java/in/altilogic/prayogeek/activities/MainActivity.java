@@ -466,8 +466,8 @@ public class MainActivity extends AppCompatActivity
             case RC_PROFILE_CHANGE:
                 if (!isUserFullProfile())
                     finish();
-
-                checkLocationPermissions();
+                if(!isOnboardingShowing())
+                    runOnboarding();
                 break;
             case RC_BUTTON1:
             case RC_BUTTON2:
