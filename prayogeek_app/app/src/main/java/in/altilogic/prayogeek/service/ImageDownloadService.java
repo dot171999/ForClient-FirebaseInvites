@@ -37,6 +37,8 @@ public class ImageDownloadService  extends IntentService {
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT = "MESSAGE_TYPE_EXPERIMENT";
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE = "MESSAGE_TYPE_PATH_FIRESTORE";
 
+    private static final int MAX_DOWNLOADING_IMG_FILE_SIZE = (1024*1024); // 1MB
+
     private FireBaseHelper mFireBaseHelper;
 
     private int mFilesNumber = 0;
@@ -49,6 +51,13 @@ public class ImageDownloadService  extends IntentService {
     private Thread mDownloadImagesThread;
     private String mExperimentType;
     private boolean mIsLocFilesNotFound;
+
+    private File createFile(String fileName) throws IOException {
+        return  File.createTempFile(fileName, ""); // TODO Default app folder
+//        return File.createTempFile(fileName, "",
+//                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)); // TODO uncomment for writing image files to the documents folder
+    }
+
     @Override
     protected void onHandleIntent(Intent intent) {
         int message_type = intent.getIntExtra(HW_SERVICE_MESSAGE_TYPE_ID, -1);
@@ -184,8 +193,7 @@ public class ImageDownloadService  extends IntentService {
         final String fileName = mStorageRef.getName();
         File localFile = null;
         try {
-            localFile = File.createTempFile(fileName, ""); // TODO Default app folder
-//            localFile = File.createTempFile(fileName, "", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)); // TODO for debugging the documents folder
+            localFile = createFile(fileName);
 
             String abspath = localFile.getAbsolutePath();
             Log.d(TAG,"Start download: AbsPath: " + abspath);
@@ -195,7 +203,7 @@ public class ImageDownloadService  extends IntentService {
 
         if (localFile != null) {
             final File finalLocalFile = localFile;
-            mStorageRef.getBytes(1024*1024).addOnCompleteListener(new OnCompleteListener<byte[]>() {
+            mStorageRef.getBytes(MAX_DOWNLOADING_IMG_FILE_SIZE).addOnCompleteListener(new OnCompleteListener<byte[]>() {
                 @Override
                 public void onComplete(@NonNull Task<byte[]> task) {
                     BufferedOutputStream bos = null;
@@ -223,19 +231,6 @@ public class ImageDownloadService  extends IntentService {
                 }
             })
 
-//            .getFile(finalLocalFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-//                @Override
-//                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-//
-//                    saveFileName(electronic_type + num, finalLocalFile.getAbsolutePath());
-//
-//                    if(++mFilesCounter >= mFilesNumber) {
-//                        mFilesNumber = 0;
-//                        mFilesCounter = 0;
-//                        notifyActivityAboutNewFiles();
-//                    }
-//                }
-//            })
             .addOnFailureListener(new OnFailureListener() {
                 @Override
                 public void onFailure(@NonNull Exception e) {

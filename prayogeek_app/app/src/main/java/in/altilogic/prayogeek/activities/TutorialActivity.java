@@ -129,17 +129,19 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
 
     @Override
     public void onBackPressed() {
+        saveSharedSetting(getApplicationContext(), CURRENT_SCREEN_SETTINGS_PAGE, 0);
         if(mScreenStatus == 0) {
             saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
-            saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
             saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
             finishActivity();
         }
         else if(mScreenStatus > SCREEN_ID_DEMO_PROJECTS && mScreenStatus <= SCREEN_ID_IC555){
-            mScreenStatus = SCREEN_ID_BASIC_ELECTRONIC; showBasicElectronic();
+            mScreenStatus = SCREEN_ID_BASIC_ELECTRONIC;
+            showBasicElectronic();
         }
         else if(mScreenStatus == SCREEN_ID_PROJECT1 || mScreenStatus == SCREEN_ID_PROJECT2) {
-            mScreenStatus = SCREEN_ID_PROJECTS; showProjectsFragment();
+            mScreenStatus = SCREEN_ID_PROJECTS;
+            showProjectsFragment();
         }
         else if(mScreenStatus == SCREEN_ID_DEMO_PROJECT1 || mScreenStatus == SCREEN_ID_DEMO_PROJECT2) {
             mScreenStatus = SCREEN_ID_DEMO_PROJECTS; showDemoProjectsFragment();
@@ -295,6 +297,7 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
                     case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_START_DOWNLOAD:
                         Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_IMAGE_START_DOWNLOAD");
                         Toast.makeText(getApplicationContext(), "Downloading Experiment. Please wait..", Toast.LENGTH_SHORT ).show();
+                        saveSharedSetting(getApplicationContext(), CURRENT_SCREEN_SETTINGS_PAGE, 0);
                         break;
                     case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET:
                         Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET");
