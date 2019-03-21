@@ -8,21 +8,13 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.AttributeSet;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
-
-//import com.ablanco.zoomy.Zoomy;
-//import com.ablanco.zoomy.ZoomyConfig;
-
-//import com.github.chrisbanes.photoview.PhotoView;
-//import com.github.chrisbanes.photoview.PhotoViewAttacher;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -35,9 +27,6 @@ import java.util.List;
 import in.altilogic.prayogeek.R;
 import pl.droidsonroids.gif.GifDrawable;
 import pl.droidsonroids.gif.GifImageView;
-import uk.co.senab.photoview.PhotoViewAttacher;
-//import uk.co.senab.photoview.PhotoView;
-//import uk.co.senab.photoview.PhotoViewAttacher;
 
 public class PlaceholderFragment extends Fragment implements View.OnTouchListener {
     private final static String TAG = "YOUSCOPE-DB-PLACEHOLDER";
@@ -183,6 +172,7 @@ public class PlaceholderFragment extends Fragment implements View.OnTouchListene
     // These matrices will be used to scale points of the image
     Matrix matrix = new Matrix();
     Matrix savedMatrix = new Matrix();
+    Matrix defaultMatrix = null;
 
     // The 3 states (events) which the user is trying to perform
     static final int NONE = 0;
@@ -194,8 +184,11 @@ public class PlaceholderFragment extends Fragment implements View.OnTouchListene
     PointF start = new PointF();
     PointF mid = new PointF();
     float oldDist = 1f;
-    float curScale = 1f;
-
+    private long mDoubleClickStartTime;
+    long duration;
+    private int mDoubleClickCount = 0;
+    static final int MAX_DURATION = 500;
+    ImageView.ScaleType defScale = null;
     @Override
     public boolean onTouch(View v, MotionEvent event)
     {
@@ -203,8 +196,11 @@ public class PlaceholderFragment extends Fragment implements View.OnTouchListene
         view.setScaleType(ImageView.ScaleType.MATRIX);
         float scale;
 
-        dumpEvent(event);
-        // Handle touch events here...
+        if(defaultMatrix == null)
+        {
+            defaultMatrix = view.getImageMatrix();
+            defScale = view.getScaleType();
+        }
 
         switch (event.getAction() & MotionEvent.ACTION_MASK)
         {
@@ -212,16 +208,38 @@ public class PlaceholderFragment extends Fragment implements View.OnTouchListene
                 matrix.set(view.getImageMatrix());
                 savedMatrix.set(matrix);
                 start.set(event.getX(), event.getY());
-                Log.d(TAG, "mode=DRAG"); // write to LogCat
                 mode = DRAG;
+
+                mDoubleClickStartTime = System.currentTimeMillis();
+                mDoubleClickCount++;
                 break;
 
             case MotionEvent.ACTION_UP: // first finger lifted
+                long time = System.currentTimeMillis() - mDoubleClickStartTime;
+                duration =  duration + time;
+                if(mDoubleClickCount >= 2)
+                {
+                    if(duration <= MAX_DURATION)
+                    {
+                        Log.d(TAG,"double tap");
+                        oldDist = 1f;
+                        mode = NONE;
+                        start = null;
+                        mid = null;
+                        start = new PointF();
+                        mid = new PointF();
+                        view.setImageMatrix(new Matrix());
+                        view.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                        view.invalidate();
+                        return true;
+                    }
+                    mDoubleClickCount = 0;
+                    duration = 0;
+                }
 
             case MotionEvent.ACTION_POINTER_UP: // second finger lifted
 
                 mode = NONE;
-                Log.d(TAG, "mode=NONE");
                 break;
 
             case MotionEvent.ACTION_POINTER_DOWN: // first and second finger down
@@ -292,35 +310,5 @@ public class PlaceholderFragment extends Fragment implements View.OnTouchListene
         float x = event.getX(0) + event.getX(1);
         float y = event.getY(0) + event.getY(1);
         point.set(x / 2, y / 2);
-    }
-
-    /** Show an event in the LogCat view, for debugging */
-    private void dumpEvent(MotionEvent event)
-    {
-        String names[] = { "DOWN", "UP", "MOVE", "CANCEL", "OUTSIDE","POINTER_DOWN", "POINTER_UP", "7?", "8?", "9?" };
-        StringBuilder sb = new StringBuilder();
-        int action = event.getAction();
-        int actionCode = action & MotionEvent.ACTION_MASK;
-        sb.append("event ACTION_").append(names[actionCode]);
-
-        if (actionCode == MotionEvent.ACTION_POINTER_DOWN || actionCode == MotionEvent.ACTION_POINTER_UP)
-        {
-            sb.append("(pid ").append(action >> MotionEvent.ACTION_POINTER_ID_SHIFT);
-            sb.append(")");
-        }
-
-        sb.append("[");
-        for (int i = 0; i < event.getPointerCount(); i++)
-        {
-            sb.append("#").append(i);
-            sb.append("(pid ").append(event.getPointerId(i));
-            sb.append(")=").append((int) event.getX(i));
-            sb.append(",").append((int) event.getY(i));
-            if (i + 1 < event.getPointerCount())
-                sb.append(";");
-        }
-
-        sb.append("]");
-        Log.d("Touch Events ---------", sb.toString());
     }
 }

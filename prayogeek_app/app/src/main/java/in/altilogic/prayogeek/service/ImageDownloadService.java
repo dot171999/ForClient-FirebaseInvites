@@ -2,7 +2,6 @@ package in.altilogic.prayogeek.service;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Base64;
