@@ -541,7 +541,7 @@ public class MainActivity extends AppCompatActivity
                 String collection,document;
                 if (dataList2.size() > 0 && dataList2.size() > i) {
                     printInfoMessage("App will connect to Module " + dataList2.get(i));
-                    if((mList1.getSelectedItem().toString() == "Demo") || (mList1.getSelectedItem().toString() == "Individual"))
+                    if((mList1.getSelectedItem().toString().equals("Demo")) || (mList1.getSelectedItem().toString().equals("Individual")))
                     {
                         collection = "Hw_Modules";
                         document = "module_info_100";
