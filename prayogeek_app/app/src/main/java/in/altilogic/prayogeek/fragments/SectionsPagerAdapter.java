@@ -9,16 +9,20 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
+public class SectionsPagerAdapter extends FragmentStatePagerAdapter implements PlaceholderFragment.OnZoomListener {
     private final static String TAG = "YOUSCOPE-DB-SECTIONS-PA";
     private List<String> mImages;
     private int mLayoutId = -1;
     private long baseId = 0;
 
     private List<PlaceholderFragment> mFragmentList;
-
+    private PlaceholderFragment.OnZoomListener mZoomListener;
     private SectionsPagerAdapter(){
         super(null);
+    }
+
+    public void setOnZoomListener(PlaceholderFragment.OnZoomListener listener) {
+        mZoomListener = listener;
     }
 
     public SectionsPagerAdapter(int layout_id, FragmentManager fm, List<String> imagesPaths, boolean is_asses) {
@@ -35,16 +39,28 @@ public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
             mFragmentList.add(PlaceholderFragment.newInstance(mLayoutId,i+1, mImages.get(i), is_asses));
             Log.d(TAG, "SectionsPagerAdapter.add " + i);
         }
+
+        for(int i=0; i<mFragmentList.size(); i++){
+            mFragmentList.get(i).setOnZoomListener(this);
+        }
         notifyDataSetChanged();
     }
 
+    private int mCurPosition=0;
+
     @Override
     public Fragment getItem(int position) {
+        mCurPosition = position;
         Log.d(TAG, "SectionsPagerAdapter.getItem " + position);
-        if(mImages.size() != getCount())
-        {
+        if(mImages.size() != getCount()) {
             Log.d(TAG, "SectionsPagerAdapter.getItem mDrawable.length = " + mImages.size() + "; getCount = " + getCount());
         }
+        if(position >= mFragmentList.size()) {
+            Log.d(TAG, "SectionsPagerAdapter.getItem()  position(" + position + ") >= mFragmentList.size(" + mFragmentList.size() + ")");
+
+            return null;
+        }
+
         return mFragmentList.get(position);
     }
 
@@ -65,5 +81,29 @@ public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
 
     public void notifyChangeInPosition(int n) {
         baseId += getCount() + n;
+    }
+
+    private float scale_old = 1.0f;
+
+    @Override
+    public void OnZoomChanged(float scale) {
+//        if(scale != scale_old) {
+//            scale_old = scale;
+//            if(scale == 1.0f) {
+//                Log.d(TAG, "OnZoomChanged: " + scale);
+//                mFragmentList.clear();
+//                mFragmentList.addAll(mFragmentListDefault);
+//                notifyDataSetChanged();
+//            }
+//            else{
+//                if(mFragmentList.size() > 1){
+//                    Log.d(TAG, "OnZoomChanged: " + scale);
+//                    PlaceholderFragment tempfragment = mFragmentList.get(mCurPosition);
+//                    mFragmentList.clear();
+//                    mFragmentList.add(tempfragment);
+//                    notifyDataSetChanged();
+//                }
+//            }
+//        }
     }
 }

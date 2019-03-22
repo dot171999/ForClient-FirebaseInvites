@@ -7,11 +7,10 @@
     android:layout_height="match_parent"
     tools:context=".activities.TutorialActivity">
 
-    <android.support.v4.view.ViewPager
+    <in.altilogic.prayogeek.fragments.ScrollableViewPager
         android:id="@+id/container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+        android:layout_height="match_parent"/>
 
     <TextView
         android:id="@+id/tvPageNumber"

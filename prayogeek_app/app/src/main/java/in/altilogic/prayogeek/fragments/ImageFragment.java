@@ -16,17 +16,17 @@ import java.util.List;
 
 import in.altilogic.prayogeek.R;
 
-public class ImageFragment extends Fragment implements View.OnClickListener {
+public class ImageFragment extends Fragment implements View.OnClickListener{
     private final static String TAG = "YOUSCOPE-DB-IMAGE";
 
     private SectionsPagerAdapter mSectionsPagerAdapter;
-    private ViewPager mViewPager;
+    private ScrollableViewPager mViewPager;
     private int mStatusBarColor;
     private TextView tvPageNumber;
     private List<String> mImageFiles;
     private int mPage;
     private boolean mIsAssets;
-
+    private ArgbEvaluator mEvaluator;
     public ImageFragment(){
     }
 
@@ -68,7 +68,7 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
         ImageButton btnMinimize = view.findViewById(R.id.btnMinimize);
         ImageButton btnDone = view.findViewById(R.id.btnDone);
         tvPageNumber = view.findViewById(R.id.tvPageNumber);
-        mViewPager = (ViewPager) view.findViewById(R.id.container);
+        mViewPager = (ScrollableViewPager) view.findViewById(R.id.container);
         tvPageNumber.setText(" - / - ");
 
         btnHome.setOnClickListener(this);
@@ -81,6 +81,8 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
         if(mImageFiles == null || mImageFiles.size() == 0)
             throw new AssertionError();
 
+        mEvaluator = new ArgbEvaluator();
+
         initViewPager();
     }
 
@@ -89,28 +91,7 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
         mViewPager.setAdapter(mSectionsPagerAdapter);
         mViewPager.setCurrentItem(mPage);
         tvPageNumber.setText(" "+ (mPage+1)+"/" +"-"+ mImageFiles.size());
-        final ArgbEvaluator evaluator = new ArgbEvaluator();
-
-        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-                int colorUpdate = (Integer) evaluator.evaluate(positionOffset, getCurrentColor(position), getCurrentColor(position == 2 ? position : position + 1));
-                mViewPager.setBackgroundColor(colorUpdate);
-                tvPageNumber.setText(" " + (position+1)+"/" +mImageFiles.size() + " ");
-                if(mOnClickListener != null)
-                    mOnClickListener.onPageChanged(position);
-            }
-
-            @Override
-            public void onPageSelected(int position) {
-                updateIndicators(position);
-            }
-
-            @Override
-            public void onPageScrollStateChanged(int i) {
-
-            }
-        });
+        mViewPager.addOnPageChangeListener(mViewPageListener);
     }
 
     private int getCurrentColor(int position) {
@@ -134,4 +115,25 @@ public class ImageFragment extends Fragment implements View.OnClickListener {
             mSectionsPagerAdapter.notifyChangeInPosition(mImageFiles.size());
         Log.d(TAG, "ImageFragment::onStop");
     }
+
+    private ViewPager.OnPageChangeListener mViewPageListener = new ViewPager.OnPageChangeListener() {
+        @Override
+        public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            int colorUpdate = (Integer) mEvaluator.evaluate(positionOffset, getCurrentColor(position), getCurrentColor(position == 2 ? position : position + 1));
+            mViewPager.setBackgroundColor(colorUpdate);
+            tvPageNumber.setText(" " + (position+1)+"/" +mImageFiles.size() + " ");
+            if(mOnClickListener != null)
+                mOnClickListener.onPageChanged(position);
+        }
+
+        @Override
+        public void onPageSelected(int position) {
+            updateIndicators(position);
+        }
+
+        @Override
+        public void onPageScrollStateChanged(int i) {
+
+        }
+    };
 }
