@@ -570,6 +570,7 @@ public class MainActivity extends AppCompatActivity
                                     GlobalVar.Set_INA1Calibration((int) ina1_cal);
                                     GlobalVar.Set_INA2Calibration((int) ina2_cal);
                                     GlobalVar.Set_MacAddress(mac_address);
+                                    Log.d(TAG, "List 2 values retrieved");
                                 }
                             }
                         }
