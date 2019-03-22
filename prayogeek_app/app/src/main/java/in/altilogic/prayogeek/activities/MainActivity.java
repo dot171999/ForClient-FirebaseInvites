@@ -538,9 +538,21 @@ public class MainActivity extends AppCompatActivity
         mList2.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                String collection,document;
                 if (dataList2.size() > 0 && dataList2.size() > i) {
                     printInfoMessage("App will connect to Module " + dataList2.get(i));
-                    mFireBaseHelper.read("Colleges", mList1.getSelectedItem().toString(), new OnCompleteListener<DocumentSnapshot>() {
+                    if((mList1.getSelectedItem().toString() == "Demo") || (mList1.getSelectedItem().toString() == "Individual"))
+                    {
+                        collection = "Hw_Modules";
+                        document = "module_info_100";
+                    }
+                    else
+                    {
+                        collection = "Colleges";
+                        document = mList1.getSelectedItem().toString();
+                    }
+
+                    mFireBaseHelper.read(collection, document, new OnCompleteListener<DocumentSnapshot>() {
                         @Override
                         public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                             if(mList1.getSelectedItem().toString().equals("Individual"))  {
@@ -558,6 +570,7 @@ public class MainActivity extends AppCompatActivity
                                     GlobalVar.Set_INA1Calibration((int) ina1_cal);
                                     GlobalVar.Set_INA2Calibration((int) ina2_cal);
                                     GlobalVar.Set_MacAddress(mac_address);
+                                    Log.d(TAG, "List 2 values retrieved");
                                 }
                             }
                         }
