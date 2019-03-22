@@ -29,7 +29,7 @@ import pl.droidsonroids.gif.GifDrawable;
 import pl.droidsonroids.gif.GifImageView;
 import uk.co.senab.photoview.PhotoViewAttacher;
 
-public class PlaceholderFragment extends Fragment
+public class PlaceholderFragment extends Fragment implements PhotoViewAttacher.OnScaleChangeListener
 //        implements View.OnTouchListener
 {
     private final static String TAG = "YOUSCOPE-DB-PLACEHOLDER";
@@ -41,6 +41,13 @@ public class PlaceholderFragment extends Fragment
     private static final String ARG_IMAGES = "arg_images";
     private static final String ARG_LAYOUT_ID = "arg_layout_id";
     private static final String ARG_IS_ASSETS = "arg_is_assets";
+
+    @Override
+    public void onScaleChange(float scaleFactor, float focusX, float focusY) {
+        Log.d(TAG, "onScaleChange: " + scaleFactor + "; " + focusX + " : " + focusY);
+        if(mZoomListener!= null)
+            mZoomListener.OnZoomChanged(scaleFactor);
+    }
 
     public interface OnZoomListener{
         void OnZoomChanged(float scale);
@@ -134,6 +141,7 @@ public class PlaceholderFragment extends Fragment
         pAttacher.setMaximumScale((float) 4.0);
         pAttacher.setMinimumScale((float) 1.0);
         pAttacher.setZoomable(true);
+        pAttacher.setOnScaleChangeListener(this);
         pAttacher.update();
 
 // 3) Option

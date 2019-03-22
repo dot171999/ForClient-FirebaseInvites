@@ -76,7 +76,7 @@ public class ImageFragment extends Fragment implements View.OnClickListener{
         btnDone.setOnClickListener(this);
         mImageFiles = getArguments().getStringArrayList("show-images-list");
         mStatusBarColor = getArguments().getInt("show-gif-color");
-        mIsAssets = getArguments().getInt("show-images-list") == 1;
+        mIsAssets = (getArguments().getInt("show-images-list") == 1);
         mPage = getArguments().getInt("show-gif-page");
         if(mImageFiles == null || mImageFiles.size() == 0)
             throw new AssertionError();

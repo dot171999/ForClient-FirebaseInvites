@@ -7,6 +7,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Base64;
 import android.util.Log;
 
+import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
@@ -32,6 +33,7 @@ public class ImageDownloadService  extends IntentService {
     public static final int HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES_COMPLETE = 2;
     public static final int HW_SERVICE_MESSAGE_TYPE_IMAGE_START_DOWNLOAD = 3;
     public static final int HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET = 4;
+    public static final int HW_SERVICE_MESSAGE_TYPE_IMAGE_DOWNLOAD_FAIL = 5;
 
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT = "MESSAGE_TYPE_EXPERIMENT";
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE = "MESSAGE_TYPE_PATH_FIRESTORE";
@@ -234,6 +236,14 @@ public class ImageDownloadService  extends IntentService {
                 @Override
                 public void onFailure(@NonNull Exception e) {
                 Log.d(TAG, "Exception: " + e.toString());
+                notifyActivityAboutDownloadFail();
+                }
+            })
+            .addOnCanceledListener(new OnCanceledListener() {
+                @Override
+                public void onCanceled() {
+                    Log.d(TAG, "Download canceled");
+                    notifyActivityAboutDownloadFail();
                 }
             });
         }
@@ -289,6 +299,12 @@ public class ImageDownloadService  extends IntentService {
     private void notifyActivityAboutNoInternetConnection() {
         Intent intentAnswer = new Intent(HW_SERVICE_BROADCAST_VALUE);
         intentAnswer.putExtra(HW_SERVICE_MESSAGE_TYPE_ID, HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intentAnswer);
+    }
+
+    private void notifyActivityAboutDownloadFail() {
+        Intent intentAnswer = new Intent(HW_SERVICE_BROADCAST_VALUE);
+        intentAnswer.putExtra(HW_SERVICE_MESSAGE_TYPE_ID, HW_SERVICE_MESSAGE_TYPE_IMAGE_DOWNLOAD_FAIL);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intentAnswer);
     }
 }

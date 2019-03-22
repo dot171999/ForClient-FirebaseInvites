@@ -105,6 +105,10 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         }
     }
 
+    private void showMessageDownloadFail(){
+        Toast.makeText(getApplicationContext(), "No Network Connection.\nTurn ON network and Retry", Toast.LENGTH_SHORT ).show();
+    }
+
 
     @Override
     public void onStart() {
@@ -309,12 +313,18 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
                         isStartShowingImage = false;
                         startImageFragment();
                         break;
+                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_DOWNLOAD_FAIL:
+                        Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_IMAGE_DOWNLOAD_FAIL");
+                        showMessageDownloadFail();
+                        isStartShowingImage = false;
+                        break;
                     default:
                         break;
                 }
             }
         };
     }
+
 
     private void startImageFragment() {
         for (Fragment fragment:getSupportFragmentManager().getFragments()) {

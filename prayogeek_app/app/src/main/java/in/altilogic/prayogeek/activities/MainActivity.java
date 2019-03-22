@@ -401,7 +401,7 @@ public class MainActivity extends AppCompatActivity
                             message = getValidityString();
                         }
                         else
-                            message = "App will connect to Module " + ( mList2 != null && mList2.getSelectedItem() != null ? mList2.getSelectedItem().toString() : "");
+                            message = "App will connect to Module " + dataList2.get(0);
 
                         checkSelectedList2();
                     }
