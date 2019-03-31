@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="8dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:text="Baud rate" />
+
+            <Spinner
+                android:id="@+id/spBaudRate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/baud_rate_array"/>
+
+            <include layout="@layout/divider" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:text="Data bits" />
+
+            <Spinner
+                android:id="@+id/spDataBits"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/data_bits_array" />
+
+            <include layout="@layout/divider" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:text="Parity check" />
+
+            <Spinner
+                android:id="@+id/spParityCheck"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/parity_check_array"/>
+
+            <include layout="@layout/divider" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:text="Stop bit" />
+
+            <Spinner
+                android:id="@+id/spStopBit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/stop_bit_array"/>
+
+            <include layout="@layout/divider" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:text="Flow control" />
+
+            <Spinner
+                android:id="@+id/spFlowControl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/flow_control_array"/>
+        </LinearLayout>
+    </ScrollView>
+
+</android.support.constraint.ConstraintLayout>

@@ -25,4 +25,37 @@
     <string name="string_describe_why_do_you_need_a_location">The app needs access to a location in order to …</string>
     <string name="subsciption_expired">Subscription Expired. Kindly Renew</string>
 
+    <string-array name="baud_rate_array">
+        <item>2400</item>
+        <item>4800</item>
+        <item>9600</item>
+        <item>19200</item>
+        <item>38400</item>
+        <item>57600</item>
+        <item>115200</item>
+    </string-array>
+
+    <string-array name="data_bits_array">
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+    </string-array>
+
+    <string-array name="parity_check_array">
+        <item>none</item>
+        <item>odd</item>
+        <item>even</item>
+    </string-array>
+
+    <string-array name="stop_bit_array">
+        <item>1</item>
+        <item>1,5</item>
+        <item>2</item>
+    </string-array>
+
+    <string-array name="flow_control_array">
+        <item>off</item>
+    </string-array>
+
 </resources>

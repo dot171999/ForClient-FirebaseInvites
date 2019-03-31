@@ -76,6 +76,7 @@ public class MainActivity extends AppCompatActivity
     public static final int RC_PROFILE_CHANGE = 5;
     public static final int RC_BUTTON1 = 6;
     public static final int RC_BUTTON2 = 7;
+    public static final int RC_BUTTON3 = 8;
 
     private String mUsername;
     private String mEmailId;
@@ -691,6 +692,7 @@ public class MainActivity extends AppCompatActivity
                 break;
             case R.id.btn_button3:
                 printInfoMessage("press button 3");
+                startActivityForResult(new Intent(MainActivity.this, SerialConsoleActivity.class), RC_BUTTON3);
                 updateLocation();
                 break;
             case R.id.btn_button4:
