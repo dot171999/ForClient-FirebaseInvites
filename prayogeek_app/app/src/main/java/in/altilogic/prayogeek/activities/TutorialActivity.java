@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -19,6 +20,9 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+
 import in.altilogic.prayogeek.Global_Var;
 import in.altilogic.prayogeek.R;
 import in.altilogic.prayogeek.fragments.BasicElectronicFragment;
@@ -31,7 +35,7 @@ import in.altilogic.prayogeek.utils.Utils;
 
 import static in.altilogic.prayogeek.utils.Utils.*;
 
-public class TutorialActivity extends AppCompatActivity implements View.OnClickListener, ImageFragment.OnClickListener {
+public class TutorialActivity extends AppCompatActivity implements View.OnClickListener, ImageFragment.OnClickListener, GoogleApiClient.OnConnectionFailedListener  {
     private FragmentManager mFragmentManager;
     private final static String TAG = "YOUSCOPE-DB-TUTORIAL";
 
@@ -359,5 +363,10 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         String fileName = Utils.readSharedSetting(this, settings_key, null);
         Log.d(TAG, "Get file key: " + settings_key + "; name: " + fileName);
         return fileName;
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Log.d(TAG, "Connection FAILED; " + connectionResult.getErrorMessage());
     }
 }

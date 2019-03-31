@@ -872,16 +872,16 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onConnected(@android.support.annotation.Nullable Bundle bundle) {
-
+        Log.d(TAG, "Connection CONNECTED");
     }
 
     @Override
     public void onConnectionSuspended(int i) {
-
+        Log.d(TAG, "Connection SUSPENDED; " + i);
     }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
+        Log.d(TAG, "Connection FAILED; " + connectionResult.getErrorMessage());
     }
 }

@@ -11,6 +11,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
 
 import in.altilogic.prayogeek.activities.MainActivity;
 import in.altilogic.prayogeek.utils.Utils;
@@ -22,12 +23,14 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 public class FireBaseHelper {
+    private final static int MAX_DOWNLOAD_INTERVAL_MS = 2000;
     private final static String GLOBAL_VARIABLE_ID = "GLOBAL_VARIABLE_ID";
     private final static String GLOBAL_VARIABLE_COLLECTION = "Usage_Info";
     private FirebaseFirestore mDb;
 
     public FireBaseHelper(){
         mDb = FirebaseFirestore.getInstance();
+        FirebaseStorage.getInstance().setMaxDownloadRetryTimeMillis(MAX_DOWNLOAD_INTERVAL_MS);
     }
 
     public void write(final Global_Var gv) {
@@ -71,6 +74,10 @@ public class FireBaseHelper {
 
     public void read(String collection, String document, OnCompleteListener<DocumentSnapshot> completeListener) {
         mDb.collection(collection).document(document).get().addOnCompleteListener(completeListener);
+    }
+
+    public void read(String collection, String document, OnCompleteListener<DocumentSnapshot> completeListener, final OnFailureListener failListener) {
+        mDb.collection(collection).document(document).get().addOnCompleteListener(completeListener).addOnFailureListener(failListener);
     }
 
     /**

@@ -108,9 +108,9 @@ public class ImageDownloadService  extends IntentService {
                 if (!task.isSuccessful()) {
                     Log.w(TAG, "Listen failed." + task.getException());
 
-                    if(!mIsOnline)
+                    if (!mIsOnline)
                         notifyActivityAboutNoInternetConnection();
-                        return;
+                    return;
                 }
                 DocumentSnapshot documentSnapshot = task.getResult();
                 if (!documentSnapshot.exists()) {
@@ -119,37 +119,41 @@ public class ImageDownloadService  extends IntentService {
                 }
                 List<String> basic_electronics = mFireBaseHelper.getArray(documentSnapshot);
 
-                if(basic_electronics.contains(mExperimentType)) {
+                if (basic_electronics.contains(mExperimentType)) {
                     List<String> breadboard_urls = mFireBaseHelper.getArray(documentSnapshot, mExperimentType, "imageURL");
-                    if(breadboard_urls == null)
+                    if (breadboard_urls == null)
                         return;
 
                     int firestore_images_version = mFireBaseHelper.getLong(documentSnapshot, mExperimentType, "version");
 
-                    if(firestore_images_version <= 0 && !mIsOnline) {
+                    if (firestore_images_version <= 0 && !mIsOnline) {
                         notifyActivityAboutNoInternetConnection();
                         return;
                     }
                     boolean isNewVersion = false;
-                    if( getLocaleImagesVersion() != firestore_images_version)  {
+                    if (getLocaleImagesVersion() != firestore_images_version) {
                         isNewVersion = true;
                         deleteOldImages();
                     }
 
-                    if(isNewVersion || mIsLocFilesNotFound ) {
-                            int count = 1;
+                    if (isNewVersion || mIsLocFilesNotFound) {
+                        int count = 1;
                         notifyActivityAboutStartDownload();
                         mFilesNumber = breadboard_urls.size();
                         saveImagesVersion(mExperimentType, firestore_images_version);
-                        saveFilesNumber(mExperimentType, breadboard_urls.size() );
-                        for(String path: breadboard_urls) {
+                        saveFilesNumber(mExperimentType, breadboard_urls.size());
+                        for (String path : breadboard_urls) {
                             downloadUri(path, mExperimentType, count++);
                         }
-                    }
-                    else {
+                    } else {
                         notifyActivityAboutNewFiles();
                     }
                 }
+            }
+        }, new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                notifyActivityAboutDownloadFail();
             }
         });
     }
