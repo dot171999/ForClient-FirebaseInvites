@@ -26,6 +26,10 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import in.altilogic.prayogeek.R;
+import in.altilogic.prayogeek.activities.SerialSettingsActivity;
+import in.altilogic.prayogeek.utils.Utils;
+
 public class SerialConsoleService extends Service {
 
     public static final String TAG = "UsbService";
@@ -44,7 +48,7 @@ public class SerialConsoleService extends Service {
     public static final int CTS_CHANGE = 1;
     public static final int DSR_CHANGE = 2;
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
-    private static final int BAUD_RATE = 9600; // BaudRate. Change this value if you need
+//    private static final int BAUD_RATE = 9600; // BaudRate. Change this value if you need
     public static boolean SERVICE_CONNECTED = false;
     private static final String DATE_TIME_FORMAT = "[HH:mm:ss.SSS]";
 
@@ -58,13 +62,6 @@ public class SerialConsoleService extends Service {
     private UsbSerialDevice serialPort;
 
     private boolean serialPortConnected;
-
-    private byte getAscii(byte data) {
-        if(data < 10)
-            return (byte)(0x30 + 0x0f&(data));
-        else
-            return (byte)(0x41 + 0x0f&(data-10));
-    }
 
     /*
      *  Data received from serial port will be received here. Just populate onReceivedData with your code
@@ -86,9 +83,9 @@ public class SerialConsoleService extends Service {
                         logarray = new byte[timestamp.length + (2*arg0.length)];
                         System.arraycopy(timestamp, 0, logarray, 0, timestamp.length);
 
-                        for(int j=0, i=0; i<arg0.length; i++) {
-                            logarray[timestamp.length+j++] = getAscii((byte)(arg0[i]>>4));
-                            logarray[timestamp.length+j++] = getAscii(arg0[i]);
+                        for(int j=0, i=0; i<arg0.length; i++, j+=2) {
+                            logarray[timestamp.length+j] = getAscii((byte)(arg0[i]>>4));
+                            logarray[timestamp.length+j+1] = getAscii(arg0[i]);
                         }
                         System.arraycopy(arg0, 0, logarray, timestamp.length, arg0.length);
                     }
@@ -105,7 +102,6 @@ public class SerialConsoleService extends Service {
                             isTimestamp = true;
                 }
                 String data = new String(logarray, "UTF-8");
-
                 if (mHandler != null)
                     mHandler.obtainMessage(MESSAGE_FROM_SERIAL_PORT, data).sendToTarget();
             } catch (UnsupportedEncodingException e) {
@@ -144,21 +140,22 @@ public class SerialConsoleService extends Service {
         public void onReceive(Context arg0, Intent arg1) {
             if (arg1.getAction().equals(ACTION_USB_PERMISSION)) {
                 boolean granted = arg1.getExtras().getBoolean(UsbManager.EXTRA_PERMISSION_GRANTED);
-                if (granted) // User accepted our USB connection. Try to open the device as a serial port
-                {
+                if (granted) {// User accepted our USB connection. Try to open the device as a serial port
                     Intent intent = new Intent(ACTION_USB_PERMISSION_GRANTED);
                     arg0.sendBroadcast(intent);
                     connection = usbManager.openDevice(device);
                     new ConnectionThread().start();
-                } else // User not accepted our USB connection. Send an Intent to the Main Activity
-                {
+                }
+                else {// User not accepted our USB connection. Send an Intent to the Main Activity
                     Intent intent = new Intent(ACTION_USB_PERMISSION_NOT_GRANTED);
                     arg0.sendBroadcast(intent);
                 }
-            } else if (arg1.getAction().equals(ACTION_USB_ATTACHED)) {
+            }
+            else if (arg1.getAction().equals(ACTION_USB_ATTACHED)) {
                 if (!serialPortConnected)
                     findSerialPortDevice(); // A USB device has been attached. Try to open it as a Serial port
-            } else if (arg1.getAction().equals(ACTION_USB_DETACHED)) {
+            }
+            else if (arg1.getAction().equals(ACTION_USB_DETACHED)) {
                 // Usb device was disconnected. send an intent to the Main Activity
                 Intent intent = new Intent(ACTION_USB_DISCONNECTED);
                 arg0.sendBroadcast(intent);
@@ -295,17 +292,17 @@ public class SerialConsoleService extends Service {
             if (serialPort != null) {
                 if (serialPort.open()) {
                     serialPortConnected = true;
-                    serialPort.setBaudRate(BAUD_RATE);
-                    serialPort.setDataBits(UsbSerialInterface.DATA_BITS_8);
-                    serialPort.setStopBits(UsbSerialInterface.STOP_BITS_1);
-                    serialPort.setParity(UsbSerialInterface.PARITY_NONE);
+                    serialPort.setBaudRate(getSavedParameter(R.array.baud_rate_array));
+                    serialPort.setDataBits(getSavedParameter(R.array.data_bits_array));
+                    serialPort.setStopBits(getSavedParameter(R.array.stop_bit_array));
+                    serialPort.setParity(getSavedParameter(R.array.parity_check_array));
                     /**
                      * Current flow control Options:
                      * UsbSerialInterface.FLOW_CONTROL_OFF
                      * UsbSerialInterface.FLOW_CONTROL_RTS_CTS only for CP2102 and FT232
                      * UsbSerialInterface.FLOW_CONTROL_DSR_DTR only for CP2102 and FT232
                      */
-                    serialPort.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
+                    serialPort.setFlowControl(getSavedParameter(R.array.flow_control_array));
                     serialPort.read(mCallback);
                     serialPort.getCTS(ctsCallback);
                     serialPort.getDSR(dsrCallback);
@@ -335,5 +332,56 @@ public class SerialConsoleService extends Service {
                 context.sendBroadcast(intent);
             }
         }
+    }
+
+    private byte getAscii(byte data) {
+        if(data < 10)
+            return (byte)(0x30 + 0x0f&(data));
+        else
+            return (byte)(0x41 + 0x0f&(data-10));
+    }
+
+    private int getSavedParameter(int param_id) {
+        String[] params = getResources().getStringArray(param_id);
+        int pos;
+        switch (param_id){
+            case R.array.baud_rate_array:
+                pos = Utils.readSharedSetting(this, SerialSettingsActivity.SETTINGS_BAUD_RATE, 0 );
+                if(pos < params.length){
+                    String valueS = params[pos];
+                    return Integer.parseInt(valueS);
+                }
+                break;
+            case R.array.data_bits_array:
+                pos = Utils.readSharedSetting(this, SerialSettingsActivity.SETTINGS_DATA_BITS, 0 );
+                if(pos < params.length){
+                    String valueS = params[pos];
+                    return Integer.parseInt(valueS);
+                }
+                break;
+            case R.array.stop_bit_array:
+                pos = Utils.readSharedSetting(this, SerialSettingsActivity.SETTINGS_STOP_BIT, 0 );
+                if(pos == 0)
+                    return UsbSerialInterface.STOP_BITS_1;
+                else if(pos == 1)
+                    return UsbSerialInterface.STOP_BITS_15;
+                else if(pos == 2)
+                    return UsbSerialInterface.STOP_BITS_2;
+                break;
+            case R.array.parity_check_array:
+                pos = Utils.readSharedSetting(this, SerialSettingsActivity.SETTINGS_PARITY_CHECK, 0 );
+                if(pos == 0)
+                    return UsbSerialInterface.PARITY_NONE;
+                else if(pos == 1)
+                    return UsbSerialInterface.PARITY_ODD;
+                else if(pos == 2)
+                    return UsbSerialInterface.PARITY_EVEN;
+                break;
+            case R.array.flow_control_array:
+                return UsbSerialInterface.FLOW_CONTROL_OFF;
+            default:
+                break;
+        }
+        return 0;
     }
 }

@@ -56,7 +56,7 @@ public class SerialConsoleActivity  extends AppCompatActivity {
     private SerialConsoleService usbService;
     private TextView mTvOut;
     private EditText mEtText, mEtHex;
-    private SerialCinsoleHandler mHandler;
+    private SerialConsoleHandler mHandler;
     private Button mSendBtn, mSettingsBtn;
     private CheckBox mHex, mHexReceive;
     private ScrollView svConsole;
@@ -78,7 +78,7 @@ public class SerialConsoleActivity  extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_serial_console);
 
-        mHandler = new SerialCinsoleHandler(this);
+        mHandler = new SerialConsoleHandler(this);
 
         mTvOut = (TextView) findViewById(R.id.tvConsoleOut);
         mEtText = (EditText) findViewById(R.id.etSerialData);
@@ -99,25 +99,17 @@ public class SerialConsoleActivity  extends AppCompatActivity {
                 }
             }
         });
-        mSettingsBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startConsoleSettings();
-            }
-        });
+        mSettingsBtn.setOnClickListener(view -> startConsoleSettings());
 
-        mHex.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if(mEtText!=null){
-                    if(b) {
-                        mEtHex.setVisibility(View.VISIBLE);
-                        mEtText.setVisibility(View.INVISIBLE);
-                    }
-                    else{
-                        mEtHex.setVisibility(View.INVISIBLE);
-                        mEtText.setVisibility(View.VISIBLE);
-                    }
+        mHex.setOnCheckedChangeListener((compoundButton, b) -> {
+            if(mEtText!=null){
+                if(b) {
+                    mEtHex.setVisibility(View.VISIBLE);
+                    mEtText.setVisibility(View.INVISIBLE);
+                }
+                else{
+                    mEtHex.setVisibility(View.INVISIBLE);
+                    mEtText.setVisibility(View.VISIBLE);
                 }
             }
         });
@@ -180,10 +172,10 @@ public class SerialConsoleActivity  extends AppCompatActivity {
     /*
      * This handler will be passed to UsbService. Data received from serial port is displayed through this handler
      */
-    private static class SerialCinsoleHandler extends Handler {
+    private static class SerialConsoleHandler extends Handler {
         private final WeakReference<SerialConsoleActivity> mActivity;
 
-        public SerialCinsoleHandler(SerialConsoleActivity activity) {
+        public SerialConsoleHandler(SerialConsoleActivity activity) {
             mActivity = new WeakReference<>(activity);
         }
 

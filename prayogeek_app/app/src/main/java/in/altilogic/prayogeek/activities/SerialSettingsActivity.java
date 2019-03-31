@@ -12,11 +12,11 @@ import in.altilogic.prayogeek.utils.Utils;
 
 public class SerialSettingsActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
-    private static final String SETTINGS_PARITY_CHECK = "PARITY_CHECK_SETTINGS";
-    private static final String SETTINGS_BAUD_RATE = "BAUD_RATE_SETTINGS";
-    private static final String SETTINGS_DATA_BITS = "DATA_BITS_SETTINGS";
-    private static final String SETTINGS_STOP_BIT = "STOP_BIT_SETTINGS";
-    private static final String SETTINGS_FLOW_CONTROL = "FLOW_CONTROL_SETTINGS";
+    public static final String SETTINGS_PARITY_CHECK = "PARITY_CHECK_SETTINGS";
+    public static final String SETTINGS_BAUD_RATE = "BAUD_RATE_SETTINGS";
+    public static final String SETTINGS_DATA_BITS = "DATA_BITS_SETTINGS";
+    public static final String SETTINGS_STOP_BIT = "STOP_BIT_SETTINGS";
+    public static final String SETTINGS_FLOW_CONTROL = "FLOW_CONTROL_SETTINGS";
 
     private Spinner spBaudRate, spParityCheck, spDataBits, spStopBit, spFlowControl;
 
