@@ -241,7 +241,7 @@ public class MainActivity extends AppCompatActivity
             for(int i=0; i<dataList1.size(); i++){
                 if(dataList1.get(i).equals(varList1)){
                     mList1.setSelection(i);
-                    Log.d(TAG, " Set Selected LIST1 : " + varList1);
+                    Log.d(TAG, "Set Selected LIST1 : " + varList1);
                     break;
                 }
             }
@@ -261,7 +261,7 @@ public class MainActivity extends AppCompatActivity
             }
         }
         mList2.setSelection(idxSelected);
-        Log.d(TAG, " Set Selected LIST2 : " + mList2.getSelectedItem().toString());
+        Log.d(TAG, "Set Selected LIST2 : " + mList2.getSelectedItem().toString());
     }
 
     private void list1_check_for_update() {
@@ -311,7 +311,14 @@ public class MainActivity extends AppCompatActivity
                 if (task.isSuccessful()) {
                     boolean mIndividual = false;
                     Global_Var GlobalVar = (Global_Var) getApplicationContext();
+
                     dataList2.clear();
+                    adapterList2.clear();
+                    adapterList2 = null;
+                    adapterList2 = new ArrayAdapter<String>(MainActivity.this, R.layout.spinner_custom, dataList2);
+                    adapterList2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                    mList2.setAdapter(adapterList2);
+
                     DocumentSnapshot docum = task.getResult();
                     if (mDocumentName != null && docum != null) {
                         switch (mDocumentName) {
@@ -395,6 +402,7 @@ public class MainActivity extends AppCompatActivity
                     }
 
                     adapterList2.notifyDataSetChanged();
+
                     String message = "";
                     if(dataList2 != null && dataList2.size() > 0) {
                         if(mIndividual) {
@@ -407,7 +415,6 @@ public class MainActivity extends AppCompatActivity
                     }
 
                     printInfoMessage(message);
-
                     Log.d(MainActivity.TAG, (docum != null ? docum.getId() : "NULL") + " => " + (docum != null ? docum.getData() : "NULL"));
                 } else {
                     Log.w(MainActivity.TAG, "Error getting documents.", task.getException());
@@ -538,6 +545,7 @@ public class MainActivity extends AppCompatActivity
         mList2.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                Log.d(TAG, "mList2.onItemSelected " + i);
                 String collection,document;
                 if (dataList2.size() > 0 && dataList2.size() > i) {
                     printInfoMessage("App will connect to Module " + dataList2.get(i));
@@ -558,20 +566,18 @@ public class MainActivity extends AppCompatActivity
                             if(mList1.getSelectedItem().toString().equals("Individual"))  {
                                 printInfoMessage(getValidityString());
                             }
-                            if(task != null){
-                                DocumentSnapshot docum = task.getResult();
-                                Map<String, Object> hw =  (Map<String, Object>) docum.get(mList2.getSelectedItem().toString());
-                                if (hw != null) {
-                                    long hw_version = (Long) hw.get((String) "hw_version");
-                                    long ina1_cal = (Long) hw.get((String) "ina1_cal");
-                                    long ina2_cal = (Long) hw.get((String) "ina2_cal");
-                                    String mac_address = (String) hw.get((String) "mac_address");
-                                    Global_Var GlobalVar = ((Global_Var) getApplicationContext());
-                                    GlobalVar.Set_INA1Calibration((int) ina1_cal);
-                                    GlobalVar.Set_INA2Calibration((int) ina2_cal);
-                                    GlobalVar.Set_MacAddress(mac_address);
-                                    Log.d(TAG, "List 2 values retrieved");
-                                }
+                            DocumentSnapshot docum = task.getResult();
+                            Map<String, Object> hw =  (Map<String, Object>) docum.get(mList2.getSelectedItem().toString());
+                            if (hw != null) {
+                                long hw_version = (Long) hw.get("hw_version");
+                                long ina1_cal = (Long) hw.get("ina1_cal");
+                                long ina2_cal = (Long) hw.get("ina2_cal");
+                                String mac_address = (String) hw.get((String) "mac_address");
+                                Global_Var GlobalVar = ((Global_Var) getApplicationContext());
+                                GlobalVar.Set_INA1Calibration((int) ina1_cal);
+                                GlobalVar.Set_INA2Calibration((int) ina2_cal);
+                                GlobalVar.Set_MacAddress(mac_address);
+                                Log.d(TAG, "List 2 values retrieved");
                             }
                         }
                     });
