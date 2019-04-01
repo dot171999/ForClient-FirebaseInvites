@@ -9,4 +9,5 @@
     <dimen name="activity_margin_half">8dp</dimen>
     <dimen name="activity_margin_content">24dp</dimen>
     <dimen name="statusbar_size">24dp</dimen>
+    <dimen name="spinner_text_size">24sp</dimen>
 </resources>

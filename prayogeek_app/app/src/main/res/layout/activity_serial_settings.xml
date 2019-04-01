@@ -32,6 +32,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
+                android:text="Line feed" />
+
+            <Spinner
+                android:id="@+id/spLineFeed"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/line_feed_array"/>
+
+            <include layout="@layout/divider" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
                 android:text="Data bits" />
 
             <Spinner

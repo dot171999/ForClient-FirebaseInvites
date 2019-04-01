@@ -58,7 +58,6 @@ public class SerialConsoleActivity  extends AppCompatActivity {
     private EditText mEtText, mEtHex;
     private SerialConsoleHandler mHandler;
     private Button mSendBtn, mSettingsBtn;
-    private CheckBox mHex, mHexReceive;
     private ScrollView svConsole;
     private final ServiceConnection usbConnection = new ServiceConnection() {
         @Override
@@ -85,8 +84,6 @@ public class SerialConsoleActivity  extends AppCompatActivity {
         mEtHex = (EditText) findViewById(R.id.etSerialDataHex);
         mSendBtn = (Button) findViewById(R.id.btnSend);
         mSettingsBtn = (Button) findViewById(R.id.btnConsoleSettings);
-        mHex = (CheckBox) findViewById(R.id.cbHex);
-        mHexReceive = (CheckBox) findViewById(R.id.cbHexReceive);
         svConsole = (ScrollView) findViewById(R.id.svConsole);
         mSendBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -101,24 +98,18 @@ public class SerialConsoleActivity  extends AppCompatActivity {
         });
         mSettingsBtn.setOnClickListener(view -> startConsoleSettings());
 
-        mHex.setOnCheckedChangeListener((compoundButton, b) -> {
-            if(mEtText!=null){
-                if(b) {
-                    mEtHex.setVisibility(View.VISIBLE);
-                    mEtText.setVisibility(View.INVISIBLE);
-                }
-                else{
-                    mEtHex.setVisibility(View.INVISIBLE);
-                    mEtText.setVisibility(View.VISIBLE);
-                }
-            }
-        });
-        mHexReceive.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-
-            }
-        });
+//        mHex.setOnCheckedChangeListener((compoundButton, b) -> {
+//            if(mEtText!=null){
+//                if(b) {
+//                    mEtHex.setVisibility(View.VISIBLE);
+//                    mEtText.setVisibility(View.INVISIBLE);
+//                }
+//                else{
+//                    mEtHex.setVisibility(View.INVISIBLE);
+//                    mEtText.setVisibility(View.VISIBLE);
+//                }
+//            }
+//        });
 
         mEtHex.setVisibility(View.INVISIBLE);
         mEtText.setVisibility(View.VISIBLE);
