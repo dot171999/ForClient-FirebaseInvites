@@ -1,101 +1,199 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ScrollView
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_margin="8dp">
 
-        <LinearLayout
+        <RelativeLayout
+            android:layout_margin="8dp"
+            android:gravity="center"
+            android:background="@drawable/textview_border"
+            android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="wrap_content">
 
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:text="Baud rate" />
+                android:text="Baud Rate : "
+                android:textSize="16sp" />
 
             <Spinner
                 android:id="@+id/spBaudRate"
-                android:layout_width="match_parent"
+                android:layout_marginStart="120dp"
+                android:layout_width="200dp"
                 android:layout_height="wrap_content"
-                android:entries="@array/baud_rate_array"/>
+                android:entries="@array/baud_rate_array" />
+        </RelativeLayout>
 
-            <include layout="@layout/divider" />
+        <RelativeLayout
+            android:layout_margin="8dp"
+            android:gravity="center"
+            android:background="@drawable/textview_border"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
-                android:text="Line feed" />
+                android:text="Line Feed : " />
 
             <Spinner
                 android:id="@+id/spLineFeed"
-                android:layout_width="match_parent"
+                android:layout_marginStart="120dp"
+                android:layout_width="200dp"
                 android:layout_height="wrap_content"
                 android:entries="@array/line_feed_array"/>
 
-            <include layout="@layout/divider" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_margin="8dp"
+            android:gravity="center"
+            android:background="@drawable/textview_border"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
-                android:text="Data bits" />
+                android:text="Data Bits : " />
 
             <Spinner
                 android:id="@+id/spDataBits"
-                android:layout_width="match_parent"
+                android:layout_marginStart="120dp"
+                android:layout_width="200dp"
                 android:layout_height="wrap_content"
                 android:entries="@array/data_bits_array" />
 
-            <include layout="@layout/divider" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_margin="8dp"
+            android:gravity="center"
+            android:background="@drawable/textview_border"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
             <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:text="Parity check" />
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:text="Parity Check : " />
 
             <Spinner
-                android:id="@+id/spParityCheck"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:entries="@array/parity_check_array"/>
+            android:id="@+id/spParityCheck"
+            android:layout_marginStart="120dp"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:entries="@array/parity_check_array"/>
 
-            <include layout="@layout/divider" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_margin="8dp"
+            android:gravity="center"
+            android:background="@drawable/textview_border"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
-                android:text="Stop bit" />
+                android:text="Stop Bit : " />
 
             <Spinner
                 android:id="@+id/spStopBit"
-                android:layout_width="match_parent"
+                android:layout_marginStart="120dp"
+                android:layout_width="200dp"
                 android:layout_height="wrap_content"
                 android:entries="@array/stop_bit_array"/>
 
-            <include layout="@layout/divider" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_margin="8dp"
+            android:gravity="center"
+            android:background="@drawable/textview_border"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
-                android:text="Flow control" />
+                android:text="Flow Control : " />
 
             <Spinner
                 android:id="@+id/spFlowControl"
-                android:layout_width="match_parent"
+                android:layout_marginStart="120dp"
+                android:layout_width="200dp"
                 android:layout_height="wrap_content"
                 android:entries="@array/flow_control_array"/>
-        </LinearLayout>
-    </ScrollView>
 
-</android.support.constraint.ConstraintLayout>
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_margin="8dp"
+            android:gravity="center"
+            android:background="@drawable/textview_border"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:text="Data Format : " />
+
+            <Spinner
+                android:id="@+id/spDataFormat"
+                android:layout_marginStart="120dp"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:entries="@array/data_format_array"/>
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_margin="8dp"
+            android:gravity="center"
+            android:background="@drawable/textview_border"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:textSize="16sp"
+            android:text="Log file Name : " />
+
+            <EditText
+            android:id="@+id/etFileName"
+            android:layout_marginStart="120dp"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="textPersonName"
+            android:text="filename" />
+
+        </RelativeLayout>
+    </LinearLayout>
+</ScrollView>

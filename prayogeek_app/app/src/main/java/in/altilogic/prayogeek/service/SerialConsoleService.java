@@ -28,6 +28,7 @@ import java.util.Map;
 
 import in.altilogic.prayogeek.R;
 import in.altilogic.prayogeek.activities.SerialSettingsActivity;
+import in.altilogic.prayogeek.fragments.SerialConsoleSettingsFragment;
 import in.altilogic.prayogeek.utils.Utils;
 
 public class SerialConsoleService extends Service {
@@ -346,21 +347,21 @@ public class SerialConsoleService extends Service {
         int pos;
         switch (param_id){
             case R.array.baud_rate_array:
-                pos = Utils.readSharedSetting(this, SerialSettingsActivity.SETTINGS_BAUD_RATE, 0 );
+                pos = Utils.readSharedSetting(this, SerialConsoleSettingsFragment.SETTINGS_BAUD_RATE, 0 );
                 if(pos < params.length){
                     String valueS = params[pos];
                     return Integer.parseInt(valueS);
                 }
                 break;
             case R.array.data_bits_array:
-                pos = Utils.readSharedSetting(this, SerialSettingsActivity.SETTINGS_DATA_BITS, 0 );
+                pos = Utils.readSharedSetting(this, SerialConsoleSettingsFragment.SETTINGS_DATA_BITS, 0 );
                 if(pos < params.length){
                     String valueS = params[pos];
                     return Integer.parseInt(valueS);
                 }
                 break;
             case R.array.stop_bit_array:
-                pos = Utils.readSharedSetting(this, SerialSettingsActivity.SETTINGS_STOP_BIT, 0 );
+                pos = Utils.readSharedSetting(this, SerialConsoleSettingsFragment.SETTINGS_STOP_BIT, 0 );
                 if(pos == 0)
                     return UsbSerialInterface.STOP_BITS_1;
                 else if(pos == 1)
@@ -369,7 +370,7 @@ public class SerialConsoleService extends Service {
                     return UsbSerialInterface.STOP_BITS_2;
                 break;
             case R.array.parity_check_array:
-                pos = Utils.readSharedSetting(this, SerialSettingsActivity.SETTINGS_PARITY_CHECK, 0 );
+                pos = Utils.readSharedSetting(this, SerialConsoleSettingsFragment.SETTINGS_PARITY_CHECK, 0 );
                 if(pos == 0)
                     return UsbSerialInterface.PARITY_NONE;
                 else if(pos == 1)

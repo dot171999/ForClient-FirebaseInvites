@@ -58,7 +58,12 @@
     </string-array>
 
     <string-array name="flow_control_array">
-        <item>off</item>
+        <item>OFF</item>
+    </string-array>
+
+    <string-array name="data_format_array">
+        <item>ASCII</item>
+        <item> HEX</item>
     </string-array>
 
 </resources>
