@@ -2,22 +2,18 @@ package in.altilogic.prayogeek.fragments;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 
 import java.util.Objects;
 
 import in.altilogic.prayogeek.R;
-import in.altilogic.prayogeek.activities.SerialSettingsActivity;
 import in.altilogic.prayogeek.utils.Utils;
 
 import static android.content.Context.INPUT_METHOD_SERVICE;
@@ -63,25 +59,20 @@ public class SerialConsoleSettingsFragment extends Fragment implements AdapterVi
         int baud_position = Utils.readSharedSetting(getActivity(), SETTINGS_BAUD_RATE, 2);
         int parity_position = Utils.readSharedSetting(getActivity(), SETTINGS_PARITY_CHECK, 0);
         int databits_position = Utils.readSharedSetting(getActivity(), SETTINGS_DATA_BITS, 3);
-        int sopbit_position = Utils.readSharedSetting(getActivity(), SETTINGS_STOP_BIT, 0);
+        int stopbit_position = Utils.readSharedSetting(getActivity(), SETTINGS_STOP_BIT, 0);
         int flow_position = Utils.readSharedSetting(getActivity(), SETTINGS_FLOW_CONTROL, 0);
         int line_feed_position = Utils.readSharedSetting(getActivity(), SETTINGS_LINE_FEED, 0);
+        int data_format_position = Utils.readSharedSetting(getActivity(), SETTINGS_DATA_FORMAT, 0);
 
-//        spBaudRate.setAdapter(ArrayAdapter.createFromResource(getActivity(), R.array.baud_rate_array, R.layout.spinner));
-//        spParityCheck.setAdapter(ArrayAdapter.createFromResource(getActivity(), R.array.parity_check_array, R.layout.spinner));
-//        spDataBits.setAdapter(ArrayAdapter.createFromResource(getActivity(), R.array.data_bits_array, R.layout.spinner));
-//        spStopBit.setAdapter(ArrayAdapter.createFromResource(getActivity(), R.array.stop_bit_array, R.layout.spinner));
-//        spFlowControl.setAdapter(ArrayAdapter.createFromResource(getActivity(), R.array.flow_control_array, R.layout.spinner));
-//        spLineFeed.setAdapter(ArrayAdapter.createFromResource(getActivity(), R.array.line_feed_array, R.layout.spinner));
+        spBaudRate.setSelection(baud_position < getResources().getIntArray(R.array.baud_rate_array).length ? baud_position : 0);
+        spParityCheck.setSelection(parity_position < getResources().getIntArray(R.array.parity_check_array).length ? parity_position : 0);
+        spDataBits.setSelection(databits_position < getResources().getIntArray(R.array.data_bits_array).length ? databits_position : 0);
+        spStopBit.setSelection(stopbit_position < getResources().getIntArray(R.array.stop_bit_array).length ? stopbit_position : 0);
+        spFlowControl.setSelection(flow_position < getResources().getIntArray(R.array.flow_control_array).length ? flow_position : 0);
+        spLineFeed.setSelection(line_feed_position < getResources().getIntArray(R.array.line_feed_array).length ? line_feed_position : 0);
+        spDataFormat.setSelection(data_format_position < getResources().getIntArray(R.array.data_format_array).length ? data_format_position : 0);
 
-//        spBaudRate.setSelection(baud_position);
-//        spParityCheck.setSelection(parity_position);
-//        spDataBits.setSelection(databits_position);
-//        spStopBit.setSelection(sopbit_position);
-//        spFlowControl.setSelection(flow_position);
-//        spLineFeed.setSelection(line_feed_position);
-
-//        etFileName.setInputType(InputType.TYPE_NULL);
+        etFileName.setText(Utils.readSharedSetting(getActivity(), SETTINGS_LOG_FILE_NAME, ""));
     }
 
     @Override
@@ -120,6 +111,7 @@ public class SerialConsoleSettingsFragment extends Fragment implements AdapterVi
             case R.id.spParityCheck: Utils.saveSharedSetting(Objects.requireNonNull(getActivity()), SETTINGS_PARITY_CHECK, pos); break;
             case R.id.spStopBit: Utils.saveSharedSetting(Objects.requireNonNull(getActivity()), SETTINGS_STOP_BIT, pos); break;
             case R.id.spLineFeed: Utils.saveSharedSetting(Objects.requireNonNull(getActivity()), SETTINGS_LINE_FEED, pos); break;
+            case R.id.spDataFormat: Utils.saveSharedSetting(Objects.requireNonNull(getActivity()), SETTINGS_DATA_FORMAT, pos); break;
             default: break;
         }
     }
@@ -129,5 +121,9 @@ public class SerialConsoleSettingsFragment extends Fragment implements AdapterVi
 
     }
 
-
+    @Override
+    public void onStop() {
+        super.onStop();
+        Utils.saveSharedSetting(Objects.requireNonNull(getActivity()), SETTINGS_LOG_FILE_NAME, etFileName.getText().toString());
+    }
 }
