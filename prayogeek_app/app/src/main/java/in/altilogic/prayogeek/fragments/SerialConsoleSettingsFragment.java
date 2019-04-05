@@ -1,12 +1,12 @@
 package in.altilogic.prayogeek.fragments;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.Spinner;
@@ -15,8 +15,6 @@ import java.util.Objects;
 
 import in.altilogic.prayogeek.R;
 import in.altilogic.prayogeek.utils.Utils;
-
-import static android.content.Context.INPUT_METHOD_SERVICE;
 
 
 public class SerialConsoleSettingsFragment extends Fragment implements AdapterView.OnItemSelectedListener {
@@ -29,24 +27,23 @@ public class SerialConsoleSettingsFragment extends Fragment implements AdapterVi
     public static final String SETTINGS_DATA_FORMAT = "DATA_FORMAT_SETTINGS";
     public static final String SETTINGS_LOG_FILE_NAME = "LOG_FILE_SETTINGS";
 
-    private Spinner spBaudRate, spLineFeed, spParityCheck, spDataBits, spStopBit, spFlowControl, spDataFormat;
     private EditText etFileName;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.activity_serial_settings, null);
+        return inflater.inflate(R.layout.fragment_serial_settings, null);
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
-        spBaudRate = view.findViewById(R.id.spBaudRate);
-        spParityCheck = view.findViewById(R.id.spParityCheck);
-        spDataBits = view.findViewById(R.id.spDataBits);
-        spStopBit = view.findViewById(R.id.spStopBit);
-        spFlowControl = view.findViewById(R.id.spFlowControl);
-        spLineFeed = view.findViewById(R.id.spLineFeed);
-        spDataFormat = view.findViewById(R.id.spDataFormat);
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        Spinner spBaudRate = view.findViewById(R.id.spBaudRate);
+        Spinner spParityCheck = view.findViewById(R.id.spParityCheck);
+        Spinner spDataBits = view.findViewById(R.id.spDataBits);
+        Spinner spStopBit = view.findViewById(R.id.spStopBit);
+        Spinner spFlowControl = view.findViewById(R.id.spFlowControl);
+        Spinner spLineFeed = view.findViewById(R.id.spLineFeed);
+        Spinner spDataFormat = view.findViewById(R.id.spDataFormat);
         etFileName = view.findViewById(R.id.etFileName);
 
         spBaudRate.setOnItemSelectedListener(this);
@@ -56,7 +53,7 @@ public class SerialConsoleSettingsFragment extends Fragment implements AdapterVi
         spFlowControl.setOnItemSelectedListener(this);
         spLineFeed.setOnItemSelectedListener(this);
 
-        int baud_position = Utils.readSharedSetting(getActivity(), SETTINGS_BAUD_RATE, 2);
+        int baud_position = Utils.readSharedSetting(Objects.requireNonNull(getActivity()), SETTINGS_BAUD_RATE, 2);
         int parity_position = Utils.readSharedSetting(getActivity(), SETTINGS_PARITY_CHECK, 0);
         int databits_position = Utils.readSharedSetting(getActivity(), SETTINGS_DATA_BITS, 3);
         int stopbit_position = Utils.readSharedSetting(getActivity(), SETTINGS_STOP_BIT, 0);
@@ -78,26 +75,7 @@ public class SerialConsoleSettingsFragment extends Fragment implements AdapterVi
     @Override
     public void onStart() {
         super.onStart();
-        hideSoftKeyboard();
-
-    }
-    /**
-     * Hides the soft keyboard
-     */
-    public void hideSoftKeyboard() {
-        if(getActivity().getCurrentFocus()!=null) {
-            InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getSystemService(INPUT_METHOD_SERVICE);
-            inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
-        }
-    }
-
-    /**
-     * Shows the soft keyboard
-     */
-    public void showSoftKeyboard(View view) {
-        InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getSystemService(INPUT_METHOD_SERVICE);
-        view.requestFocus();
-        inputMethodManager.showSoftInput(view, 0);
+        Utils.hideSoftKeyboard(Objects.requireNonNull(getActivity()));
     }
 
     @Override

@@ -27,7 +27,6 @@ import java.util.Locale;
 import java.util.Map;
 
 import in.altilogic.prayogeek.R;
-import in.altilogic.prayogeek.activities.SerialSettingsActivity;
 import in.altilogic.prayogeek.fragments.SerialConsoleSettingsFragment;
 import in.altilogic.prayogeek.utils.Utils;
 
@@ -56,7 +55,6 @@ public class SerialConsoleService extends Service {
     private IBinder binder = new UsbBinder();
 
     private Context context;
-    private Handler mHandler;
     private UsbManager usbManager;
     private UsbDevice device;
     private UsbDeviceConnection connection;
@@ -74,64 +72,51 @@ public class SerialConsoleService extends Service {
     private UsbSerialInterface.UsbReadCallback mCallback = new UsbSerialInterface.UsbReadCallback() {
         @Override
         public void onReceivedData(byte[] arg0) {
-            try {
-                byte[] logarray;
-                if(isTimestamp) {
-                    isTimestamp = false;
-                    DateFormat dataFormatter = new SimpleDateFormat(DATE_TIME_FORMAT, Locale.US);
-                    byte[] timestamp = dataFormatter.format(Calendar.getInstance().getTime()).getBytes();
-                    if(isHexReceive){
-                        logarray = new byte[timestamp.length + (2*arg0.length)];
-                        System.arraycopy(timestamp, 0, logarray, 0, timestamp.length);
+            byte[] logarray;
+            if(isTimestamp) {
+                isTimestamp = false;
+                DateFormat dataFormatter = new SimpleDateFormat(DATE_TIME_FORMAT, Locale.US);
+                byte[] timestamp = dataFormatter.format(Calendar.getInstance().getTime()).getBytes();
+                if(isHexReceive){
+                    logarray = new byte[timestamp.length + (2*arg0.length)];
+                    System.arraycopy(timestamp, 0, logarray, 0, timestamp.length);
 
-                        for(int j=0, i=0; i<arg0.length; i++, j+=2) {
-                            logarray[timestamp.length+j] = getAscii((byte)(arg0[i]>>4));
-                            logarray[timestamp.length+j+1] = getAscii(arg0[i]);
-                        }
-                        System.arraycopy(arg0, 0, logarray, timestamp.length, arg0.length);
+                    for(int j=0, i=0; i<arg0.length; i++, j+=2) {
+                        logarray[timestamp.length+j] = getAscii((byte)(arg0[i]>>4));
+                        logarray[timestamp.length+j+1] = getAscii(arg0[i]);
                     }
-                    else{
-                        logarray = new byte[timestamp.length + (arg0.length)];
-                        System.arraycopy(timestamp, 0, logarray, 0, timestamp.length);
-                        System.arraycopy(arg0, 0, logarray, timestamp.length, arg0.length);
-                    }
+                    System.arraycopy(arg0, 0, logarray, timestamp.length, arg0.length);
                 }
-                else {
-                    logarray = arg0;
-                    for (byte anArg0 : arg0)
-                        if (anArg0 == '\n')
-                            isTimestamp = true;
+                else{
+                    logarray = new byte[timestamp.length + (arg0.length)];
+                    System.arraycopy(timestamp, 0, logarray, 0, timestamp.length);
+                    System.arraycopy(arg0, 0, logarray, timestamp.length, arg0.length);
                 }
-                String data = new String(logarray, "UTF-8");
-                if (mHandler != null)
-                    mHandler.obtainMessage(MESSAGE_FROM_SERIAL_PORT, data).sendToTarget();
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
             }
+            else {
+                logarray = arg0;
+                for (byte anArg0 : arg0)
+                    if (anArg0 == '\n')
+                        isTimestamp = true;
+            }
+            notifyAboutNewData(logarray);
         }
     };
 
-    /*
-     * State changes in the CTS line will be received here
-     */
-    private UsbSerialInterface.UsbCTSCallback ctsCallback = new UsbSerialInterface.UsbCTSCallback() {
-        @Override
-        public void onCTSChanged(boolean state) {
-            if(mHandler != null)
-                mHandler.obtainMessage(CTS_CHANGE).sendToTarget();
-        }
-    };
+    private void notifyAboutNewData(byte[] logarray) {
+        String data = null;
+        try {
+            data = new String(logarray, "UTF-8");
 
-    /*
-     * State changes in the DSR line will be received here
-     */
-    private UsbSerialInterface.UsbDSRCallback dsrCallback = new UsbSerialInterface.UsbDSRCallback() {
-        @Override
-        public void onDSRChanged(boolean state) {
-            if(mHandler != null)
-                mHandler.obtainMessage(DSR_CHANGE).sendToTarget();
+//            if (mHandler != null)
+//                mHandler.obtainMessage(MESSAGE_FROM_SERIAL_PORT, data).sendToTarget();
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
         }
-    };
+    }
+
+
     /*
      * Different notifications from OS will be received here (USB attached, detached, permission responses...)
      * About BroadcastReceiver: http://developer.android.com/reference/android/content/BroadcastReceiver.html
@@ -210,10 +195,6 @@ public class SerialConsoleService extends Service {
     public void write(byte[] data) {
         if (serialPort != null)
             serialPort.write(data);
-    }
-
-    public void setHandler(Handler mHandler) {
-        this.mHandler = mHandler;
     }
 
     private void findSerialPortDevice() {
@@ -305,8 +286,6 @@ public class SerialConsoleService extends Service {
                      */
                     serialPort.setFlowControl(getSavedParameter(R.array.flow_control_array));
                     serialPort.read(mCallback);
-                    serialPort.getCTS(ctsCallback);
-                    serialPort.getDSR(dsrCallback);
 
                     //
                     // Some Arduinos would need some sleep because firmware wait some time to know whether a new sketch is going

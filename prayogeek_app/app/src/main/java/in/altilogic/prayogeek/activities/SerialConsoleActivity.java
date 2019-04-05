@@ -6,15 +6,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -24,6 +26,8 @@ import java.lang.ref.WeakReference;
 import java.util.Set;
 
 import in.altilogic.prayogeek.R;
+import in.altilogic.prayogeek.fragments.SerialConsoleFragment;
+import in.altilogic.prayogeek.service.ImageDownloadService;
 import in.altilogic.prayogeek.service.SerialConsoleService;
 
 public class SerialConsoleActivity  extends AppCompatActivity {
@@ -55,7 +59,7 @@ public class SerialConsoleActivity  extends AppCompatActivity {
     };
     private SerialConsoleService usbService;
     private TextView mTvOut;
-    private EditText mEtText, mEtHex;
+    private EditText mEtText;//, mEtHex;
     private SerialConsoleHandler mHandler;
     private Button mSendBtn, mSettingsBtn;
     private ScrollView svConsole;
@@ -72,31 +76,53 @@ public class SerialConsoleActivity  extends AppCompatActivity {
         }
     };
 
+    private FragmentManager mFragmentManager;
+    private BroadcastReceiver mBroadcastReceiver;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_serial_console);
 
-        mHandler = new SerialConsoleHandler(this);
+        setContentView(R.layout.activity_tutolial);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        mFragmentManager = getSupportFragmentManager();
+        SerialConsoleFragment serialConsoleFragment = new SerialConsoleFragment();
+        mFragmentManager.beginTransaction().replace(R.id.fragmentContent, serialConsoleFragment).commit();
+        initBroadcastReceiver();
+    }
 
-        mTvOut = (TextView) findViewById(R.id.tvConsoleOut);
-        mEtText = (EditText) findViewById(R.id.etSerialData);
-        mEtHex = (EditText) findViewById(R.id.etSerialDataHex);
-        mSendBtn = (Button) findViewById(R.id.btnSend);
-        mSettingsBtn = (Button) findViewById(R.id.btnConsoleSettings);
-        svConsole = (ScrollView) findViewById(R.id.svConsole);
-        mSendBtn.setOnClickListener(new View.OnClickListener() {
+    private void initBroadcastReceiver() {
+        mBroadcastReceiver = new BroadcastReceiver() {
             @Override
-            public void onClick(View v) {
-                if (!mEtText.getText().toString().equals("")) {
-                    String data = mEtText.getText().toString();
-                    if (usbService != null) { // if UsbService was correctly binded, Send data
-                        usbService.write(data.getBytes());
-                    }
+            public void onReceive(Context context, Intent intent) {
+                int result = intent.getIntExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, -1);
+                switch (result) {
+
                 }
             }
-        });
-        mSettingsBtn.setOnClickListener(view -> startConsoleSettings());
+        };
+    }
+//        setContentView(R.layout.fragment_serial_console);
+//
+//        mHandler = new SerialConsoleHandler(this);
+//
+//        mTvOut = (TextView) findViewById(R.id.tvConsoleOut);
+//        mEtText = (EditText) findViewById(R.id.etSerialData);
+////        mEtHex = (EditText) findViewById(R.id.etSerialData);
+//        mSendBtn = (Button) findViewById(R.id.btnSend);
+//        mSettingsBtn = (Button) findViewById(R.id.btnConsoleSettings);
+//        svConsole = (ScrollView) findViewById(R.id.svConsole);
+//        mSendBtn.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                if (!mEtText.getText().toString().equals("")) {
+//                    String data = mEtText.getText().toString();
+//                    if (usbService != null) { // if UsbService was correctly binded, Send data
+//                        usbService.write(data.getBytes());
+//                    }
+//                }
+//            }
+//        });
+//        mSettingsBtn.setOnClickListener(view -> startConsoleSettings());
 
 //        mHex.setOnCheckedChangeListener((compoundButton, b) -> {
 //            if(mEtText!=null){
@@ -111,13 +137,33 @@ public class SerialConsoleActivity  extends AppCompatActivity {
 //            }
 //        });
 
-        mEtHex.setVisibility(View.INVISIBLE);
-        mEtText.setVisibility(View.VISIBLE);
-    }
+//        mEtHex.setVisibility(View.INVISIBLE);
+//        mEtText.setVisibility(View.VISIBLE);
+//    }
 
     private void startConsoleSettings() {
         Intent intent = new Intent(this, SerialSettingsActivity.class);
         startActivity(intent);
+    }
+
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        IntentFilter statusIntentFilter = new IntentFilter(ImageDownloadService.HW_SERVICE_BROADCAST_VALUE);
+        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, statusIntentFilter);
+    }
+
+    @Override
+    public void onStop(){
+        super.onStop();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
+    }
+
+    @Override
+    public void onDestroy() {
+        stopService(new Intent(this, ImageDownloadService.class));
+        super.onDestroy();
     }
 
     @Override
