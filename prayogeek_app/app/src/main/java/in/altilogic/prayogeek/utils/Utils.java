@@ -12,7 +12,12 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.TimeZone;
 
 import in.altilogic.prayogeek.R;
 
@@ -101,6 +106,10 @@ public class Utils {
         inputMethodManager.showSoftInput(view, 0);
     }
 
-
+    public static String getTimestamp(long millis) {
+        DateFormat formatter = new SimpleDateFormat("[HH:mm:ss.SSS]", Locale.US);
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return formatter.format(new Date(millis));
+    }
 }
 

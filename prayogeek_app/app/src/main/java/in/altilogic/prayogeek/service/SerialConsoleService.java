@@ -10,20 +10,15 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import android.os.Binder;
-import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
 import com.felhr.usbserial.CDCSerialDevice;
 import com.felhr.usbserial.UsbSerialDevice;
 import com.felhr.usbserial.UsbSerialInterface;
+import com.google.common.primitives.Bytes;
 
-import java.io.UnsupportedEncodingException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 import in.altilogic.prayogeek.R;
@@ -32,7 +27,7 @@ import in.altilogic.prayogeek.utils.Utils;
 
 public class SerialConsoleService extends Service {
 
-    public static final String TAG = "UsbService";
+    public static final String TAG = "YOUSCOPE-USB-SERVICE";
 
     public static final String ACTION_USB_READY = "com.felhr.connectivityservices.USB_READY";
     public static final String ACTION_USB_ATTACHED = "android.hardware.usb.action.USB_DEVICE_ATTACHED";
@@ -48,9 +43,25 @@ public class SerialConsoleService extends Service {
     public static final int CTS_CHANGE = 1;
     public static final int DSR_CHANGE = 2;
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
-//    private static final int BAUD_RATE = 9600; // BaudRate. Change this value if you need
     public static boolean SERVICE_CONNECTED = false;
     private static final String DATE_TIME_FORMAT = "[HH:mm:ss.SSS]";
+
+    public static final String SERIAL_SERVICE_MESSAGE_TYPE_NAME = "in.altilogic.prayogeek.serial.message.type";
+    public static final String SERIAL_SERVICE_MESSAGE_TYPE_DATA = "in.altilogic.prayogeek.serial.data";
+    public static final String SERIAL_SERVICE_MESSAGE_TYPE_TIMESTAMP = "in.altilogic.prayogeek.serial.timestamp";
+    public static final String SERIAL_SERVICE_MESSAGE_TYPE_COLOR = "in.altilogic.prayogeek.serial.color";
+    public static final int SERIAL_SERVICE_MESSAGE_TYPE_PARAMETERS = 1;
+    public static final int SERIAL_SERVICE_MESSAGE_TYPE_READ_DATA = 2;
+    public static final int SERIAL_SERVICE_MESSAGE_TYPE_WRITE_DATA = 3;
+
+    public static final int SERIAL_LINE_FEED_NO_ENDING = 0;
+    public static final int SERIAL_LINE_FEED_NL = 1;
+    public static final int SERIAL_LINE_FEED_CR = 2;
+    public static final int SERIAL_LINE_FEED_NLCR = 3;
+
+    public static final int SERIAL_LINE_MAX_STRING_SIZE = 128;
+
+    private int mLineFeed = SERIAL_LINE_FEED_NO_ENDING;
 
     private IBinder binder = new UsbBinder();
 
@@ -67,53 +78,72 @@ public class SerialConsoleService extends Service {
      *  In this particular example. byte stream is converted to String and send to UI thread to
      *  be treated there.
      */
-    private boolean isTimestamp = true;
-    private boolean isHexReceive = true;
+    private static byte[] mLogarray = new byte[SERIAL_LINE_MAX_STRING_SIZE];
+    private int mLogArrayOffset = 0;
+    private boolean mCR = false;
+    private boolean mNL = false;
+
     private UsbSerialInterface.UsbReadCallback mCallback = new UsbSerialInterface.UsbReadCallback() {
         @Override
         public void onReceivedData(byte[] arg0) {
-            byte[] logarray;
-            if(isTimestamp) {
-                isTimestamp = false;
-                DateFormat dataFormatter = new SimpleDateFormat(DATE_TIME_FORMAT, Locale.US);
-                byte[] timestamp = dataFormatter.format(Calendar.getInstance().getTime()).getBytes();
-                if(isHexReceive){
-                    logarray = new byte[timestamp.length + (2*arg0.length)];
-                    System.arraycopy(timestamp, 0, logarray, 0, timestamp.length);
+            if(arg0 != null) {
+                if(mLineFeed == SERIAL_LINE_FEED_NO_ENDING) {
+                    notifyAboutNewData(arg0, getResources().getColor(R.color.blue));
+                }
+                else {
+                    boolean isSend = false;
+                    for(byte sym : arg0) {
+                        if(sym == 0x0D) {
+                            mCR = true;
+                        } else if(sym == 0x0A ) {
+                            mNL = true;
+                        }
+                        else {
+                            mLogarray[mLogArrayOffset++] = sym;
+                        }
 
-                    for(int j=0, i=0; i<arg0.length; i++, j+=2) {
-                        logarray[timestamp.length+j] = getAscii((byte)(arg0[i]>>4));
-                        logarray[timestamp.length+j+1] = getAscii(arg0[i]);
+                        if(mLogArrayOffset >= mLogarray.length) {
+                            Log.d(TAG, "Error: mLogArrayOffset > mLogarray.length");
+                            mLogArrayOffset = 0;
+                            mCR = false;
+                            mNL = false;
+                            return;
+                        }
+
+                        if(mCR && mLineFeed == SERIAL_LINE_FEED_CR) {
+                            isSend = true;
+                        }
+                        else if(mNL && mLineFeed == SERIAL_LINE_FEED_NL) {
+                            isSend = true;
+                        }
+                        else if (mNL && mCR && mLineFeed == SERIAL_LINE_FEED_NLCR ) {
+                            isSend = true;
+                        }
+
+                        if(isSend) {
+                            isSend = false;
+                            mLogArrayOffset = 0;
+                            mCR = false;
+                            mNL = false;
+                            byte[] data = new byte[mLogArrayOffset + 2];
+                            data[data.length-2] = 0x0D;
+                            data[data.length-1] = 0x0A;
+                            System.arraycopy(mLogarray, 0, data, 0, mLogArrayOffset);
+                            notifyAboutNewData(data, getResources().getColor(R.color.blue));
+                        }
                     }
-                    System.arraycopy(arg0, 0, logarray, timestamp.length, arg0.length);
-                }
-                else{
-                    logarray = new byte[timestamp.length + (arg0.length)];
-                    System.arraycopy(timestamp, 0, logarray, 0, timestamp.length);
-                    System.arraycopy(arg0, 0, logarray, timestamp.length, arg0.length);
                 }
             }
-            else {
-                logarray = arg0;
-                for (byte anArg0 : arg0)
-                    if (anArg0 == '\n')
-                        isTimestamp = true;
-            }
-            notifyAboutNewData(logarray);
         }
     };
 
-    private void notifyAboutNewData(byte[] logarray) {
-        String data = null;
-        try {
-            data = new String(logarray, "UTF-8");
-
-//            if (mHandler != null)
-//                mHandler.obtainMessage(MESSAGE_FROM_SERIAL_PORT, data).sendToTarget();
-
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+    private void notifyAboutNewData(byte[] logarray, int color) {
+        Intent intent = new Intent(SERIAL_SERVICE_MESSAGE_TYPE_NAME);
+        intent.putExtra(SERIAL_SERVICE_MESSAGE_TYPE_NAME, SERIAL_SERVICE_MESSAGE_TYPE_READ_DATA);
+        intent.putExtra(SERIAL_SERVICE_MESSAGE_TYPE_DATA, logarray);
+        intent.putExtra(SERIAL_SERVICE_MESSAGE_TYPE_TIMESTAMP, System.currentTimeMillis());
+        intent.putExtra(SERIAL_SERVICE_MESSAGE_TYPE_COLOR, color);
+        sendBroadcast(intent);
     }
 
 
@@ -178,6 +208,36 @@ public class SerialConsoleService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null) {
+            int messageType = intent.getIntExtra(SERIAL_SERVICE_MESSAGE_TYPE_NAME, -1);
+            Log.d(TAG, "onStartCommand messageType = " + messageType);
+
+            switch (messageType) {
+                case SERIAL_SERVICE_MESSAGE_TYPE_WRITE_DATA:
+                    byte[] bytes = intent.getByteArrayExtra(SERIAL_SERVICE_MESSAGE_TYPE_DATA);
+                    if(serialPort != null && bytes != null && serialPort.isOpen()) {
+                        serialPort.write(bytes);
+                        notifyAboutNewData(bytes, getResources().getColor(R.color.black_trans80));
+                    }
+                    break;
+                case SERIAL_SERVICE_MESSAGE_TYPE_PARAMETERS:
+                    if(serialPort != null && serialPort.isOpen()){
+                        serialPort.setBaudRate(getSavedParameter(R.array.baud_rate_array));
+                        serialPort.setDataBits(getSavedParameter(R.array.data_bits_array));
+                        serialPort.setStopBits(getSavedParameter(R.array.stop_bit_array));
+                        serialPort.setParity(getSavedParameter(R.array.parity_check_array));
+                        serialPort.setFlowControl(getSavedParameter(R.array.flow_control_array));
+                        serialPort.read(mCallback);
+                    }
+
+                    if(connection != null)
+                        new ConnectionThread().start();
+
+                    break;
+                    default:
+                        break;
+            }
+        }
         return Service.START_NOT_STICKY;
     }
 
@@ -273,6 +333,7 @@ public class SerialConsoleService extends Service {
             serialPort = UsbSerialDevice.createUsbSerialDevice(device, connection);
             if (serialPort != null) {
                 if (serialPort.open()) {
+                    mLineFeed = Utils.readSharedSetting(getApplicationContext(), SerialConsoleSettingsFragment.SETTINGS_LINE_FEED, 0 );
                     serialPortConnected = true;
                     serialPort.setBaudRate(getSavedParameter(R.array.baud_rate_array));
                     serialPort.setDataBits(getSavedParameter(R.array.data_bits_array));

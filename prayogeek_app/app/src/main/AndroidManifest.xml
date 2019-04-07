@@ -56,9 +56,6 @@
         <activity android:name=".activities.SerialConsoleActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
 
-        <activity android:name=".activities.SerialSettingsActivity"
-            android:theme="@style/AppTheme.NoActionBar"/>
-
         <service android:name=".service.ImageDownloadService" android:exported="false">
         </service>
 

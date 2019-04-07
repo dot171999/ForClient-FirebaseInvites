@@ -7,7 +7,7 @@
     android:layout_height="match_parent">
 
     <android.support.design.widget.TextInputLayout
-        android:id="@+id/etSerialData"
+        android:id="@+id/ilSerialData"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
@@ -16,7 +16,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <AutoCompleteTextView
-            android:id="@+id/txtEmailServer"
+            android:id="@+id/etSerialData"
             android:layout_width="727dp"
             android:layout_height="wrap_content"
             android:hint="Enter message here"
@@ -65,7 +65,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/btnSend"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/etSerialData">
+        app:layout_constraintTop_toBottomOf="@+id/ilSerialData">
 
         <TextView
             android:id="@+id/tvConsoleOut"
