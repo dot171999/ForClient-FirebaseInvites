@@ -95,8 +95,10 @@ public class SerialConsoleService extends Service {
                     for(byte sym : arg0) {
                         if(sym == 0x0D) {
                             mCR = true;
+                            mLogarray[mLogArrayOffset++] = sym;
                         } else if(sym == 0x0A ) {
                             mNL = true;
+                            mLogarray[mLogArrayOffset++] = sym;
                         }
                         else {
                             mLogarray[mLogArrayOffset++] = sym;
@@ -122,14 +124,12 @@ public class SerialConsoleService extends Service {
 
                         if(isSend) {
                             isSend = false;
+                            byte[] data = new byte[mLogArrayOffset];
+                            System.arraycopy(mLogarray, 0, data, 0, mLogArrayOffset);
+                            notifyAboutNewData(data, getResources().getColor(R.color.blue));
                             mLogArrayOffset = 0;
                             mCR = false;
                             mNL = false;
-                            byte[] data = new byte[mLogArrayOffset + 2];
-                            data[data.length-2] = 0x0D;
-                            data[data.length-1] = 0x0A;
-                            System.arraycopy(mLogarray, 0, data, 0, mLogArrayOffset);
-                            notifyAboutNewData(data, getResources().getColor(R.color.blue));
                         }
                     }
                 }

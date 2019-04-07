@@ -196,7 +196,7 @@ public class SerialConsoleActivity  extends AppCompatActivity implements View.On
                                 TextView tvConsole = ((TextView)mConsoleFragment.getView().findViewById(R.id.tvConsoleOut));
                                 if(tvConsole != null){
                                     tvConsole.setTextColor(color);
-                                    tvConsole.append(Html.fromHtml("<font color="+color+">"+sb.toString()+"</font>"));
+                                    tvConsole.append(Html.fromHtml("<font color="+color+">"+sb.toString()+"\n"+"</font>"));
                                     ((ScrollView)(mConsoleFragment.getView().findViewById(R.id.svConsole))).post(()->
                                             ((ScrollView)(mConsoleFragment.getView().findViewById(R.id.svConsole))).fullScroll(View.FOCUS_DOWN));
                                 }
