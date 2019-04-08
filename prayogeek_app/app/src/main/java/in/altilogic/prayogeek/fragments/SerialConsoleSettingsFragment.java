@@ -52,6 +52,7 @@ public class SerialConsoleSettingsFragment extends Fragment implements AdapterVi
         spStopBit.setOnItemSelectedListener(this);
         spFlowControl.setOnItemSelectedListener(this);
         spLineFeed.setOnItemSelectedListener(this);
+        spDataFormat.setOnItemSelectedListener(this);
 
         int baud_position = Utils.readSharedSetting(Objects.requireNonNull(getActivity()), SETTINGS_BAUD_RATE, 2);
         int parity_position = Utils.readSharedSetting(getActivity(), SETTINGS_PARITY_CHECK, 0);

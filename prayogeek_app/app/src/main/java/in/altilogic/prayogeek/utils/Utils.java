@@ -111,5 +111,17 @@ public class Utils {
         formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         return formatter.format(new Date(millis));
     }
+
+    public static String asciiToHex(String asciiStr) {
+        char[] chars = asciiStr.toCharArray();
+        StringBuilder hex = new StringBuilder();
+        for (char ch : chars) {
+            if((int) ch <= 0xF)
+                hex.append(Integer.toHexString(0));
+
+            hex.append(Integer.toHexString((int) ch));
+        }
+        return hex.toString();
+    }
 }
 

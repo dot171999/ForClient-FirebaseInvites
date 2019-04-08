@@ -205,14 +205,22 @@ public class SerialConsoleActivity  extends AppCompatActivity implements View.On
                             int color = intent.getIntExtra(SerialConsoleService.SERIAL_SERVICE_MESSAGE_TYPE_COLOR, 0);
                             if(mConsoleFragment!= null && serial_data != null && mScreenStatus == SCREEN_ID_SERIAL_CONSOLE) {
                                 StringBuilder sb = new StringBuilder();
-                                sb.append(Utils.getTimestamp(timestamp)).append(new String(serial_data));
+                                boolean isHex = 0 < Utils.readSharedSetting(getApplicationContext(), SerialConsoleSettingsFragment.SETTINGS_DATA_FORMAT, 0 );
+
+                                String receive = new String(serial_data);
+
+                                sb      .append(Utils.getTimestamp(timestamp))
+                                        .append(isHex ? Utils.asciiToHex(receive) : receive );
                                 TextView tvConsole = ((TextView)mConsoleFragment.getView().findViewById(R.id.tvConsoleOut));
                                 if(tvConsole != null){
                                     tvConsole.setTextColor(color);
                                     String cStr = sb.toString();
 
                                     tvConsole.append(Html.fromHtml("<font color="+color+">"+cStr+"</font>"));
-                                    tvConsole.append("\r\n");
+//                                    if(!isHex)
+                                    {
+                                        tvConsole.append("\r\n");
+                                    }
                                     ((ScrollView)(mConsoleFragment.getView().findViewById(R.id.svConsole))).post(()->
                                             ((ScrollView)(mConsoleFragment.getView().findViewById(R.id.svConsole))).fullScroll(View.FOCUS_DOWN));
                                 }
