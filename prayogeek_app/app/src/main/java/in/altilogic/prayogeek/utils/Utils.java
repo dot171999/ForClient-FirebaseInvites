@@ -1,5 +1,6 @@
 package in.altilogic.prayogeek.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.PorterDuff;
@@ -7,9 +8,20 @@ import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.v4.graphics.drawable.DrawableCompat;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.TimeZone;
 
 import in.altilogic.prayogeek.R;
+
+import static android.content.Context.INPUT_METHOD_SERVICE;
 
 public class Utils {
     private static final String PREFERENCES_FILE = "altilogic_prayogeek_settings";
@@ -75,5 +87,41 @@ public class Utils {
         return assetsList;
     }
 
+    /**
+     * Hides the soft keyboard
+     */
+    public static void hideSoftKeyboard(Activity activity) {
+        if(activity.getCurrentFocus()!=null) {
+            InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(INPUT_METHOD_SERVICE);
+            inputMethodManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
+        }
+    }
+
+    /**
+     * Shows the soft keyboard
+     */
+    public static void showSoftKeyboard(View view) {
+        InputMethodManager inputMethodManager = (InputMethodManager) view.getContext().getSystemService(INPUT_METHOD_SERVICE);
+        view.requestFocus();
+        inputMethodManager.showSoftInput(view, 0);
+    }
+
+    public static String getTimestamp(long millis) {
+        DateFormat formatter = new SimpleDateFormat("[HH:mm:ss.SSS]", Locale.US);
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return formatter.format(new Date(millis));
+    }
+
+    public static String asciiToHex(String asciiStr) {
+        char[] chars = asciiStr.toCharArray();
+        StringBuilder hex = new StringBuilder();
+        for (char ch : chars) {
+            if((int) ch <= 0xF)
+                hex.append(Integer.toHexString(0));
+
+            hex.append(Integer.toHexString((int) ch));
+        }
+        return hex.toString();
+    }
 }
 

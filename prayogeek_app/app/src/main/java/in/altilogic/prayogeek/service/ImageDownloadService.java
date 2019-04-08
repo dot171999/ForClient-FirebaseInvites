@@ -25,7 +25,7 @@ import java.util.List;
 import in.altilogic.prayogeek.FireBaseHelper;
 import in.altilogic.prayogeek.utils.Utils;
 
-public class ImageDownloadService  extends IntentService {
+public class ImageDownloadService extends IntentService {
     private final String TAG = "YOUSCOPE-DB-SERVICE";
     public static final String HW_SERVICE_BROADCAST_VALUE = "prayogeek.altilogic.in";
     public static final String HW_SERVICE_MESSAGE_TYPE_ID = "MESSAGE_TYPE_ID";

@@ -13,6 +13,8 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
+    <uses-feature android:name="android.hardware.usb.host"
+        android:required="true"/>
 
     <application
         android:icon="@mipmap/ic_launcher"
@@ -51,8 +53,17 @@
             android:name=".activities.TutorialActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
 
+        <activity android:name=".activities.SerialConsoleActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
         <service android:name=".service.ImageDownloadService" android:exported="false">
         </service>
+
+        <service
+            android:name="in.altilogic.prayogeek.service.SerialConsoleService"
+            android:enabled="true">
+        </service>
+
     </application>
 
 </manifest>
