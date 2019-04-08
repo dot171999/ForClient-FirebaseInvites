@@ -18,15 +18,13 @@
         <AutoCompleteTextView
             android:id="@+id/etSerialData"
             android:windowSoftInputMode="stateHidden"
-            android:layout_width="727dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Enter message here"
             android:imeOptions="actionDone"
             android:inputType="textVisiblePassword"
             android:lines="1"
             android:maxLines="1" />
-        <requestFocus />
-
     </android.support.design.widget.TextInputLayout>
 
     <ScrollView
