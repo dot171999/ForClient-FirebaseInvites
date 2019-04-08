@@ -44,7 +44,7 @@ public class FileSaver {
         try {
             writer = new BufferedWriter(new OutputStreamWriter(
                     new FileOutputStream(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/"
-                            + mFilePath + "/"+ mFileName +  extension, true), "utf-8"));
+                            + mFilePath + "/"+ mFileName +  extension, false), "utf-8"));
 
             writer.write(msg);
             writer.close();

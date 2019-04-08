@@ -228,10 +228,12 @@ public class SerialConsoleService extends Service {
                         serialPort.setParity(getSavedParameter(R.array.parity_check_array));
                         serialPort.setFlowControl(getSavedParameter(R.array.flow_control_array));
                         serialPort.read(mCallback);
+                        mLineFeed = Utils.readSharedSetting(getApplicationContext(), SerialConsoleSettingsFragment.SETTINGS_LINE_FEED, 0 );
+                        serialPortConnected = true;
                     }
 
-                    if(connection != null)
-                        new ConnectionThread().start();
+//                    if(connection != null)
+//                        new ConnectionThread().start();
 
                     break;
                     default:

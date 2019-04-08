@@ -127,7 +127,7 @@ public class SerialConsoleActivity  extends AppCompatActivity implements View.On
     private void writeSerial() {
         if(mConsoleFragment != null) {
             String sendText = ((AutoCompleteTextView)mConsoleFragment.getView().findViewById(R.id.etSerialData)).getText().toString();
-
+            sendText += getNewLine();
             byte[] bytes;
             try {
                 bytes = sendText.getBytes("UTF-8");
@@ -140,6 +140,19 @@ public class SerialConsoleActivity  extends AppCompatActivity implements View.On
             intent.putExtra(SerialConsoleService.SERIAL_SERVICE_MESSAGE_TYPE_DATA, bytes);
             startService(intent);
         }
+    }
+
+    private String getNewLine() {
+        int pos = Utils.readSharedSetting(getApplicationContext(), SerialConsoleSettingsFragment.SETTINGS_LINE_FEED, 0 );
+
+        if(pos == SerialConsoleService.SERIAL_LINE_FEED_CR)
+            return "\r";
+        else if(pos == SerialConsoleService.SERIAL_LINE_FEED_NL)
+            return "\n";
+        else if(pos == SerialConsoleService.SERIAL_LINE_FEED_NLCR)
+            return "\r\n";
+
+        return "";
     }
 
     private void showSettingsFragment() {
@@ -196,7 +209,10 @@ public class SerialConsoleActivity  extends AppCompatActivity implements View.On
                                 TextView tvConsole = ((TextView)mConsoleFragment.getView().findViewById(R.id.tvConsoleOut));
                                 if(tvConsole != null){
                                     tvConsole.setTextColor(color);
-                                    tvConsole.append(Html.fromHtml("<font color="+color+">"+sb.toString()+"\n"+"</font>"));
+                                    String cStr = sb.toString();
+
+                                    tvConsole.append(Html.fromHtml("<font color="+color+">"+cStr+"</font>"));
+                                    tvConsole.append("\r\n");
                                     ((ScrollView)(mConsoleFragment.getView().findViewById(R.id.svConsole))).post(()->
                                             ((ScrollView)(mConsoleFragment.getView().findViewById(R.id.svConsole))).fullScroll(View.FOCUS_DOWN));
                                 }
