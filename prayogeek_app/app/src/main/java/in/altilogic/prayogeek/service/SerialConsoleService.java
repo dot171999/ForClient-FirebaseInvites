@@ -246,7 +246,8 @@ public class SerialConsoleService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        serialPort.close();
+        if (serialPort != null)
+            serialPort.close();
         unregisterReceiver(usbReceiver);
         SerialConsoleService.SERVICE_CONNECTED = false;
     }

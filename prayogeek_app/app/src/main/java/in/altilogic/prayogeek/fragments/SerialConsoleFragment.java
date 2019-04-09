@@ -1,5 +1,6 @@
 package in.altilogic.prayogeek.fragments;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -24,6 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -31,9 +33,10 @@ import in.altilogic.prayogeek.R;
 import in.altilogic.prayogeek.service.SerialConsoleService;
 import in.altilogic.prayogeek.utils.FileSaver;
 import in.altilogic.prayogeek.utils.Utils;
+import pub.devrel.easypermissions.EasyPermissions;
 
 
-public class SerialConsoleFragment extends Fragment implements AdapterView.OnClickListener  {
+public class SerialConsoleFragment extends Fragment implements AdapterView.OnClickListener, EasyPermissions.PermissionCallbacks   {
     public static final String TAG = "YOUSCOPE-SERIAL-FR";
 
     private View.OnClickListener mListener;
@@ -42,6 +45,7 @@ public class SerialConsoleFragment extends Fragment implements AdapterView.OnCli
     }
 
     private TextView mTvOut;
+    private Button btnSave;
     private ScrollView svConsole;
     private AutoCompleteTextView etSerialData;
 
@@ -57,7 +61,7 @@ public class SerialConsoleFragment extends Fragment implements AdapterView.OnCli
         Button btnSend = (Button) view.findViewById(R.id.btnSend);
         Button btnSettings = (Button) view.findViewById(R.id.btnConsoleSettings);
         Button btnClear = (Button) view.findViewById(R.id.btnClear);
-        Button btnSave = (Button) view.findViewById(R.id.btnSave);
+        btnSave = (Button) view.findViewById(R.id.btnSave);
         svConsole = (ScrollView) view. findViewById(R.id.svConsole);
         etSerialData = (AutoCompleteTextView) view. findViewById(R.id.etSerialData);
         btnSend.setOnClickListener(this);
@@ -75,6 +79,7 @@ public class SerialConsoleFragment extends Fragment implements AdapterView.OnCli
     public void onStart() {
         super.onStart();
         Utils.hideSoftKeyboard(Objects.requireNonNull(getActivity()));
+        checkWriteReadPermissions();
     }
 
     @Override
@@ -189,6 +194,14 @@ public class SerialConsoleFragment extends Fragment implements AdapterView.OnCli
         Log.d(TAG, "onPause()");
     }
 
+    @Override
+    public void onDestroy() {
+        Log.d(TAG, "onDestroy()");
+        Objects.requireNonNull(getActivity()).stopService(new Intent(getActivity(), SerialConsoleService.class));
+        super.onDestroy();
+    }
+
+
     private void setFilters() {
         IntentFilter filter = new IntentFilter();
         filter.addAction(SerialConsoleService.ACTION_USB_PERMISSION_GRANTED);
@@ -257,5 +270,37 @@ public class SerialConsoleFragment extends Fragment implements AdapterView.OnCli
             }
         }
     };
+
+
+    private boolean checkWriteReadPermissions() {
+        String[] perms = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE};
+        if (EasyPermissions.hasPermissions(getActivity(), perms)) {
+            return true;
+        } else {
+            // Do not have permissions, request them now
+            EasyPermissions.requestPermissions(this, getString(R.string.string_describe_why_do_you_need_a_write_ext),
+                    1000, perms);
+        }
+        return false;
+    }
+
+    @Override
+    public void onPermissionsGranted(int requestCode, @NonNull List<String> perms) {
+        btnSave.setClickable(true);
+    }
+
+    @Override
+    public void onPermissionsDenied(int requestCode, @NonNull List<String> perms) {
+        btnSave.setClickable(false);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        Log.d(TAG, "onRequestPermissionsResult " + requestCode);
+
+        // Forward results to EasyPermissions
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
+    }
 }
 

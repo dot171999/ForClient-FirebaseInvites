@@ -29,10 +29,12 @@ public class TutorialFragment extends Fragment implements View.OnClickListener {
         Button btnProjects = (Button) view.findViewById(R.id.btnProjects);
         Button btnDemo = (Button) view.findViewById(R.id.btnDemoProjects);
         Button btnResume = view.findViewById(R.id.btnResume);
+        Button btnSerial = view.findViewById(R.id.btnSerialConsole);
         btnBasicElectronic.setOnClickListener(this);
         btnProjects.setOnClickListener(this);
         btnDemo.setOnClickListener(this);
         btnResume.setOnClickListener(this);
+        btnSerial.setOnClickListener(this);
     }
 
     @Override

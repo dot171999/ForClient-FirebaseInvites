@@ -2,7 +2,6 @@
 <android.support.constraint.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -11,7 +10,7 @@
         android:layout_width="120dp"
         android:layout_height="70dp"
         android:layout_marginStart="100dp"
-        android:layout_marginTop="60dp"
+        android:layout_marginTop="20dp"
         android:theme="@style/AppTheme.Button"
         android:text="Basic electronics"
         app:layout_constraintStart_toStartOf="parent"
@@ -49,4 +48,26 @@
         app:layout_constraintEnd_toEndOf="@+id/btnProjects"
         app:layout_constraintStart_toStartOf="@+id/btnProjects"
         app:layout_constraintTop_toTopOf="@+id/btnDemoProjects" />
+
+    <Button
+        android:id="@+id/btnSerialConsole"
+        android:layout_width="120dp"
+        android:layout_height="70dp"
+        android:layout_marginTop="40dp"
+        android:theme="@style/AppTheme.Button"
+        android:text="Serial console"
+        app:layout_constraintStart_toStartOf="@+id/btnDemoProjects"
+        app:layout_constraintTop_toBottomOf="@+id/btnDemoProjects" />
+
+    <Button
+        android:id="@+id/btn_button6"
+        android:visibility="invisible"
+        android:layout_width="120dp"
+        android:layout_height="70dp"
+        android:layout_marginEnd="8dp"
+        android:text="Button 6"
+        android:theme="@style/AppTheme.Button"
+        app:layout_constraintEnd_toEndOf="@+id/btnResume"
+        app:layout_constraintStart_toStartOf="@+id/btnResume"
+        app:layout_constraintTop_toTopOf="@+id/btnSerialConsole" />
 </android.support.constraint.ConstraintLayout>

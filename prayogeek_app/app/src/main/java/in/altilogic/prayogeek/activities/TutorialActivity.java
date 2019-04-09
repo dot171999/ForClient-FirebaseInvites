@@ -29,8 +29,11 @@ import in.altilogic.prayogeek.fragments.BasicElectronicFragment;
 import in.altilogic.prayogeek.fragments.DemoProjectsFragment;
 import in.altilogic.prayogeek.fragments.ImageFragment;
 import in.altilogic.prayogeek.fragments.ProjectsFragment;
+import in.altilogic.prayogeek.fragments.SerialConsoleFragment;
+import in.altilogic.prayogeek.fragments.SerialConsoleSettingsFragment;
 import in.altilogic.prayogeek.fragments.TutorialFragment;
 import in.altilogic.prayogeek.service.ImageDownloadService;
+import in.altilogic.prayogeek.service.SerialConsoleService;
 import in.altilogic.prayogeek.utils.Utils;
 
 import static in.altilogic.prayogeek.utils.Utils.*;
@@ -56,6 +59,8 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     private final static int SCREEN_ID_PROJECT2 = 11;
     private final static int SCREEN_ID_DEMO_PROJECT1 = 12;
     private final static int SCREEN_ID_DEMO_PROJECT2 = 13;
+    public  final static int SCREEN_ID_SERIAL_SETTINGS = 14;
+    public  final static int SCREEN_ID_SERIAL_CONSOLE = 15;
     private int mScreenStatus = 0;
 
     private final static String mBasicElectronic = "basic_electronics";
@@ -152,10 +157,20 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
             showProjectsFragment();
         }
         else if(mScreenStatus == SCREEN_ID_DEMO_PROJECT1 || mScreenStatus == SCREEN_ID_DEMO_PROJECT2) {
-            mScreenStatus = SCREEN_ID_DEMO_PROJECTS; showDemoProjectsFragment();
+            mScreenStatus = SCREEN_ID_DEMO_PROJECTS;
+            showDemoProjectsFragment();
         }
         else if(mScreenStatus > 0 && mScreenStatus < SCREEN_ID_BREADBOARD_USAGE) {
             mScreenStatus = 0; showTutorialFragment();
+        }
+        else if(mScreenStatus == TutorialActivity.SCREEN_ID_SERIAL_CONSOLE) {
+            mScreenStatus = 0; showTutorialFragment();
+        }
+        else if(mScreenStatus == TutorialActivity.SCREEN_ID_SERIAL_SETTINGS){
+            Intent intent = new Intent(this, SerialConsoleService.class);
+            intent.putExtra(SerialConsoleService.SERIAL_SERVICE_MESSAGE_TYPE_NAME, SerialConsoleService.SERIAL_SERVICE_MESSAGE_TYPE_PARAMETERS);
+            startService(intent);
+            showSerialConsoleFragment();
         }
     }
 
@@ -202,6 +217,12 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
                 else
                     showFragment(last_screen_id, last_screen_page);
                 break;
+            case R.id.btnSerialConsole:
+                showSerialConsoleFragment();
+                break;
+            case R.id.btnConsoleSettings:
+                showSerialSettingsFragment();
+                break;
         }
     }
 
@@ -241,9 +262,6 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     public void onPageChanged(int page) {
         saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, page);
         saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
-    }
-
-    private void startShowGifFragment(){
     }
 
     private String mExperimentFolder;
@@ -295,6 +313,20 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         mDemoProjectsFragment.setOnClickListener(this);
         mFragmentManager.beginTransaction().replace(R.id.fragmentContent, mDemoProjectsFragment).commit();
     }
+
+    private void showSerialSettingsFragment() {
+        mScreenStatus = SCREEN_ID_SERIAL_SETTINGS;
+        SerialConsoleSettingsFragment mSettingsFragment = new SerialConsoleSettingsFragment();
+        mFragmentManager.beginTransaction().replace(R.id.fragmentContent, mSettingsFragment).commit();
+    }
+
+    private void showSerialConsoleFragment(){
+        mScreenStatus = SCREEN_ID_SERIAL_CONSOLE;
+        SerialConsoleFragment mConsoleFragment = new SerialConsoleFragment();
+        mConsoleFragment.setOnClickListener(this);
+        mFragmentManager.beginTransaction().replace(R.id.fragmentContent, mConsoleFragment).commit();
+    }
+
 
     private void initBroadcastReceiver() {
         mBroadcastReceiver = new BroadcastReceiver() {
