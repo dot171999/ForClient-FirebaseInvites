@@ -54,7 +54,8 @@ public class ImageDownloadService extends IntentService {
     private boolean mIsLocFilesNotFound;
 
     private File createFile(String fileName) throws IOException {
-        return  File.createTempFile(fileName, ""); // TODO Default app folder
+        return  new File(getFilesDir(), fileName);
+//        return  File.createTempFile(fileName, ""); // TODO Default app folder
 //        return File.createTempFile(fileName, "",
 //                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)); // TODO uncomment for writing image files to the documents folder
     }
