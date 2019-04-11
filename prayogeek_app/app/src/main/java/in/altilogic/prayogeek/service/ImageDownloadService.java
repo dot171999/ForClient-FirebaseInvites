@@ -7,9 +7,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Base64;
 import android.util.Log;
 
-import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
@@ -102,61 +100,52 @@ public class ImageDownloadService extends IntentService {
         if(mFireBaseHelper == null)
             mFireBaseHelper = new FireBaseHelper();
 
-        mFireBaseHelper.read("Tutorials", experiment_folder, new OnCompleteListener<DocumentSnapshot>() {
+        mFireBaseHelper.read("Tutorials", experiment_folder, task -> {
+            if (!task.isSuccessful()) {
+                Log.w(TAG, "Listen failed." + task.getException());
 
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                if (!task.isSuccessful()) {
-                    Log.w(TAG, "Listen failed." + task.getException());
+                if (!mIsOnline)
+                    notifyActivityAboutNoInternetConnection();
+                return;
+            }
+            DocumentSnapshot documentSnapshot = task.getResult();
+            if (!documentSnapshot.exists()) {
+                Log.d(TAG, "No such document");
+                return;
+            }
+            List<String> basic_electronics = mFireBaseHelper.getArray(documentSnapshot);
 
-                    if (!mIsOnline)
-                        notifyActivityAboutNoInternetConnection();
+            if (basic_electronics.contains(mExperimentType)) {
+                List<String> breadboard_urls = mFireBaseHelper.getArray(documentSnapshot, mExperimentType, "imageURL");
+                if (breadboard_urls == null)
+                    return;
+
+                int firestore_images_version = mFireBaseHelper.getLong(documentSnapshot, mExperimentType, "version");
+
+                if (firestore_images_version <= 0 && !mIsOnline) {
+                    notifyActivityAboutNoInternetConnection();
                     return;
                 }
-                DocumentSnapshot documentSnapshot = task.getResult();
-                if (!documentSnapshot.exists()) {
-                    Log.d(TAG, "No such document");
-                    return;
+                boolean isNewVersion = false;
+                if (getLocaleImagesVersion() != firestore_images_version) {
+                    isNewVersion = true;
+                    deleteOldImages();
                 }
-                List<String> basic_electronics = mFireBaseHelper.getArray(documentSnapshot);
 
-                if (basic_electronics.contains(mExperimentType)) {
-                    List<String> breadboard_urls = mFireBaseHelper.getArray(documentSnapshot, mExperimentType, "imageURL");
-                    if (breadboard_urls == null)
-                        return;
-
-                    int firestore_images_version = mFireBaseHelper.getLong(documentSnapshot, mExperimentType, "version");
-
-                    if (firestore_images_version <= 0 && !mIsOnline) {
-                        notifyActivityAboutNoInternetConnection();
-                        return;
+                if (isNewVersion || mIsLocFilesNotFound) {
+                    int count = 1;
+                    notifyActivityAboutStartDownload();
+                    mFilesNumber = breadboard_urls.size();
+                    saveImagesVersion(mExperimentType, firestore_images_version);
+                    saveFilesNumber(mExperimentType, breadboard_urls.size());
+                    for (String path : breadboard_urls) {
+                        downloadUri(path, mExperimentType, count++);
                     }
-                    boolean isNewVersion = false;
-                    if (getLocaleImagesVersion() != firestore_images_version) {
-                        isNewVersion = true;
-                        deleteOldImages();
-                    }
-
-                    if (isNewVersion || mIsLocFilesNotFound) {
-                        int count = 1;
-                        notifyActivityAboutStartDownload();
-                        mFilesNumber = breadboard_urls.size();
-                        saveImagesVersion(mExperimentType, firestore_images_version);
-                        saveFilesNumber(mExperimentType, breadboard_urls.size());
-                        for (String path : breadboard_urls) {
-                            downloadUri(path, mExperimentType, count++);
-                        }
-                    } else {
-                        notifyActivityAboutNewFiles();
-                    }
+                } else {
+                    notifyActivityAboutNewFiles();
                 }
             }
-        }, new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                notifyActivityAboutDownloadFail();
-            }
-        });
+        }, e -> notifyActivityAboutDownloadFail());
     }
 
     private void deleteOldImages() {
@@ -237,19 +226,13 @@ public class ImageDownloadService extends IntentService {
                 }
             })
 
-            .addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                Log.d(TAG, "Exception: " + e.toString());
-                notifyActivityAboutDownloadFail();
-                }
+            .addOnFailureListener(e -> {
+            Log.d(TAG, "Exception: " + e.toString());
+            notifyActivityAboutDownloadFail();
             })
-            .addOnCanceledListener(new OnCanceledListener() {
-                @Override
-                public void onCanceled() {
-                    Log.d(TAG, "Download canceled");
-                    notifyActivityAboutDownloadFail();
-                }
+            .addOnCanceledListener(() -> {
+                Log.d(TAG, "Download canceled");
+                notifyActivityAboutDownloadFail();
             });
         }
     }
