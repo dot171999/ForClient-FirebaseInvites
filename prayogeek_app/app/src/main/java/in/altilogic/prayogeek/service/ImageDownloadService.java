@@ -2,20 +2,16 @@ package in.altilogic.prayogeek.service;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Base64;
 import android.util.Log;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
@@ -80,12 +76,7 @@ public class ImageDownloadService extends IntentService {
                 if(mDownloadImagesThread != null)
                     mDownloadImagesThread = null;
 
-                mDownloadImagesThread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        startDownloadImage(experimentPath);
-                    }
-                });
+                mDownloadImagesThread = new Thread(() -> startDownloadImage(experimentPath));
 
                 mDownloadImagesThread.start();
 
@@ -109,7 +100,7 @@ public class ImageDownloadService extends IntentService {
                 return;
             }
             DocumentSnapshot documentSnapshot = task.getResult();
-            if (!documentSnapshot.exists()) {
+            if (documentSnapshot != null && !documentSnapshot.exists()) {
                 Log.d(TAG, "No such document");
                 return;
             }
@@ -198,31 +189,28 @@ public class ImageDownloadService extends IntentService {
 
         if (localFile != null) {
             final File finalLocalFile = localFile;
-            mStorageRef.getBytes(MAX_DOWNLOADING_IMG_FILE_SIZE).addOnCompleteListener(new OnCompleteListener<byte[]>() {
-                @Override
-                public void onComplete(@NonNull Task<byte[]> task) {
-                    BufferedOutputStream bos = null;
-                    try {
-                        bos = new BufferedOutputStream(new FileOutputStream(finalLocalFile));
+            mStorageRef.getBytes(MAX_DOWNLOADING_IMG_FILE_SIZE).addOnCompleteListener(task -> {
+                BufferedOutputStream bos;
+                try {
+                    bos = new BufferedOutputStream(new FileOutputStream(finalLocalFile));
 
-                        byte[] encBytes = Base64.encode(task.getResult(), Base64.NO_WRAP);
-                        bos.write(encBytes);
-                        bos.flush();
-                        bos.close();
+                    byte[] encBytes = Base64.encode(task.getResult(), Base64.NO_WRAP);
+                    bos.write(encBytes);
+                    bos.flush();
+                    bos.close();
 
-                        saveFileName(electronic_type + num, finalLocalFile.getAbsolutePath());
+                    saveFileName(electronic_type + num, finalLocalFile.getAbsolutePath());
 
-                        if(++mFilesCounter >= mFilesNumber) {
-                            mFilesNumber = 0;
-                            mFilesCounter = 0;
-                            notifyActivityAboutNewFiles();
-                        }
-
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    if(++mFilesCounter >= mFilesNumber) {
+                        mFilesNumber = 0;
+                        mFilesCounter = 0;
+                        notifyActivityAboutNewFiles();
                     }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Log.d(TAG, "Exception: " + e.toString());
+                    notifyActivityAboutDownloadFail();
                 }
             })
 
