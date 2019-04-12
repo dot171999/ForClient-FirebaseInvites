@@ -13,17 +13,19 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.annimon.stream.operator.LongGenerate;
 import com.felhr.usbserial.CDCSerialDevice;
 import com.felhr.usbserial.UsbSerialDevice;
 import com.felhr.usbserial.UsbSerialInterface;
-import com.google.common.primitives.Bytes;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import in.altilogic.prayogeek.R;
 import in.altilogic.prayogeek.fragments.SerialConsoleSettingsFragment;
 import in.altilogic.prayogeek.utils.Utils;
+import in.altilogic.prayogeek.utils.WaitTimer;
 
 public class SerialConsoleService extends Service {
 
@@ -39,12 +41,8 @@ public class SerialConsoleService extends Service {
     public static final String ACTION_USB_DISCONNECTED = "com.felhr.usbservice.USB_DISCONNECTED";
     public static final String ACTION_CDC_DRIVER_NOT_WORKING = "com.felhr.connectivityservices.ACTION_CDC_DRIVER_NOT_WORKING";
     public static final String ACTION_USB_DEVICE_NOT_WORKING = "com.felhr.connectivityservices.ACTION_USB_DEVICE_NOT_WORKING";
-    public static final int MESSAGE_FROM_SERIAL_PORT = 0;
-    public static final int CTS_CHANGE = 1;
-    public static final int DSR_CHANGE = 2;
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
     public static boolean SERVICE_CONNECTED = false;
-    private static final String DATE_TIME_FORMAT = "[HH:mm:ss.SSS]";
 
     public static final String SERIAL_SERVICE_MESSAGE_TYPE_NAME = "in.altilogic.prayogeek.serial.message.type";
     public static final String SERIAL_SERVICE_MESSAGE_TYPE_DATA = "in.altilogic.prayogeek.serial.data";
@@ -62,6 +60,7 @@ public class SerialConsoleService extends Service {
     public static final int SERIAL_LINE_MAX_STRING_SIZE = 128;
 
     private int mLineFeed = SERIAL_LINE_FEED_NO_ENDING;
+    private static final int SERIAL_RX_TIMEOUT_MS = 100;
 
     private IBinder binder = new UsbBinder();
 
@@ -72,6 +71,7 @@ public class SerialConsoleService extends Service {
     private UsbSerialDevice serialPort;
 
     private boolean serialPortConnected;
+    private WaitTimer mDataTimer;
 
     /*
      *  Data received from serial port will be received here. Just populate onReceivedData with your code
@@ -88,7 +88,8 @@ public class SerialConsoleService extends Service {
         public void onReceivedData(byte[] arg0) {
             if(arg0 != null) {
                 if(mLineFeed == SERIAL_LINE_FEED_NO_ENDING) {
-                    notifyAboutNewData(arg0, getResources().getColor(R.color.blue));
+                    if(arg0.length > 0)
+                        notifyAboutNewData(arg0, getResources().getColor(R.color.blue));
                 }
                 else {
                     boolean isSend = false;
@@ -124,18 +125,29 @@ public class SerialConsoleService extends Service {
 
                         if(isSend) {
                             isSend = false;
-                            byte[] data = new byte[mLogArrayOffset];
-                            System.arraycopy(mLogarray, 0, data, 0, mLogArrayOffset);
-                            notifyAboutNewData(data, getResources().getColor(R.color.blue));
-                            mLogArrayOffset = 0;
-                            mCR = false;
-                            mNL = false;
+                            Log.d(TAG, "Found End line");
+                            onSerialRxComplete();
                         }
                     }
                 }
+                if(mDataTimer != null)
+                    mDataTimer.refresh();
             }
         }
     };
+
+    private void onSerialRxComplete() {
+        mCR = false;
+        mNL = false;
+
+        if(mLogArrayOffset == 0 || mLogarray == null)
+            return;
+        byte[] data = new byte[mLogArrayOffset];
+        System.arraycopy(mLogarray, 0, data, 0, mLogArrayOffset);
+        notifyAboutNewData(data, getResources().getColor(R.color.blue));
+        mLogArrayOffset = 0;
+        Log.d(TAG, "OnSerial RX complete: " + new String(data));
+    }
 
     private void notifyAboutNewData(byte[] logarray, int color) {
         Intent intent = new Intent(SERIAL_SERVICE_MESSAGE_TYPE_NAME);
@@ -154,31 +166,32 @@ public class SerialConsoleService extends Service {
     private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context arg0, Intent arg1) {
-            if (arg1.getAction().equals(ACTION_USB_PERMISSION)) {
-                boolean granted = arg1.getExtras().getBoolean(UsbManager.EXTRA_PERMISSION_GRANTED);
-                if (granted) {// User accepted our USB connection. Try to open the device as a serial port
-                    Intent intent = new Intent(ACTION_USB_PERMISSION_GRANTED);
+            switch (Objects.requireNonNull(arg1.getAction())) {
+                case ACTION_USB_PERMISSION:
+                    boolean granted = Objects.requireNonNull(arg1.getExtras()).getBoolean(UsbManager.EXTRA_PERMISSION_GRANTED);
+                    if (granted) {// User accepted our USB connection. Try to open the device as a serial port
+                        Intent intent = new Intent(ACTION_USB_PERMISSION_GRANTED);
+                        arg0.sendBroadcast(intent);
+                        connection = usbManager.openDevice(device);
+                        new ConnectionThread().start();
+                    } else {// User not accepted our USB connection. Send an Intent to the Main Activity
+                        Intent intent = new Intent(ACTION_USB_PERMISSION_NOT_GRANTED);
+                        arg0.sendBroadcast(intent);
+                    }
+                    break;
+                case ACTION_USB_ATTACHED:
+                    if (!serialPortConnected)
+                        findSerialPortDevice(); // A USB device has been attached. Try to open it as a Serial port
+                    break;
+                case ACTION_USB_DETACHED:
+                    // Usb device was disconnected. send an intent to the Main Activity
+                    Intent intent = new Intent(ACTION_USB_DISCONNECTED);
                     arg0.sendBroadcast(intent);
-                    connection = usbManager.openDevice(device);
-                    new ConnectionThread().start();
-                }
-                else {// User not accepted our USB connection. Send an Intent to the Main Activity
-                    Intent intent = new Intent(ACTION_USB_PERMISSION_NOT_GRANTED);
-                    arg0.sendBroadcast(intent);
-                }
-            }
-            else if (arg1.getAction().equals(ACTION_USB_ATTACHED)) {
-                if (!serialPortConnected)
-                    findSerialPortDevice(); // A USB device has been attached. Try to open it as a Serial port
-            }
-            else if (arg1.getAction().equals(ACTION_USB_DETACHED)) {
-                // Usb device was disconnected. send an intent to the Main Activity
-                Intent intent = new Intent(ACTION_USB_DISCONNECTED);
-                arg0.sendBroadcast(intent);
-                if (serialPortConnected) {
-                    serialPort.close();
-                }
-                serialPortConnected = false;
+                    if (serialPortConnected) {
+                        serialPort.close();
+                    }
+                    serialPortConnected = false;
+                    break;
             }
         }
     };
@@ -231,10 +244,6 @@ public class SerialConsoleService extends Service {
                         mLineFeed = Utils.readSharedSetting(getApplicationContext(), SerialConsoleSettingsFragment.SETTINGS_LINE_FEED, 0 );
                         serialPortConnected = true;
                     }
-
-//                    if(connection != null)
-//                        new ConnectionThread().start();
-
                     break;
                     default:
                         break;
@@ -246,18 +255,15 @@ public class SerialConsoleService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        if(mDataTimer != null) {
+            mDataTimer.stop();
+            mDataTimer = null;
+        }
+
         if (serialPort != null)
             serialPort.close();
         unregisterReceiver(usbReceiver);
         SerialConsoleService.SERVICE_CONNECTED = false;
-    }
-
-    /*
-     * This function will be called from MainActivity to write data through Serial Port
-     */
-    public void write(byte[] data) {
-        if (serialPort != null)
-            serialPort.write(data);
     }
 
     private void findSerialPortDevice() {
@@ -277,8 +283,8 @@ public class SerialConsoleService extends Service {
 
             for (Map.Entry<String, UsbDevice> entry : usbDevices.entrySet()) {
                 device = entry.getValue();
-                int deviceVID = device.getVendorId();
-                int devicePID = device.getProductId();
+//                int deviceVID = device.getVendorId();
+//                int devicePID = device.getProductId();
 
 //                if (deviceVID != 0x1d6b && (devicePID != 0x0001 && devicePID != 0x0002 && devicePID != 0x0003) && deviceVID != 0x5c6 && devicePID != 0x904c) {
                 if (UsbSerialDevice.isSupported(device)) {
@@ -350,7 +356,14 @@ public class SerialConsoleService extends Service {
                      */
                     serialPort.setFlowControl(getSavedParameter(R.array.flow_control_array));
                     serialPort.read(mCallback);
-
+                    if(mDataTimer != null) {
+                        mDataTimer.stop();
+                        mDataTimer = null;
+                    }
+                    mDataTimer = new WaitTimer(() -> {
+                        Log.d(TAG, "Wait timer finish");
+                        onSerialRxComplete();
+                    }, SERIAL_RX_TIMEOUT_MS);
                     //
                     // Some Arduinos would need some sleep because firmware wait some time to know whether a new sketch is going
                     // to be uploaded or not
@@ -376,13 +389,6 @@ public class SerialConsoleService extends Service {
                 context.sendBroadcast(intent);
             }
         }
-    }
-
-    private byte getAscii(byte data) {
-        if(data < 10)
-            return (byte)(0x30 + 0x0f&(data));
-        else
-            return (byte)(0x41 + 0x0f&(data-10));
     }
 
     private int getSavedParameter(int param_id) {
