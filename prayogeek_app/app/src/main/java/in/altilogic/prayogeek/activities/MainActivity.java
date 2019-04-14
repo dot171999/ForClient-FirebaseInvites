@@ -77,6 +77,7 @@ public class MainActivity extends AppCompatActivity
     public static final int RC_BUTTON1 = 6;
     public static final int RC_BUTTON2 = 7;
     public static final int RC_BUTTON3 = 8;
+    public static final int RC_USER_GUIDE = 9;
 
     private String mUsername;
     private String mEmailId;
@@ -631,6 +632,7 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.nav_on_boarding) {
             runOnboarding();
         } else if (id == R.id.nav_basic_electronic_tutorial) {
+            runUserGuide();
             Toast.makeText(this, "Run electronic tutorial", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_about_us) {
             uri = Uri.parse(getString(R.string.nav_link_about_us));
@@ -794,6 +796,11 @@ public class MainActivity extends AppCompatActivity
     private void runOnboarding(){
         startActivityForResult(new Intent(MainActivity.this, OnBoardingActivity.class), RC_ON_BOARDING);
     }
+
+    private void runUserGuide() {
+        startActivityForResult(new Intent(MainActivity.this, UserGuideActivity.class), RC_USER_GUIDE);
+    }
+
 
     private boolean isOnboardingShowing(){
         return !Boolean.valueOf(Utils.readSharedSetting(MainActivity.this, PREF_USER_FIRST_TIME, "true"));

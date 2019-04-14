@@ -41,6 +41,9 @@
             android:name=".activities.OnBoardingActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
         <activity
+            android:name=".activities.UserGuideActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+        <activity
             android:name=".activities.ProfileActivity"
             android:theme="@style/ProfileTheme"/>
         <activity
