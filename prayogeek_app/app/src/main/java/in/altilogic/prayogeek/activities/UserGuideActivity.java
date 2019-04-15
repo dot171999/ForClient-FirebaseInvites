@@ -7,6 +7,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import in.altilogic.prayogeek.R;
 import in.altilogic.prayogeek.fragments.ButtonsFragment;
 
@@ -27,14 +30,31 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
         Log.d(TAG, "onCreate()");
     }
 
+    final static String[] mButtons = {"HELP", "GUIDE", "ABOUT"};
+
     private void showUserGuideFragment() {
         mScreenStatus = 1;
-        ButtonsFragment buttonsFragment = new ButtonsFragment();
+        ArrayList<String> mArray = new ArrayList<>(Arrays.asList(mButtons));
+        ButtonsFragment buttonsFragment = ButtonsFragment.newInstance(mArray);
+        buttonsFragment.setOnClickListener(this);
         mFragmentManager.beginTransaction().replace(R.id.fragmentContent, buttonsFragment).commit();
     }
 
     @Override
     public void onClick(View view) {
+        if(view == null)
+            return;
+        int id = view.getId();
+        Log.d(TAG, "onClick() press button " + id);
+
+        switch (id){
+            case 1:
+            case 2:
+            case 3:
+
+            default:
+                break;
+        }
 
     }
 }
