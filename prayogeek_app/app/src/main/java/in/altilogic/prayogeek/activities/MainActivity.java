@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
+import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
@@ -35,15 +37,10 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 
 
 import in.altilogic.prayogeek.FireBaseHelper;
@@ -57,14 +54,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.Nullable;
-
 import pub.devrel.easypermissions.EasyPermissions;
 
 import static in.altilogic.prayogeek.utils.Utils.saveSharedSetting;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener, EasyPermissions.PermissionCallbacks, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+        implements NavigationView.OnNavigationItemSelectedListener,
+        View.OnClickListener,
+        EasyPermissions.PermissionCallbacks,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener {
 
     // Firebase Authentication
     private FirebaseAuth mFirebaseAuth;
@@ -94,7 +93,6 @@ public class MainActivity extends AppCompatActivity
 
     private Spinner mList1, mList2;
     private TextView tvInfo, tvError;
-    private Button mButton1, mButton2, mButton3, mButton4;
 
     private TextView tvNavDrUser, tvNavDrEmail;
 //    private LocationManager mLocationManager;
@@ -190,33 +188,30 @@ public class MainActivity extends AppCompatActivity
 
         mFirebaseAuth = FirebaseAuth.getInstance();
 
-        mAuthStateListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-                if (user != null) {
-                    // user is signed in
-                    mUsername = user.getDisplayName();
-                    mEmailId = user.getEmail();
-                    Global_Var GlobalVar = (Global_Var) getApplicationContext();
-                    GlobalVar.Set_Username(mUsername);
-                    GlobalVar.Set_EmailId(mEmailId);
-                    ui_init();
-                    loadList1();
-                    list1_check_for_update();
-                } else {
-                    // user is signed out
-                    mUsername = ANONYMOUS;
+        mAuthStateListener = firebaseAuth -> {
+            FirebaseUser user = firebaseAuth.getCurrentUser();
+            if (user != null) {
+                // user is signed in
+                mUsername = user.getDisplayName();
+                mEmailId = user.getEmail();
+                Global_Var GlobalVar = (Global_Var) getApplicationContext();
+                GlobalVar.Set_Username(mUsername);
+                GlobalVar.Set_EmailId(mEmailId);
+                ui_init();
+                loadList1();
+                list1_check_for_update();
+            } else {
+                // user is signed out
+                mUsername = ANONYMOUS;
 
-                    startActivityForResult(
-                            AuthUI.getInstance()
-                                    .createSignInIntentBuilder()
-                                    .setIsSmartLockEnabled(false) // Smart lock automatically saves user credentials and logs in
-                                    .setAvailableProviders(
-                                            Arrays.asList(new AuthUI.IdpConfig.GoogleBuilder().build()))
-                                    .build(),
-                            RC_SIGN_IN);
-                }
+                startActivityForResult(
+                        AuthUI.getInstance()
+                                .createSignInIntentBuilder()
+                                .setIsSmartLockEnabled(false) // Smart lock automatically saves user credentials and logs in
+                                .setAvailableProviders(
+                                        Arrays.asList(new AuthUI.IdpConfig.GoogleBuilder().build()))
+                                .build(),
+                        RC_SIGN_IN);
             }
         };
     }
@@ -267,37 +262,34 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void list1_check_for_update() {
-        mFireBaseHelper.read("Colleges", "College_List", new EventListener<DocumentSnapshot>() {
-            @Override
-            public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
-                if (e != null) {
-                    Log.w(TAG, "Listen failed.", e);
+        mFireBaseHelper.read("Colleges", "College_List", (documentSnapshot, e) -> {
+            if (e != null) {
+                Log.w(TAG, "Listen failed.", e);
+                return;
+            }
+            if (documentSnapshot != null && documentSnapshot.exists()) {
+                List<String> colleges = (List<String>) documentSnapshot.get("Colleges");
+
+                if(isListsEquals(colleges, dataList1)) {
+                    checkSelectedList1();
                     return;
                 }
-                if (documentSnapshot != null && documentSnapshot.exists()) {
-                    List<String> colleges = (List<String>) documentSnapshot.get("Colleges");
 
-                    if(isListsEquals(colleges, dataList1)) {
-                        checkSelectedList1();
-                        return;
+                Log.d(TAG, "Updating List1");
+
+                dataList1.clear();
+                if (colleges != null && colleges.size() > 0) {
+                    Log.d(TAG, " data: " + colleges.toString());
+
+                    dataList1.addAll(colleges);
+                    adapterList1.notifyDataSetChanged();
+                    saveList1();
+                    if (dataList1.size() > 0) {
+                        list2_update(dataList1.get(0));
                     }
-
-                    Log.d(TAG, "Updating List1");
-
-                    dataList1.clear();
-                    if (colleges != null && colleges.size() > 0) {
-                        Log.d(TAG, " data: " + colleges.toString());
-
-                        dataList1.addAll(colleges);
-                        adapterList1.notifyDataSetChanged();
-                        saveList1();
-                        if (dataList1.size() > 0) {
-                            list2_update(dataList1.get(0));
-                        }
-                    }
-                } else {
-                    Log.d(TAG, " data: null");
                 }
+            } else {
+                Log.d(TAG, " data: null");
             }
         });
     }
@@ -307,120 +299,117 @@ public class MainActivity extends AppCompatActivity
     private void list2_update(String document) {
         Log.d(TAG, " list2_update: " + document);
         mDocumentName = document;
-        mFireBaseHelper.read("Colleges", document, new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                if (task.isSuccessful()) {
-                    boolean mIndividual = false;
-                    Global_Var GlobalVar = (Global_Var) getApplicationContext();
+        mFireBaseHelper.read("Colleges", document, task -> {
+            if (task.isSuccessful()) {
+                boolean mIndividual = false;
+                Global_Var GlobalVar = (Global_Var) getApplicationContext();
 
-                    dataList2.clear();
-                    adapterList2.clear();
-                    adapterList2 = null;
-                    adapterList2 = new ArrayAdapter<String>(MainActivity.this, R.layout.spinner_custom, dataList2);
-                    adapterList2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    mList2.setAdapter(adapterList2);
+                dataList2.clear();
+                adapterList2.clear();
+                adapterList2 = null;
+                adapterList2 = new ArrayAdapter<String>(MainActivity.this, R.layout.spinner_custom, dataList2);
+                adapterList2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                mList2.setAdapter(adapterList2);
 
-                    DocumentSnapshot docum = task.getResult();
-                    if (mDocumentName != null && docum != null) {
-                        switch (mDocumentName) {
-                            case "Demo": {
-                                ((Global_Var) getApplicationContext()).Set_Project_Access(false);
-                                List<String> dataMap = (List<String>) docum.get("demo_modules");
-                                if (dataMap != null && dataMap.size() > 0) {
-                                    Log.d(TAG, " data: " + dataMap.toString());
-                                    dataList2.addAll(dataMap);
-                                }
-                                break;
+                DocumentSnapshot docum = task.getResult();
+                if (mDocumentName != null && docum != null) {
+                    switch (mDocumentName) {
+                        case "Demo": {
+                            ((Global_Var) getApplicationContext()).Set_Project_Access(false);
+                            List<String> dataMap = (List<String>) docum.get("demo_modules");
+                            if (dataMap != null && dataMap.size() > 0) {
+                                Log.d(TAG, " data: " + dataMap.toString());
+                                dataList2.addAll(dataMap);
                             }
-                            case "Individual": {
-                                mIndividual = true;
-                                Map<String, Object> dataMap = (Map<String, Object>) docum.getData();
-                                if (dataMap != null) {
-                                    if (dataMap.containsKey(mEmailId)) {
+                            break;
+                        }
+                        case "Individual": {
+                            mIndividual = true;
+                            Map<String, Object> dataMap = (Map<String, Object>) docum.getData();
+                            if (dataMap != null) {
+                                if (dataMap.containsKey(mEmailId)) {
+                                    ((Global_Var) getApplicationContext()).Set_Project_Access(true);
+
+                                    Map<String, Object> dataModules = (Map<String, Object>) dataMap.get((Object) mEmailId);
+                                    if (dataModules != null) {
+                                        if (dataModules.containsKey("module")) {
+                                            String dataMod = (String) dataModules.get((Object) "module");
+                                            if (dataMod != null) {
+                                                dataList2.add(dataMod);
+                                                Log.d(TAG, " module " + dataMod);
+                                                GlobalVar.Set_Module_Name(dataMod);
+                                                if (dataMap.containsKey(dataMod)) {
+                                                    Map<String, Object> hw = (Map<String, Object>) dataMap.get(dataMod);
+                                                    long hw_version = (Long) hw.get((String) "hw_version");
+                                                    long ina1_cal = (Long) hw.get((String) "ina1_cal");
+                                                    long ina2_cal = (Long) hw.get((String) "ina2_cal");
+                                                    String mac_address = (String) hw.get((String) "mac_address");
+                                                    GlobalVar.Set_INA1Calibration((int) ina1_cal);
+                                                    GlobalVar.Set_INA2Calibration((int) ina2_cal);
+                                                    GlobalVar.Set_MacAddress(mac_address);
+                                                }
+                                            }
+                                        }
+                                        if (dataModules.containsKey("validity")) {
+                                            Timestamp dataMod = (Timestamp) dataModules.get((Object) "validity");
+                                            if (dataMod != null) {
+                                                GlobalVar.Set_Validity(dataMod);
+                                                if (!GlobalVar.isValidity()) {
+                                                    Toast.makeText(getApplicationContext(),getString(R.string.subsciption_expired), Toast.LENGTH_SHORT ).show();
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    ((Global_Var) getApplicationContext()).Set_Project_Access(false);
+                                    printErrorMessage("You have not Subscribed");
+                                }
+                                Log.d(TAG, " Select Individual " + dataMap.toString());
+                            }
+                            break;
+                        }
+                        default: {
+                            List<String> dataMap = (List<String>) docum.get("college_modules");
+                            if (dataMap != null && dataMap.size() > 0) {
+                                Log.d(TAG, " data: " + dataMap.toString());
+                                dataList2.addAll(dataMap);
+                            }
+                            ((Global_Var) getApplicationContext()).Set_Project_Access(false);
+
+                            Map<String, Object> defMap = (Map<String, Object>) docum.getData();
+                            if (defMap != null && defMap.size() > 0) {
+                                if (defMap.containsKey("proj_access")) {
+                                    List<String> mails = (List<String>) defMap.get("proj_access");
+                                    if(mails.contains(mEmailId))
+                                    {
                                         ((Global_Var) getApplicationContext()).Set_Project_Access(true);
-
-                                        Map<String, Object> dataModules = (Map<String, Object>) dataMap.get((Object) mEmailId);
-                                        if (dataModules != null) {
-                                            if (dataModules.containsKey("module")) {
-                                                String dataMod = (String) dataModules.get((Object) "module");
-                                                if (dataMod != null) {
-                                                    dataList2.add(dataMod);
-                                                    Log.d(TAG, " module " + dataMod);
-                                                    GlobalVar.Set_Module_Name(dataMod);
-                                                    if (dataMap.containsKey(dataMod)) {
-                                                        Map<String, Object> hw = (Map<String, Object>) dataMap.get(dataMod);
-                                                        long hw_version = (Long) hw.get((String) "hw_version");
-                                                        long ina1_cal = (Long) hw.get((String) "ina1_cal");
-                                                        long ina2_cal = (Long) hw.get((String) "ina2_cal");
-                                                        String mac_address = (String) hw.get((String) "mac_address");
-                                                        GlobalVar.Set_INA1Calibration((int) ina1_cal);
-                                                        GlobalVar.Set_INA2Calibration((int) ina2_cal);
-                                                        GlobalVar.Set_MacAddress(mac_address);
-                                                    }
-                                                }
-                                            }
-                                            if (dataModules.containsKey("validity")) {
-                                                Timestamp dataMod = (Timestamp) dataModules.get((Object) "validity");
-                                                if (dataMod != null) {
-                                                    GlobalVar.Set_Validity(dataMod);
-                                                    if (!GlobalVar.isValidity()) {
-                                                        Toast.makeText(getApplicationContext(),getString(R.string.subsciption_expired), Toast.LENGTH_SHORT ).show();
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        ((Global_Var) getApplicationContext()).Set_Project_Access(false);
-                                        printErrorMessage("You have not Subscribed");
                                     }
-                                    Log.d(TAG, " Select Individual " + dataMap.toString());
                                 }
-                                break;
+                                Log.d(TAG, " data: " + defMap.toString());
                             }
-                            default: {
-                                List<String> dataMap = (List<String>) docum.get("college_modules");
-                                if (dataMap != null && dataMap.size() > 0) {
-                                    Log.d(TAG, " data: " + dataMap.toString());
-                                    dataList2.addAll(dataMap);
-                                }
-                                ((Global_Var) getApplicationContext()).Set_Project_Access(false);
 
-                                Map<String, Object> defMap = (Map<String, Object>) docum.getData();
-                                if (defMap != null && defMap.size() > 0) {
-                                    if (defMap.containsKey("proj_access")) {
-                                        List<String> mails = (List<String>) defMap.get("proj_access");
-                                        if(mails.contains(mEmailId))
-                                        {
-                                            ((Global_Var) getApplicationContext()).Set_Project_Access(true);
-                                        }
-                                    }
-                                    Log.d(TAG, " data: " + defMap.toString());
-                                }
-
-                                break;
-                            }
+                            break;
                         }
                     }
-
-                    adapterList2.notifyDataSetChanged();
-
-                    String message = "";
-                    if(dataList2 != null && dataList2.size() > 0) {
-                        if(mIndividual) {
-                            message = getValidityString();
-                        }
-                        else
-                            message = "App will connect to Module " + dataList2.get(0);
-
-                        checkSelectedList2();
-                    }
-
-                    printInfoMessage(message);
-                    Log.d(MainActivity.TAG, (docum != null ? docum.getId() : "NULL") + " => " + (docum != null ? docum.getData() : "NULL"));
-                } else {
-                    Log.w(MainActivity.TAG, "Error getting documents.", task.getException());
                 }
+
+                adapterList2.notifyDataSetChanged();
+
+                String message = "";
+                if(dataList2 != null && dataList2.size() > 0) {
+                    if(mIndividual) {
+                        message = getValidityString();
+                    }
+                    else
+                        message = "App will connect to Module " + dataList2.get(0);
+
+                    checkSelectedList2();
+                }
+
+                printInfoMessage(message);
+                Log.d(MainActivity.TAG, (docum != null ? docum.getId() : "NULL") + " => " + (docum != null ? docum.getData() : "NULL"));
+            } else {
+                Log.w(MainActivity.TAG, "Error getting documents.", task.getException());
             }
         });
     }
@@ -501,15 +490,14 @@ public class MainActivity extends AppCompatActivity
         mList2 = findViewById(R.id.spList2);
         tvInfo = findViewById(R.id.tv_main1);
         tvError = findViewById(R.id.tv_main2);
-        mButton1 = findViewById(R.id.btn_button1);
-        mButton2 = findViewById(R.id.btn_button2);
-        mButton3 = findViewById(R.id.btn_button3);
-        mButton4 = findViewById(R.id.btn_button4);
+        Button mButton1 = findViewById(R.id.btn_button1);
+        Button mButton2 = findViewById(R.id.btn_button2);
+        Button mButton3 = findViewById(R.id.btn_button3);
+        Button mButton4 = findViewById(R.id.btn_button4);
         mButton1.setOnClickListener(this);
         mButton2.setOnClickListener(this);
         mButton3.setOnClickListener(this);
         mButton4.setOnClickListener(this);
-
         if (isUserFullProfile()) {
             if (!isOnboardingShowing()) {
                 Log.d(TAG, "First use, run onboarding");
@@ -519,11 +507,9 @@ public class MainActivity extends AppCompatActivity
             runProfileChange();
         }
 
-//        adapterList1 = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, dataList1);
         adapterList1 = new ArrayAdapter<String>(MainActivity.this, R.layout.spinner_custom, dataList1);
         adapterList1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mList1.setAdapter(adapterList1);
-//        adapterList2 = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, dataList2);
         adapterList2 = new ArrayAdapter<String>(MainActivity.this, R.layout.spinner_custom, dataList2);
         adapterList2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mList2.setAdapter(adapterList2);
@@ -562,25 +548,22 @@ public class MainActivity extends AppCompatActivity
                         document = mList1.getSelectedItem().toString();
                     }
 
-                    mFireBaseHelper.read(collection, document, new OnCompleteListener<DocumentSnapshot>() {
-                        @Override
-                        public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                            if(mList1.getSelectedItem().toString().equals("Individual"))  {
-                                printInfoMessage(getValidityString());
-                            }
-                            DocumentSnapshot docum = task.getResult();
-                            Map<String, Object> hw =  (Map<String, Object>) docum.get(mList2.getSelectedItem().toString());
-                            if (hw != null) {
-                                long hw_version = (Long) hw.get("hw_version");
-                                long ina1_cal = (Long) hw.get("ina1_cal");
-                                long ina2_cal = (Long) hw.get("ina2_cal");
-                                String mac_address = (String) hw.get((String) "mac_address");
-                                Global_Var GlobalVar = ((Global_Var) getApplicationContext());
-                                GlobalVar.Set_INA1Calibration((int) ina1_cal);
-                                GlobalVar.Set_INA2Calibration((int) ina2_cal);
-                                GlobalVar.Set_MacAddress(mac_address);
-                                Log.d(TAG, "List 2 values retrieved");
-                            }
+                    mFireBaseHelper.read(collection, document, task -> {
+                        if(mList1.getSelectedItem().toString().equals("Individual"))  {
+                            printInfoMessage(getValidityString());
+                        }
+                        DocumentSnapshot docum = task.getResult();
+                        Map<String, Object> hw =  (Map<String, Object>) docum.get(mList2.getSelectedItem().toString());
+                        if (hw != null) {
+                            long hw_version = (Long) hw.get("hw_version");
+                            long ina1_cal = (Long) hw.get("ina1_cal");
+                            long ina2_cal = (Long) hw.get("ina2_cal");
+                            String mac_address = (String) hw.get((String) "mac_address");
+                            Global_Var GlobalVar = ((Global_Var) getApplicationContext());
+                            GlobalVar.Set_INA1Calibration((int) ina1_cal);
+                            GlobalVar.Set_INA2Calibration((int) ina2_cal);
+                            GlobalVar.Set_MacAddress(mac_address);
+                            Log.d(TAG, "List 2 values retrieved");
                         }
                     });
                 }
@@ -609,12 +592,9 @@ public class MainActivity extends AppCompatActivity
         tvNavDrUser = headerView.findViewById(R.id.tv_nav_user);
         tvNavDrEmail = headerView.findViewById(R.id.tv_nav_email);
 
-        headerView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                runProfileChange();
-                mDrawer.closeDrawer(Gravity.LEFT);
-            }
+        headerView.setOnClickListener(view -> {
+            runProfileChange();
+            mDrawer.closeDrawer(Gravity.LEFT);
         });
 
         if (mUsername != null)
@@ -762,17 +742,14 @@ public class MainActivity extends AppCompatActivity
                 Log.d(TAG, "Fail permission: update location ");
                 return;
             }
-            mFusedLocationClient.getLastLocation().addOnSuccessListener( new OnSuccessListener<Location>() {
-                @Override
-                public void onSuccess(Location location) {
-                    if (location != null) {
-                        Global_Var GlobalVar = (Global_Var) getApplicationContext();
-                        GlobalVar.Set_Location(location.getLatitude(), location.getLongitude());
-                        Log.d(TAG, "update location " + location.toString());
-                    }
-                    else {
-                        Log.d(TAG, "no location ");
-                    }
+            mFusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
+                if (location != null) {
+                    Global_Var GlobalVar = (Global_Var) getApplicationContext();
+                    GlobalVar.Set_Location(location.getLatitude(), location.getLongitude());
+                    Log.d(TAG, "update location " + location.toString());
+                }
+                else {
+                    Log.d(TAG, "no location ");
                 }
             });
         }
@@ -825,16 +802,8 @@ public class MainActivity extends AppCompatActivity
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
                     .setCancelable(false)
-                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                        public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
-                            startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-                        }
-                    })
-                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                        public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
-                            dialog.cancel();
-                        }
-                    });
+                    .setPositiveButton("Yes", (dialog, id) -> startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)))
+                    .setNegativeButton("No", (dialog, id) -> dialog.cancel());
             final AlertDialog alert = builder.create();
             alert.show();
         }

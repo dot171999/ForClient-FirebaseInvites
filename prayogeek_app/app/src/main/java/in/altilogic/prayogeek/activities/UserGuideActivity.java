@@ -2,14 +2,17 @@ package in.altilogic.prayogeek.activities;
 
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 
+import in.altilogic.prayogeek.FireBaseHelper;
 import in.altilogic.prayogeek.R;
 import in.altilogic.prayogeek.fragments.ButtonsFragment;
 
@@ -17,6 +20,7 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
     public static final String TAG = "YOUSCOPE-USER-GUIDE";
 
     private FragmentManager mFragmentManager;
+    private FireBaseHelper mFireBaseHelper;
     private int mScreenStatus = 0;
 
     @Override
@@ -24,20 +28,42 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tutolial);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-
         mFragmentManager = getSupportFragmentManager();
-        showUserGuideFragment();
+        mFireBaseHelper = new FireBaseHelper();
         Log.d(TAG, "onCreate()");
+        new Thread(() -> {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            mFireBaseHelper.read("Screen_UserGuide", "Buttons", (documentSnapshot, e) -> {
+                if (e != null) {
+                    Log.w(TAG, "Listen failed.", e);
+                    return;
+                }
+
+                if (documentSnapshot != null && documentSnapshot.exists()) {
+                    List<String> names = (List<String>) documentSnapshot.get("names");
+                    runOnUiThread(() -> showUserGuideFragment(names));
+                }
+            });
+        }).start();
     }
 
-    final static String[] mButtons = {"HELP", "GUIDE", "ABOUT"};
+    @Override
+    public void onStart() {
+        super.onStart();
+        Log.d(TAG, "onStart()");
+    }
 
-    private void showUserGuideFragment() {
+    private void showUserGuideFragment(List<String> _names) {
         mScreenStatus = 1;
-        ArrayList<String> mArray = new ArrayList<>(Arrays.asList(mButtons));
-        ButtonsFragment buttonsFragment = ButtonsFragment.newInstance(mArray);
+        ButtonsFragment buttonsFragment = ButtonsFragment.newInstance(new ArrayList<>(_names));
         buttonsFragment.setOnClickListener(this);
-        mFragmentManager.beginTransaction().replace(R.id.fragmentContent, buttonsFragment).commit();
+        mFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContent, buttonsFragment)
+                .commit();
     }
 
     @Override

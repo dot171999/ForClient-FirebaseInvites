@@ -11,6 +11,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import in.altilogic.prayogeek.R;
 
@@ -65,11 +66,13 @@ public class ButtonsFragment extends Fragment implements View.OnClickListener  {
     private Button getConfiguredButton(String btnName) {
 
         int buttonStyle = R.style.AppTheme_Button;
+
         Button bt = new Button(new ContextThemeWrapper(getActivity(), buttonStyle), null, buttonStyle);
         bt.setText(btnName);
+        bt.setTextColor(Objects.requireNonNull(getActivity()).getResources().getColor(R.color.black_trans80));
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0,8,0,0);
+        params.setMargins(8,8,8,0);
         bt.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
