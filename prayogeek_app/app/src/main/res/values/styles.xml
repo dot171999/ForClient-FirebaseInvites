@@ -29,7 +29,7 @@
 
     <style name="AppTheme.Button" parent="Widget.AppCompat.Button.Colored">
         <item name="colorControlHighlight">@color/button_press</item>
-        <item name="colorAccent">@color/divider_color</item>
+        <item name="colorAccent">@color/button_color</item>
     </style>
 
 </resources>

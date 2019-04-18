@@ -1,19 +1,19 @@
 package in.altilogic.prayogeek.activities;
 
-import android.content.pm.ActivityInfo;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 
-import java.util.ArrayList;
+import com.google.firebase.firestore.DocumentSnapshot;
+
 import java.util.List;
 
 import in.altilogic.prayogeek.FireBaseHelper;
 import in.altilogic.prayogeek.R;
+import in.altilogic.prayogeek.RemoteButtonScreen;
 import in.altilogic.prayogeek.fragments.ButtonsFragment;
 
 public class UserGuideActivity extends AppCompatActivity implements View.OnClickListener  {
@@ -21,34 +21,51 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
 
     private FragmentManager mFragmentManager;
     private FireBaseHelper mFireBaseHelper;
-    private int mScreenStatus = 0;
+
+    private RemoteButtonScreen mUserGuide;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tutolial);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,WindowManager.LayoutParams.FLAG_SECURE); // disable snapshots
         mFragmentManager = getSupportFragmentManager();
         mFireBaseHelper = new FireBaseHelper();
         Log.d(TAG, "onCreate()");
-        new Thread(() -> {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        new Thread(() -> mFireBaseHelper.read("Screen_UserGuide", "Buttons", task -> {
+            if (!task.isSuccessful()) {
+                Log.w(TAG, "Listen failed.");
+                return;
             }
-            mFireBaseHelper.read("Screen_UserGuide", "Buttons", (documentSnapshot, e) -> {
-                if (e != null) {
-                    Log.w(TAG, "Listen failed.", e);
-                    return;
-                }
+            DocumentSnapshot documentSnapshot = task.getResult();
 
-                if (documentSnapshot != null && documentSnapshot.exists()) {
-                    List<String> names = (List<String>) documentSnapshot.get("names");
-                    runOnUiThread(() -> showUserGuideFragment(names));
-                }
-            });
-        }).start();
+            if (documentSnapshot != null && !documentSnapshot.exists()) {
+                Log.d(TAG, "No such document");
+                return;
+            }
+
+            List<String> screen_parameters = mFireBaseHelper.getArray(documentSnapshot);
+
+            if(screen_parameters.contains("names")){
+                List<String> mNames = (List<String>) documentSnapshot.get("names");
+                mUserGuide = new RemoteButtonScreen(mNames);
+            }
+            if(mUserGuide == null)
+                return;
+
+            if(screen_parameters.contains("version")){
+                String version = (String) documentSnapshot.get("version");
+                mUserGuide.setVersion(version);
+            }
+            if(screen_parameters.contains("orientation")){
+                String orientation = (String) documentSnapshot.get("orientation");
+                mUserGuide.setOrientation(orientation);
+            }
+
+            if (documentSnapshot != null && documentSnapshot.exists()) {
+                runOnUiThread(() -> showUserGuideFragment());
+            }
+        })).start();
     }
 
     @Override
@@ -57,12 +74,11 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
         Log.d(TAG, "onStart()");
     }
 
-    private void showUserGuideFragment(List<String> _names) {
-        mScreenStatus = 1;
-        ButtonsFragment buttonsFragment = ButtonsFragment.newInstance(new ArrayList<>(_names));
+    private void showUserGuideFragment() {
+        mUserGuide.setStatus(0);
+        ButtonsFragment buttonsFragment = ButtonsFragment.newInstance(mUserGuide);
         buttonsFragment.setOnClickListener(this);
-        mFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContent, buttonsFragment)
+        mFragmentManager.beginTransaction().replace(R.id.fragmentContent, buttonsFragment)
                 .commit();
     }
 
@@ -71,16 +87,9 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
         if(view == null)
             return;
         int id = view.getId();
-        Log.d(TAG, "onClick() press button " + id);
-
-        switch (id){
-            case 1:
-            case 2:
-            case 3:
-
-            default:
-                break;
+        RemoteButtonScreen.RemoteButton clickedButton = mUserGuide.getButton(id);
+        if(clickedButton != null) {
+            Log.d(TAG, "onClick() press button " + clickedButton.getName() + "; Start open screen " + clickedButton.getLinkName());
         }
-
     }
 }
