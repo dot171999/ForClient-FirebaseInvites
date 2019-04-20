@@ -29,8 +29,15 @@ import in.altilogic.prayogeek.fragments.ImageFragment;
 import in.altilogic.prayogeek.service.ImageDownloadService;
 import in.altilogic.prayogeek.utils.Utils;
 
+import static in.altilogic.prayogeek.utils.Utils.saveSharedSetting;
+
 public class UserGuideActivity extends AppCompatActivity implements View.OnClickListener, ImageFragment.OnClickListener  {
     public static final String TAG = "YOUSCOPE-USER-GUIDE";
+
+    public final static String CURRENT_SCREEN_SETTINGS = "USERGUIDE-SETTINGS-CURRENT-SCREEN";
+    public final static String CURRENT_SCREEN_SETTINGS_PAGE = "USERGUIDE-SETTINGS-CURRENT-PAGE";
+    public final static String CURRENT_SCREEN_SETTINGS_RESUME = "USERGUIDE-SETTINGS-CURRENT-SCREEN-RESUME";
+    public final static String CURRENT_SCREEN_SETTINGS_PAGE_RESUME = "USERGUIDE-SETTINGS-CURRENT-PAGE-RESUME";
 
     private FragmentManager mFragmentManager;
     private FireBaseHelper mFireBaseHelper;
@@ -40,6 +47,7 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
     private BroadcastReceiver mBroadcastReceiver;
     private static int mStatusBarColor;
 
+    private int mScreenStatus = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,51 +59,7 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
         mStatusBarColor = getWindow().getStatusBarColor();
 
         Log.d(TAG, "onCreate()");
-        new Thread(() -> mFireBaseHelper.read("Screen_UserGuide", "Buttons", task -> {
-            if (!task.isSuccessful()) {
-                Log.w(TAG, "Listen failed.");
-                return;
-            }
-            DocumentSnapshot documentSnapshot = task.getResult();
-
-            if (documentSnapshot != null && !documentSnapshot.exists()) {
-                Log.d(TAG, "No such document");
-                return;
-            }
-
-            List<String> screen_parameters = mFireBaseHelper.getArray(documentSnapshot);
-
-            if(screen_parameters.contains("names")){
-                List<String> mNames = (List<String>) documentSnapshot.get("names");
-                if(mNames == null)
-                    return;
-                mUserGuide = new RemoteButtonScreen(mNames);
-
-                for(String buttName : mNames) {
-                    if(screen_parameters.contains(buttName)){
-                        String buttonCollectionName = (String) documentSnapshot.get(buttName);
-                        mUserGuide.getRemoteButton(buttName).setLinkName(buttonCollectionName);
-                    }
-                }
-            }
-            if(mUserGuide == null)
-                return;
-
-            if(screen_parameters.contains("version")){
-                String version = (String) Objects.requireNonNull(documentSnapshot).get("version");
-                mUserGuide.setVersion(version);
-            }
-            if(screen_parameters.contains("orientation")){
-                assert documentSnapshot != null;
-                String orientation = (String) documentSnapshot.get("orientation");
-                mUserGuide.setOrientation(orientation);
-            }
-
-            if (documentSnapshot != null && documentSnapshot.exists()) {
-                runOnUiThread(() -> showUserGuideFragment());
-            }
-        })).start();
-
+        downloadRemoteScreen("Screen_Images");
         initBroadcastReceiver();
     }
 
@@ -118,6 +82,17 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
     public void onDestroy() {
         stopService(new Intent(this, ImageDownloadService.class));
         super.onDestroy();
+    }
+
+
+    @Override
+    public void onBackPressed() {
+        saveSharedSetting(getApplicationContext(), CURRENT_SCREEN_SETTINGS_PAGE, 0);
+        if(mScreenStatus == 0) {
+            saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
+            saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
+            finishActivity();
+        }
     }
 
     private void showUserGuideFragment() {
@@ -232,11 +207,108 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
 
     @Override
     public void onClick(View view, int page) {
+        Log.d(TAG, "mScreenStatus = " + mScreenStatus + "; page = " + page);
+        switch (view.getId()){
+            case R.id.btnHome:
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
 
+                mScreenStatus = 0;
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
+                break;
+            case R.id.btnDone:
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
+
+                mScreenStatus = 0;
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
+                finishActivity();
+                break;
+            case R.id.btnMinimize:
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
+
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, mScreenStatus);
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, page);
+                finishActivity();
+                break;
+        }
     }
 
     @Override
     public void onPageChanged(int page) {
+        saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, page);
+        saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
+    }
 
+    private void finishActivity(){
+        if (getParent() == null) {
+            setResult(RESULT_OK, new Intent());
+        }
+        else {
+            getParent().setResult(RESULT_OK, new Intent());
+        }
+        finish();
+    }
+
+    private void downloadRemoteScreen(String name) {
+        new Thread(() -> mFireBaseHelper.read(name, "Buttons", task -> {
+            if (!task.isSuccessful()) {
+                Log.w(TAG, "Listen failed.");
+                return;
+            }
+            DocumentSnapshot documentSnapshot = task.getResult();
+
+            if (documentSnapshot != null && !documentSnapshot.exists()) {
+                Log.d(TAG, "No such document");
+                mExperimentType = "Default";
+                mFireBaseHelper.read(name, "Images", task2 -> {
+                    if (!task2.isSuccessful()) {
+                        Log.w(TAG, "Listen failed.");
+                        return;
+                    }
+                    DocumentSnapshot documentSnapshot2 = task2.getResult();
+
+                    if (documentSnapshot2 != null && !documentSnapshot2.exists()) {
+                        Log.d(TAG, "No such document");
+                    }
+                    startDownload(name, "Images", "Default");
+                });
+                return;
+            }
+
+            List<String> screen_parameters = mFireBaseHelper.getArray(documentSnapshot);
+
+            if(screen_parameters.contains("names")){
+                List<String> mNames = (List<String>) documentSnapshot.get("names");
+                if(mNames == null)
+                    return;
+                mUserGuide = new RemoteButtonScreen(mNames);
+
+                for(String buttName : mNames) {
+                    if(screen_parameters.contains(buttName)){
+                        String buttonCollectionName = (String) documentSnapshot.get(buttName);
+                        mUserGuide.getRemoteButton(buttName).setLinkName(buttonCollectionName);
+                    }
+                }
+            }
+            if(mUserGuide == null)
+                return;
+
+            if(screen_parameters.contains("version")){
+                String version = (String) Objects.requireNonNull(documentSnapshot).get("version");
+                mUserGuide.setVersion(version);
+            }
+            if(screen_parameters.contains("orientation")){
+                assert documentSnapshot != null;
+                String orientation = (String) documentSnapshot.get("orientation");
+                mUserGuide.setOrientation(orientation);
+            }
+
+            if (documentSnapshot != null && documentSnapshot.exists()) {
+                runOnUiThread(() -> showUserGuideFragment());
+            }
+        })).start();
     }
 }
