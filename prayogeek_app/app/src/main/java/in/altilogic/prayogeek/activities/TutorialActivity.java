@@ -264,12 +264,12 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
     }
 
-    private String mExperimentFolder;
     private String mExperimentType;
     private int mLastPage;
     private List<String> mImagePath;
 
     private void showGifFragment(String experiment_folder, String type_folder, int last_page) {
+        mExperimentType = type_folder;
         Log.d(TAG, "showGifFragment : " + experiment_folder + "/" + type_folder + ":" + last_page);
         if(isStartShowingImage) {
             Toast.makeText(this, "Download in progress. Please wait", Toast.LENGTH_SHORT).show();
@@ -278,8 +278,6 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         }
 
         isStartShowingImage = true;
-        mExperimentFolder = experiment_folder;
-        mExperimentType = type_folder;
         mLastPage = last_page;
         if(mImagePath != null) {
             mImagePath.clear();
@@ -287,7 +285,7 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         }
 
         mImagePath = new ArrayList<>();
-        startDownload();
+        startDownload("Tutorials", experiment_folder, type_folder);
     }
 
     private void showBasicElectronic(){
@@ -380,11 +378,12 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
                 .commit();
     }
 
-    private void startDownload() {
+    private void startDownload(String collection, String folder, String path) {
         startService(new Intent(this,ImageDownloadService.class)
                 .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES)
-                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT, mExperimentFolder)
-                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE, mExperimentType));
+                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_COLLECTION, collection)
+                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT, folder)
+                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE, path));
     }
 
     private int getFilesNumber(String settings_key) {

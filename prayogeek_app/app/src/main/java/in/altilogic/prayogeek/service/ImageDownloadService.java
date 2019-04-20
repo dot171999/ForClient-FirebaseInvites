@@ -29,6 +29,7 @@ public class ImageDownloadService extends IntentService {
     public static final int HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET = 4;
     public static final int HW_SERVICE_MESSAGE_TYPE_IMAGE_DOWNLOAD_FAIL = 5;
 
+    public static final String HW_SERVICE_MESSAGE_DOWNLOAD_COLLECTION = "MESSAGE_TYPE_COLLECTION";
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT = "MESSAGE_TYPE_EXPERIMENT";
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE = "MESSAGE_TYPE_PATH_FIRESTORE";
 
@@ -59,6 +60,8 @@ public class ImageDownloadService extends IntentService {
         int message_type = intent.getIntExtra(HW_SERVICE_MESSAGE_TYPE_ID, -1);
         switch (message_type) {
             case HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES:
+
+                final String collection = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_COLLECTION);
                 final String experimentPath = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT);
                 String fireStorePath = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE);
                 Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES: " + experimentPath + "/"+fireStorePath);
@@ -76,7 +79,7 @@ public class ImageDownloadService extends IntentService {
                 if(mDownloadImagesThread != null)
                     mDownloadImagesThread = null;
 
-                mDownloadImagesThread = new Thread(() -> startDownloadImage(experimentPath));
+                mDownloadImagesThread = new Thread(() -> startDownloadImage(collection, experimentPath));
 
                 mDownloadImagesThread.start();
 
@@ -86,12 +89,12 @@ public class ImageDownloadService extends IntentService {
         }
     }
 
-    private void startDownloadImage(final String experiment_folder) {
+    private void startDownloadImage(final String collection, final String experiment_folder) {
         Log.d(TAG, "Start download "+ experiment_folder +"/"+ mExperimentType);
         if(mFireBaseHelper == null)
             mFireBaseHelper = new FireBaseHelper();
 
-        mFireBaseHelper.read("Tutorials", experiment_folder, task -> {
+        mFireBaseHelper.read(collection, experiment_folder, task -> {
             if (!task.isSuccessful()) {
                 Log.w(TAG, "Listen failed." + task.getException());
 

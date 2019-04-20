@@ -2,7 +2,6 @@ package in.altilogic.prayogeek.fragments;
 
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
@@ -12,7 +11,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
-import java.util.ArrayList;
 import java.util.Objects;
 
 import in.altilogic.prayogeek.R;
@@ -44,32 +42,27 @@ public class ButtonsFragment extends Fragment implements View.OnClickListener  {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_buttons, null);
         if(getArguments() != null) {
-            Parcelable parcelable = getArguments().getParcelable(ARG_BUTTONS_ARRAY);
-            mScreen = new RemoteButtonScreen(parcelable);
-            if (mButNames != null) {
-                for(String butName : mButNames) {
-                    mListButtons.add(getConfiguredButton(butName));
-                }
-            }
+            mScreen = getArguments().getParcelable(ARG_BUTTONS_ARRAY);
         }
         return rootView;
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
-        getActivity().setRequestedOrientation(mLandscape ?
-                ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        mLayout = (LinearLayout) view .findViewById(R.id.llButtons);
+        if( mScreen != null) {
+            getActivity().setRequestedOrientation(mScreen.getOrientation().equals("landscape") ?
+                    ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            mLayout = (LinearLayout) view .findViewById(R.id.llButtons);
 
-        for(int i=0; i<mListButtons.size(); i++) {
-            mListButtons.get(i).setOnClickListener(this);
-            mListButtons.get(i).setId(i+1);
-            mLayout.addView(mListButtons.get(i));
+            for(int i=0; i<mScreen.buttonsSize(); i++) {
+                mScreen.getRemoteButton(i+1).setButton(getConfiguredButton(mScreen.getRemoteButton(i+1).getName()));
+                mScreen.getRemoteButton(i+1).getButton().setOnClickListener(this);
+                mLayout.addView(mScreen.getRemoteButton(i+1).getButton());
+            }
         }
     }
 
     private Button getConfiguredButton(String btnName) {
-
         int buttonStyle = R.style.AppTheme_Button;
 
         Button bt = new Button(new ContextThemeWrapper(getActivity(), buttonStyle), null, buttonStyle);

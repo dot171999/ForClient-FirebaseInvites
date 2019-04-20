@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import in.altilogic.prayogeek.R;
+import in.altilogic.prayogeek.activities.UserGuideActivity;
 
 public class ImageFragment extends Fragment implements View.OnClickListener{
     private final static String TAG = "YOUSCOPE-DB-IMAGE";

@@ -2,6 +2,7 @@ package in.altilogic.prayogeek;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.widget.Button;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,15 +42,23 @@ public class RemoteButtonScreen implements Parcelable {
         parcel.writeStringList(bttns);
     }
 
-    RemoteButtonScreen(Parcel parcel){
+    private RemoteButtonScreen(Parcel parcel){
         this.mScreenVersion = parcel.readString();
         this.mScreenOrientation = parcel.readString();
         this.mScreenStatus = parcel.readInt();
 
         List<String> bttns = new ArrayList<>();
         parcel.readStringList(bttns);
-        if(bttns != null && bttns.size() > 0) {
-
+        if(bttns.size() > 0) {
+            this.mButtons = new ArrayList<>();
+            for (String remoteButton: bttns) {
+                String[] parts = remoteButton.split(",");
+                if(parts.length == 3) {
+                    RemoteButton rb = new RemoteButton(parts[0], Integer.getInteger(parts[2]));
+                    rb.setLinkName(parts[1]);
+                    mButtons.add(rb);
+                }
+            }
         }
     }
 
@@ -88,7 +97,7 @@ public class RemoteButtonScreen implements Parcelable {
         return mScreenStatus;
     }
 
-    public RemoteButton getButton(int id){
+    public RemoteButton getRemoteButton(int id){
         for(RemoteButton butt : mButtons) {
             if(id == butt.getId())
                 return butt;
@@ -96,10 +105,23 @@ public class RemoteButtonScreen implements Parcelable {
         return null;
     }
 
+    public RemoteButton getRemoteButton(String buttname){
+        for(RemoteButton butt : mButtons) {
+            if(buttname.equals(butt.getName()))
+                return butt;
+        }
+        return null;
+    }
+
+    public int buttonsSize() {
+        return mButtons.size();
+    };
+
     public class RemoteButton {
         private String mName;
         private String mLinkName;
         private int mId;
+        Button mButton;
 
         RemoteButton(String name, int id){
             mName = name;
@@ -126,12 +148,22 @@ public class RemoteButtonScreen implements Parcelable {
             return mName;
         }
 
-        public String getLinkName() {
+        public String getCollectionLinkName() {
             return mLinkName;
         }
 
         public String toString() {
             return mName + "," + mLinkName + ',' + mId;
+        }
+
+        public Button getButton() {
+            return mButton;
+        }
+
+        public void setButton(Button button) {
+            mButton = button;
+            mButton.setId(mId);
+            mButton.setText(mName);
         }
     }
 }
