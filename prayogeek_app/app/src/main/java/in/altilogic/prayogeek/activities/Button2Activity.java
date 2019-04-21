@@ -52,7 +52,7 @@ public class Button2Activity extends AppCompatActivity {
     }
 
     private void runTutorial(){
-        startActivity(new Intent(this, TutorialActivity.class));
+        startActivity(new Intent(this, TutorialRemoteActivity.class));
     }
 
 

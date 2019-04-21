@@ -125,7 +125,8 @@ public class RemoteButtonScreen implements Parcelable {
         private String mDocument;
         private String mField;
         private int mId;
-        Button mButton;
+        private Button mButton;
+        private String mType;
 
         RemoteButton(String name, int id){
             mName = name;
@@ -138,6 +139,14 @@ public class RemoteButtonScreen implements Parcelable {
 
         public int getId(){
             return mId;
+        }
+
+        public void setType(String type){
+            mType = type;
+        }
+
+        public String getType(){
+            return mType;
         }
 
         public void setName(String name) {
