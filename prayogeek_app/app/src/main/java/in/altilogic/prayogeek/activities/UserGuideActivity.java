@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -47,8 +48,6 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
     private BroadcastReceiver mBroadcastReceiver;
     private static int mStatusBarColor;
 
-    private int mScreenStatus = 0;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,7 +58,7 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
         mStatusBarColor = getWindow().getStatusBarColor();
 
         Log.d(TAG, "onCreate()");
-        downloadRemoteScreen("Screen_Images");
+        downloadRemoteScreen("Screen_UserGuide");
         initBroadcastReceiver();
     }
 
@@ -88,10 +87,13 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
     @Override
     public void onBackPressed() {
         saveSharedSetting(getApplicationContext(), CURRENT_SCREEN_SETTINGS_PAGE, 0);
-        if(mScreenStatus == 0) {
+        if(mUserGuide != null && mUserGuide.getStatus() == 0) {
             saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
-            saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
+            saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mUserGuide.getStatus());
             finishActivity();
+        }
+        else {
+            showUserGuideFragment();
         }
     }
 
@@ -113,6 +115,46 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
             Log.d(TAG, "onClick() press button " + clickedButton.getName() + "; Start open screen " + clickedButton.getCollectionLinkName());
             showGifFragment(clickedButton.getCollectionLinkName(),"Images", clickedButton.getName());
         }
+    }
+
+
+    @Override
+    public void onClick(View view, int page) {
+        int mScreenStatus = mUserGuide != null ? mUserGuide.getStatus() : 0;
+        Log.d(TAG, "mScreenStatus = " + mScreenStatus + "; page = " + page);
+        switch (view.getId()){
+            case R.id.btnHome:
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
+                if(mUserGuide!= null)
+                    mUserGuide.setStatus(0);
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
+                showUserGuideFragment();
+                break;
+            case R.id.btnDone:
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
+                if(mUserGuide!= null)
+                    mUserGuide.setStatus(0);
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
+                finishActivity();
+                break;
+            case R.id.btnMinimize:
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
+
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, mScreenStatus);
+                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, page);
+                finishActivity();
+                break;
+        }
+    }
+
+    @Override
+    public void onPageChanged(int page) {
+        saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, page);
+        saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
     }
 
     private String mExperimentType;
@@ -156,6 +198,14 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
             mImagePath.add(name);
         }
 
+        if(mUserGuide == null || mUserGuide.getOrientation() == null || mUserGuide.getOrientation().equals("landscape")) {
+            setRequestedOrientation( ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        }
+        else{
+            setRequestedOrientation( ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }
+
+        mUserGuide.setStatus(mUserGuide.getRemoteButton(mExperimentType).getId());
         ImageFragment mShowGifFragment = ImageFragment.newInstance((ArrayList<String>) mImagePath, mStatusBarColor, 0, false);
         mShowGifFragment.setOnClickListener(this);
         FragmentTransaction transaction = mFragmentManager.beginTransaction();
@@ -195,7 +245,7 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
                         break;
                     case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_DOWNLOAD_FAIL:
                         Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_IMAGE_DOWNLOAD_FAIL");
-//                        showMessageDownloadFail();
+                        Toast.makeText(getApplicationContext(), "Download Fail", Toast.LENGTH_SHORT ).show();
                         isStartShowingImage = false;
                         break;
                     default:
@@ -203,43 +253,6 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
                 }
             }
         };
-    }
-
-    @Override
-    public void onClick(View view, int page) {
-        Log.d(TAG, "mScreenStatus = " + mScreenStatus + "; page = " + page);
-        switch (view.getId()){
-            case R.id.btnHome:
-                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
-                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
-
-                mScreenStatus = 0;
-                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
-                break;
-            case R.id.btnDone:
-                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
-                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
-
-                mScreenStatus = 0;
-                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
-                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
-                finishActivity();
-                break;
-            case R.id.btnMinimize:
-                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
-                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
-
-                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, mScreenStatus);
-                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, page);
-                finishActivity();
-                break;
-        }
-    }
-
-    @Override
-    public void onPageChanged(int page) {
-        saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, page);
-        saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
     }
 
     private void finishActivity(){
@@ -273,7 +286,7 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
                     if (documentSnapshot2 != null && !documentSnapshot2.exists()) {
                         Log.d(TAG, "No such document");
                     }
-                    startDownload(name, "Images", "Default");
+                    showGifFragment(name, "Images", "Default");
                 });
                 return;
             }

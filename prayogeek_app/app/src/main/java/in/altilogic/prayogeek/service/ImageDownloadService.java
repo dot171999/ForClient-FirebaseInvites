@@ -110,8 +110,8 @@ public class ImageDownloadService extends IntentService {
             List<String> basic_electronics = mFireBaseHelper.getArray(documentSnapshot);
 
             if (basic_electronics.contains(mExperimentType)) {
-                List<String> breadboard_urls = mFireBaseHelper.getArray(documentSnapshot, mExperimentType, "imageURL");
-                if (breadboard_urls == null)
+                List<String> imagesUrls = mFireBaseHelper.getArray(documentSnapshot, mExperimentType, "imageURL");
+                if (imagesUrls == null)
                     return;
 
                 int firestore_images_version = mFireBaseHelper.getLong(documentSnapshot, mExperimentType, "version");
@@ -129,15 +129,18 @@ public class ImageDownloadService extends IntentService {
                 if (isNewVersion || mIsLocFilesNotFound) {
                     int count = 1;
                     notifyActivityAboutStartDownload();
-                    mFilesNumber = breadboard_urls.size();
+                    mFilesNumber = imagesUrls.size();
                     saveImagesVersion(mExperimentType, firestore_images_version);
-                    saveFilesNumber(mExperimentType, breadboard_urls.size());
-                    for (String path : breadboard_urls) {
+                    saveFilesNumber(mExperimentType, imagesUrls.size());
+                    for (String path : imagesUrls) {
                         downloadUri(path, mExperimentType, count++);
                     }
                 } else {
                     notifyActivityAboutNewFiles();
                 }
+            }
+            else {
+                notifyActivityAboutDownloadFail();
             }
         }, e -> notifyActivityAboutDownloadFail());
     }
@@ -176,6 +179,10 @@ public class ImageDownloadService extends IntentService {
     }
 
     private void downloadUri(String path, final String electronic_type, final int num){
+        if(path == null || path.length() == 0) {
+            notifyActivityAboutDownloadFail();
+            return;
+        }
         Log.d(TAG,"Start download: " + path);
         final StorageReference mStorageRef;
         mStorageRef = FirebaseStorage.getInstance().getReferenceFromUrl(path);
