@@ -20,6 +20,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import in.altilogic.prayogeek.FireBaseHelper;
@@ -58,7 +59,7 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
         mStatusBarColor = getWindow().getStatusBarColor();
 
         Log.d(TAG, "onCreate()");
-        downloadRemoteScreen("Screen_UserGuide");
+        downloadRemoteScreen("UserGuide");
         initBroadcastReceiver();
     }
 
@@ -112,8 +113,9 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
         int id = view.getId();
         RemoteButtonScreen.RemoteButton clickedButton = mUserGuide.getRemoteButton(id);
         if(clickedButton != null) {
-            Log.d(TAG, "onClick() press button " + clickedButton.getName() + "; Start open screen " + clickedButton.getCollectionLinkName());
-            showGifFragment(clickedButton.getCollectionLinkName(),"Images", clickedButton.getName());
+            Log.d(TAG, "onClick() press button " + clickedButton.getName() + "; Start open screen " + clickedButton.getCollection());
+            mExperimentType = clickedButton.getName();
+            showGifFragment(clickedButton.getCollection(),clickedButton.getDocument(), clickedButton.getField());
         }
     }
 
@@ -161,7 +163,6 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
     private List<String> mImagePath;
 
     private void showGifFragment(String collection, String folder, String type) {
-        mExperimentType = type;
         Log.d(TAG, "showGifFragment : " + collection + "/" + folder + "/" + type);
         if(isStartShowingImage) {
             Toast.makeText(this, "Download in progress. Please wait", Toast.LENGTH_SHORT).show();
@@ -265,29 +266,16 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
         finish();
     }
 
-    private void downloadRemoteScreen(String name) {
-        new Thread(() -> mFireBaseHelper.read(name, "Buttons", task -> {
+    private void downloadRemoteScreen(String document) {
+        new Thread(() -> mFireBaseHelper.read("Screens", document, task -> {
             if (!task.isSuccessful()) {
                 Log.w(TAG, "Listen failed.");
                 return;
             }
             DocumentSnapshot documentSnapshot = task.getResult();
 
-            if (documentSnapshot != null && !documentSnapshot.exists()) {
-                Log.d(TAG, "No such document");
-                mExperimentType = "Default";
-                mFireBaseHelper.read(name, "Images", task2 -> {
-                    if (!task2.isSuccessful()) {
-                        Log.w(TAG, "Listen failed.");
-                        return;
-                    }
-                    DocumentSnapshot documentSnapshot2 = task2.getResult();
-
-                    if (documentSnapshot2 != null && !documentSnapshot2.exists()) {
-                        Log.d(TAG, "No such document");
-                    }
-                    showGifFragment(name, "Images", "Default");
-                });
+            if (documentSnapshot == null) {
+                Log.w(TAG, "Listen failed.");
                 return;
             }
 
@@ -301,25 +289,26 @@ public class UserGuideActivity extends AppCompatActivity implements View.OnClick
 
                 for(String buttName : mNames) {
                     if(screen_parameters.contains(buttName)){
-                        String buttonCollectionName = (String) documentSnapshot.get(buttName);
-                        mUserGuide.getRemoteButton(buttName).setLinkName(buttonCollectionName);
+                        Map<String, Object> dataMap = (Map<String, Object>) documentSnapshot.get(buttName);
+                        mUserGuide.getRemoteButton(buttName).setCollection((String) dataMap.get((Object) "collection"));
+                        mUserGuide.getRemoteButton(buttName).setDocument((String) dataMap.get((Object) "document"));
+                        mUserGuide.getRemoteButton(buttName).setField((String) dataMap.get((Object) "field"));
                     }
                 }
             }
             if(mUserGuide == null)
                 return;
 
-            if(screen_parameters.contains("version")){
-                String version = (String) Objects.requireNonNull(documentSnapshot).get("version");
-                mUserGuide.setVersion(version);
-            }
             if(screen_parameters.contains("orientation")){
-                assert documentSnapshot != null;
                 String orientation = (String) documentSnapshot.get("orientation");
                 mUserGuide.setOrientation(orientation);
             }
+            if(screen_parameters.contains("version")){
+                long version = (Long) documentSnapshot.get("version");
+                mUserGuide.setVersion(version + "");
+            }
 
-            if (documentSnapshot != null && documentSnapshot.exists()) {
+            if (documentSnapshot.exists()) {
                 runOnUiThread(() -> showUserGuideFragment());
             }
         })).start();

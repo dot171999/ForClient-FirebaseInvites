@@ -53,9 +53,11 @@ public class RemoteButtonScreen implements Parcelable {
             this.mButtons = new ArrayList<>();
             for (String remoteButton: bttns) {
                 String[] parts = remoteButton.split(",");
-                if(parts.length == 3) {
-                    RemoteButton rb = new RemoteButton(parts[0], Integer.getInteger(parts[2]));
-                    rb.setLinkName(parts[1]);
+                if(parts.length == 5) {
+                    RemoteButton rb = new RemoteButton(parts[0], Integer.getInteger(parts[4]));
+                    rb.setCollection(parts[1]);
+                    rb.setDocument(parts[2]);
+                    rb.setField(parts[3]);
                     mButtons.add(rb);
                 }
             }
@@ -119,7 +121,9 @@ public class RemoteButtonScreen implements Parcelable {
 
     public class RemoteButton {
         private String mName;
-        private String mLinkName;
+        private String mCollection;
+        private String mDocument;
+        private String mField;
         private int mId;
         Button mButton;
 
@@ -140,20 +144,37 @@ public class RemoteButtonScreen implements Parcelable {
             mName = name;
         }
 
-        public void setLinkName(String name) {
-            mLinkName = name;
+        public void setCollection(String name) {
+            mCollection = name;
         }
+
+        public void setDocument(String document) {
+            mDocument = document;
+        }
+
+        public String getDocument() {
+            return mDocument;
+        }
+
+        public void setField(String field) {
+            mField = field;
+        }
+
+        public String getField() {
+            return mField;
+        }
+
 
         public String getName() {
             return mName;
         }
 
-        public String getCollectionLinkName() {
-            return mLinkName;
+        public String getCollection() {
+            return mCollection;
         }
 
         public String toString() {
-            return mName + "," + mLinkName + ',' + mId;
+            return mName + "," + mCollection + ','+ mDocument + ',' + mField + ','+ mId;
         }
 
         public Button getButton() {
