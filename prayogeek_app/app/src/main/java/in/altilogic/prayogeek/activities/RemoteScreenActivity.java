@@ -43,10 +43,11 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
     private FragmentManager mFragmentManager;
     private FireBaseHelper mFireBaseHelper;
 
-    private RemoteButtonScreen mRemoteScreen;
+    private List<RemoteButtonScreen> mRemoteScreen;
     private boolean isStartShowingImage;
     private BroadcastReceiver mBroadcastReceiver;
     private static int mStatusBarColor;
+    private int mScreenIndex;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +57,8 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
         mFragmentManager = getSupportFragmentManager();
         mFireBaseHelper = new FireBaseHelper();
         mStatusBarColor = getWindow().getStatusBarColor();
+        mRemoteScreen = new ArrayList<>(2);
+        mScreenIndex = -1;
         initBroadcastReceiver();
         Log.d(TAG, "onCreate()");
     }
@@ -85,9 +88,9 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
     @Override
     public void onBackPressed() {
         saveSharedSetting(getApplicationContext(), CURRENT_SCREEN_SETTINGS_PAGE, 0);
-        if(mRemoteScreen != null && mRemoteScreen.getStatus() == 0) {
+        if(mRemoteScreen != null && mRemoteScreen.size() > 0 && mRemoteScreen.get(0).getStatus() == 0) {
             saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
-            saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mRemoteScreen.getStatus());
+            saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mRemoteScreen.get(mScreenIndex).getStatus());
             finishActivity();
         }
         else {
@@ -156,34 +159,36 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
                 List<String> mNames = (List<String>) documentSnapshot.get("names");
                 if(mNames == null)
                     return;
-                mRemoteScreen = new RemoteButtonScreen(mNames);
+                RemoteButtonScreen screen = new RemoteButtonScreen(mNames);
+                mRemoteScreen.add(screen);
+                mScreenIndex++;
 
                 for(String buttName : mNames) {
                     if(screen_parameters.contains(buttName)){
-                        Map<String, Object> dataMap = (Map<String, Object>) documentSnapshot.get(buttName);
+                        Map<String, Object> dataMap = (Map<String, Object>) documentSnapshot.get(checkSlashSymbols(buttName));
                         if(dataMap != null) {
                             String collection = (String) dataMap.get((Object) "collection");
                             String doct = (String) dataMap.get((Object) "document");
                             String field = (String) dataMap.get((Object) "field");
                             String type = (String) dataMap.get((Object) "type");
-                            mRemoteScreen.getRemoteButton(buttName).setCollection(collection);
-                            mRemoteScreen.getRemoteButton(buttName).setDocument(doct);
-                            mRemoteScreen.getRemoteButton(buttName).setField(field);
-                            mRemoteScreen.getRemoteButton(buttName).setType(type);
+                            screen.getRemoteButton(buttName).setCollection(collection);
+                            screen.getRemoteButton(buttName).setDocument(doct);
+                            screen.getRemoteButton(buttName).setField(field);
+                            screen.getRemoteButton(buttName).setType(type);
                         }
                     }
                 }
             }
-            if(mRemoteScreen == null)
+            if(mRemoteScreen.size() == 0)
                 return;
 
             if(screen_parameters.contains("orientation")){
                 String orientation = (String) documentSnapshot.get("orientation");
-                mRemoteScreen.setOrientation(orientation);
+                mRemoteScreen.get(mScreenIndex).setOrientation(orientation);
             }
             if(screen_parameters.contains("version")){
                 long version = (Long) documentSnapshot.get("version");
-                mRemoteScreen.setVersion(version + "");
+                mRemoteScreen.get(mScreenIndex).setVersion(version + "");
             }
 
             if (documentSnapshot.exists()) {
@@ -192,6 +197,24 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
         })).start();
     }
 
+    String checkSlashSymbols(String name) {
+        String compareSymbol = "";
+        if(name.contains("/"))
+            compareSymbol = "/";
+        else
+            return name;
+
+        String[] parts = name.split(compareSymbol);
+        StringBuilder sb = new StringBuilder();
+        int len = 0;
+        for(String part : parts){
+            sb.append(part);
+            if(len++ < parts.length)
+                sb.append(" ");
+        }
+
+        return sb.toString();
+    }
 
     private void startImageFragment() {
         for (Fragment fragment:getSupportFragmentManager().getFragments()) {
@@ -204,14 +227,15 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
             mImagePath.add(name);
         }
 
-        if(mRemoteScreen == null || mRemoteScreen.getOrientation() == null || mRemoteScreen.getOrientation().equals("landscape")) {
+        if(mRemoteScreen == null || mRemoteScreen.get(mScreenIndex).getOrientation() == null ||
+                mRemoteScreen.get(mScreenIndex).getOrientation().equals("landscape")) {
             setRequestedOrientation( ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         }
         else{
             setRequestedOrientation( ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
 
-        mRemoteScreen.setStatus(mRemoteScreen.getRemoteButton(mExperimentType).getId());
+        mRemoteScreen.get(mScreenIndex).setStatus(mRemoteScreen.get(mScreenIndex).getRemoteButton(mExperimentType).getId());
         ImageFragment mShowGifFragment = ImageFragment.newInstance((ArrayList<String>) mImagePath, mStatusBarColor, 0, false);
         mShowGifFragment.setOnClickListener(this);
         FragmentTransaction transaction = mFragmentManager.beginTransaction();
@@ -234,7 +258,7 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
         if(view == null)
             return;
         int id = view.getId();
-        RemoteButtonScreen.RemoteButton clickedButton = mRemoteScreen.getRemoteButton(id);
+        RemoteButtonScreen.RemoteButton clickedButton = mRemoteScreen.get(mScreenIndex).getRemoteButton(id);
         if(clickedButton != null) {
             Log.d(TAG, "onClick() press button " + clickedButton.getName() + "; Start open screen " + clickedButton.getCollection());
             mExperimentType = clickedButton.getName();
@@ -247,14 +271,14 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
 
     @Override
     public void onClick(View view, int page) {
-        int mScreenStatus = mRemoteScreen != null ? mRemoteScreen.getStatus() : 0;
+        int mScreenStatus = mRemoteScreen != null ? mRemoteScreen.get(mScreenIndex).getStatus() : 0;
         Log.d(TAG, "mScreenStatus = " + mScreenStatus + "; page = " + page);
         switch (view.getId()){
             case R.id.btnHome:
                 saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
                 saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
                 if(mRemoteScreen != null)
-                    mRemoteScreen.setStatus(0);
+                    mRemoteScreen.get(mScreenIndex).setStatus(0);
                 saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
                 showUserGuideFragment();
                 break;
@@ -262,7 +286,7 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
                 saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
                 saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
                 if(mRemoteScreen != null)
-                    mRemoteScreen.setStatus(0);
+                    mRemoteScreen.get(mScreenIndex).setStatus(0);
                 saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
                 saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
                 finishActivity();
@@ -288,8 +312,8 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
 
 
     private void showUserGuideFragment() {
-        mRemoteScreen.setStatus(0);
-        ButtonsFragment buttonsFragment = ButtonsFragment.newInstance(mRemoteScreen);
+        mRemoteScreen.get(mScreenIndex).setStatus(0);
+        ButtonsFragment buttonsFragment = ButtonsFragment.newInstance(mRemoteScreen.get(mScreenIndex));
         buttonsFragment.setOnClickListener(this);
         mFragmentManager.beginTransaction().replace(R.id.fragmentContent, buttonsFragment)
                 .commit();
