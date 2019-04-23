@@ -141,7 +141,9 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
     }
 
     void downloadRemoteScreen(String document) {
-        new Thread(() -> mFireBaseHelper.read("Screens", document, task -> {
+        Log.d(TAG, "Download remote screen " + document);
+        new Thread(() ->
+                mFireBaseHelper.read("Screens", document, task -> {
             if (!task.isSuccessful()) {
                 Log.w(TAG, "Listen failed.");
                 return;
@@ -164,7 +166,7 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
                 mScreenIndex++;
 
                 for(String buttName : mNames) {
-                    if(screen_parameters.contains(buttName)){
+                    if(screen_parameters.contains(checkSlashSymbols(buttName))){
                         Map<String, Object> dataMap = (Map<String, Object>) documentSnapshot.get(checkSlashSymbols(buttName));
                         if(dataMap != null) {
                             String collection = (String) dataMap.get((Object) "collection");
@@ -209,7 +211,7 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
         int len = 0;
         for(String part : parts){
             sb.append(part);
-            if(len++ < parts.length)
+            if(len++ < parts.length-1)
                 sb.append(" ");
         }
 
@@ -220,10 +222,10 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
         for (Fragment fragment:getSupportFragmentManager().getFragments()) {
             getSupportFragmentManager().beginTransaction().remove(fragment).commit();
         }
-
-        int number = getFilesNumber(mExperimentType);
+        RemoteButtonScreen.RemoteButton remoteButton = mRemoteScreen.get(mScreenIndex).getRemoteButton(mExperimentType);
+        int number = getFilesNumber(remoteButton.getField());
         for(int i=0; i<number; i++) {
-            String name = getFilePath(mExperimentType+(i+1));
+            String name = getFilePath(remoteButton.getField()+(i+1));
             mImagePath.add(name);
         }
 
@@ -235,7 +237,7 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
             setRequestedOrientation( ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
 
-        mRemoteScreen.get(mScreenIndex).setStatus(mRemoteScreen.get(mScreenIndex).getRemoteButton(mExperimentType).getId());
+        mRemoteScreen.get(mScreenIndex).setStatus(remoteButton.getId());
         ImageFragment mShowGifFragment = ImageFragment.newInstance((ArrayList<String>) mImagePath, mStatusBarColor, 0, false);
         mShowGifFragment.setOnClickListener(this);
         FragmentTransaction transaction = mFragmentManager.beginTransaction();
