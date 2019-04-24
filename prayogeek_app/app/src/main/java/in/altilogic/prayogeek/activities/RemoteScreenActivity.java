@@ -1,5 +1,6 @@
 package in.altilogic.prayogeek.activities;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -30,6 +31,7 @@ import in.altilogic.prayogeek.fragments.ImageFragment;
 import in.altilogic.prayogeek.service.ImageDownloadService;
 import in.altilogic.prayogeek.utils.Utils;
 
+import static in.altilogic.prayogeek.utils.Utils.readSharedSetting;
 import static in.altilogic.prayogeek.utils.Utils.saveSharedSetting;
 
 public class RemoteScreenActivity extends AppCompatActivity implements View.OnClickListener, ImageFragment.OnClickListener {
@@ -39,6 +41,7 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
     public final static String CURRENT_SCREEN_SETTINGS_PAGE = "REMOTE-SETTINGS-CURRENT-PAGE";
     public final static String CURRENT_SCREEN_SETTINGS_RESUME = "REMOTE-SETTINGS-CURRENT-SCREEN-RESUME";
     public final static String CURRENT_SCREEN_SETTINGS_PAGE_RESUME = "REMOTE-SETTINGS-CURRENT-PAGE-RESUME";
+    private static final String CURRENT_SCREEN_SETTINGS_FIELD = "REMOTE-SETTINGS-CURRENT-SCREEN-FIELD";
 
     private FragmentManager mFragmentManager;
     private FireBaseHelper mFireBaseHelper;
@@ -88,13 +91,15 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
     @Override
     public void onBackPressed() {
         saveSharedSetting(getApplicationContext(), CURRENT_SCREEN_SETTINGS_PAGE, 0);
-        if(mRemoteScreen != null && mRemoteScreen.size() > 0 && mRemoteScreen.get(0).getStatus() == 0) {
+        if(mRemoteScreen != null && mRemoteScreen.size() > 0 && mScreenIndex <= 0) {
+            mScreenIndex=0;
             saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
             saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mRemoteScreen.get(mScreenIndex).getStatus());
             finishActivity();
         }
         else {
-            showUserGuideFragment();
+            mScreenIndex--;
+            showButtonsFragment();
         }
     }
 
@@ -140,6 +145,28 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
         };
     }
 
+    private int getScreenIndex(List<String> buttonNames) {
+        if(mRemoteScreen == null || mRemoteScreen.size() == 0 ||
+                buttonNames == null || buttonNames.size() == 0)
+            return -1;
+
+        int compareCount = 0;
+        int ind = 1;
+        for( int i=0;i<mRemoteScreen.size() ; i++ ) {
+            for(int j=0; j<buttonNames.size(); j++){
+                if(mRemoteScreen.get(i).getRemoteButton(buttonNames.get(j)) != null) {
+                    compareCount++;
+                    ind = 1;
+                }
+            }
+        }
+
+        if(mRemoteScreen.size() > ind && compareCount == mRemoteScreen.get(ind).buttonsSize()) {
+            return ind;
+        }
+        return -1;
+    }
+
     void downloadRemoteScreen(String document) {
         Log.d(TAG, "Download remote screen " + document);
         new Thread(() ->
@@ -157,65 +184,47 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
 
             List<String> screen_parameters = mFireBaseHelper.getArray(documentSnapshot);
 
+            RemoteButtonScreen screen = null;
             if(screen_parameters.contains("names")){
                 List<String> mNames = (List<String>) documentSnapshot.get("names");
                 if(mNames == null)
                     return;
-                RemoteButtonScreen screen = new RemoteButtonScreen(mNames);
-                mRemoteScreen.add(screen);
-                mScreenIndex++;
 
-                for(String buttName : mNames) {
-                    if(screen_parameters.contains(checkSlashSymbols(buttName))){
-                        Map<String, Object> dataMap = (Map<String, Object>) documentSnapshot.get(checkSlashSymbols(buttName));
-                        if(dataMap != null) {
-                            String collection = (String) dataMap.get((Object) "collection");
-                            String doct = (String) dataMap.get((Object) "document");
-                            String field = (String) dataMap.get((Object) "field");
-                            String type = (String) dataMap.get((Object) "type");
-                            screen.getRemoteButton(buttName).setCollection(collection);
-                            screen.getRemoteButton(buttName).setDocument(doct);
-                            screen.getRemoteButton(buttName).setField(field);
-                            screen.getRemoteButton(buttName).setType(type);
+                int screenIndex = getScreenIndex(mNames);
+
+                if(screenIndex < 0) {
+                    screen = new RemoteButtonScreen(mNames);
+                    mRemoteScreen.add(screen);
+                    mScreenIndex++;
+
+                    for(String buttName : mNames) {
+                        if(screen_parameters.contains(Utils.checkSlashSymbols(buttName))){
+                            Map<String, Object> dataMap = (Map<String, Object>) documentSnapshot.get(Utils.checkSlashSymbols(buttName));
+                            screen.getRemoteButton(buttName).setParameters(dataMap);
                         }
                     }
                 }
+                else {
+                    mScreenIndex = screenIndex;
+                    screen = mRemoteScreen.get(screenIndex);
+                }
             }
-            if(mRemoteScreen.size() == 0)
+            if(mRemoteScreen.size() == 0 || screen == null)
                 return;
 
             if(screen_parameters.contains("orientation")){
                 String orientation = (String) documentSnapshot.get("orientation");
-                mRemoteScreen.get(mScreenIndex).setOrientation(orientation);
+                screen.setOrientation(orientation);
             }
             if(screen_parameters.contains("version")){
                 long version = (Long) documentSnapshot.get("version");
-                mRemoteScreen.get(mScreenIndex).setVersion(version + "");
+                screen.setVersion(version + "");
             }
 
             if (documentSnapshot.exists()) {
-                runOnUiThread(() -> showUserGuideFragment());
+                runOnUiThread(() -> showButtonsFragment());
             }
         })).start();
-    }
-
-    String checkSlashSymbols(String name) {
-        String compareSymbol = "";
-        if(name.contains("/"))
-            compareSymbol = "/";
-        else
-            return name;
-
-        String[] parts = name.split(compareSymbol);
-        StringBuilder sb = new StringBuilder();
-        int len = 0;
-        for(String part : parts){
-            sb.append(part);
-            if(len++ < parts.length-1)
-                sb.append(" ");
-        }
-
-        return sb.toString();
     }
 
     private void startImageFragment() {
@@ -282,7 +291,7 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
                 if(mRemoteScreen != null)
                     mRemoteScreen.get(mScreenIndex).setStatus(0);
                 saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
-                showUserGuideFragment();
+                showButtonsFragment();
                 break;
             case R.id.btnDone:
                 saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
@@ -313,7 +322,9 @@ public class RemoteScreenActivity extends AppCompatActivity implements View.OnCl
     }
 
 
-    private void showUserGuideFragment() {
+    @SuppressLint("Assert")
+    private void showButtonsFragment() {
+        assert (mScreenIndex > mRemoteScreen.size());
         mRemoteScreen.get(mScreenIndex).setStatus(0);
         ButtonsFragment buttonsFragment = ButtonsFragment.newInstance(mRemoteScreen.get(mScreenIndex));
         buttonsFragment.setOnClickListener(this);

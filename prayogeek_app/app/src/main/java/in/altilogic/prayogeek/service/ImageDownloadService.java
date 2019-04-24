@@ -28,6 +28,7 @@ public class ImageDownloadService extends IntentService {
     public static final int HW_SERVICE_MESSAGE_TYPE_IMAGE_START_DOWNLOAD = 3;
     public static final int HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET = 4;
     public static final int HW_SERVICE_MESSAGE_TYPE_IMAGE_DOWNLOAD_FAIL = 5;
+    public static final int HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_SCREEN = 6;
 
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_COLLECTION = "MESSAGE_TYPE_COLLECTION";
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT = "MESSAGE_TYPE_EXPERIMENT";
@@ -82,6 +83,9 @@ public class ImageDownloadService extends IntentService {
                 mDownloadImagesThread = new Thread(() -> startDownloadImage(collection, experimentPath));
 
                 mDownloadImagesThread.start();
+
+                break;
+            case HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_SCREEN:
 
                 break;
             default:

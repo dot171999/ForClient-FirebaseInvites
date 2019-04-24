@@ -6,6 +6,7 @@ import android.widget.Button;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class RemoteButtonScreen implements Parcelable {
     private String mScreenVersion = null;
@@ -195,5 +196,19 @@ public class RemoteButtonScreen implements Parcelable {
             mButton.setId(mId);
             mButton.setText(mName);
         }
+
+        public void setParameters(Map<String, Object> dataMap){
+            if(dataMap != null) {
+                String collection = (String) dataMap.get((Object) "collection");
+                String doct = (String) dataMap.get((Object) "document");
+                String field = (String) dataMap.get((Object) "field");
+                String type = (String) dataMap.get((Object) "type");
+                setCollection(collection);
+                setDocument(doct);
+                setField(field);
+                setType(type);
+            }
+        }
+
     }
 }

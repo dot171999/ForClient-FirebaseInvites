@@ -123,5 +123,25 @@ public class Utils {
         }
         return hex.toString();
     }
+
+    public static String checkSlashSymbols(String name) {
+        String compareSymbol = "";
+        if(name.contains("/"))
+            compareSymbol = "/";
+        else
+            return name;
+
+        String[] parts = name.split(compareSymbol);
+        StringBuilder sb = new StringBuilder();
+        int len = 0;
+        for(String part : parts){
+            sb.append(part);
+            if(len++ < parts.length-1)
+                sb.append(" ");
+        }
+
+        return sb.toString();
+    }
+
 }
 
