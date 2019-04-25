@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 public class RemoteButtonScreen implements Parcelable {
+    private String mScreenName = null;
     private String mScreenVersion = null;
     private String mScreenOrientation = null;
     private int mScreenStatus = 0;
@@ -67,13 +68,18 @@ public class RemoteButtonScreen implements Parcelable {
 
     private RemoteButtonScreen(Parcelable parcelable){}
 
-    public RemoteButtonScreen(List<String> buttons) {
+    public RemoteButtonScreen(String screenName, List<String> buttons) {
+        mScreenName = screenName;
         if(buttons != null && buttons.size() > 0){
-            mButtons = new ArrayList<>();
+            mButtons = new ArrayList<>(buttons.size());
             for(int i=0; i<buttons.size(); i++){
                 mButtons.add(new RemoteButton(buttons.get(i), i+1) );
             }
         }
+    }
+
+    public String getScreenName() {
+        return mScreenName;
     }
 
     public void setVersion(String version){
@@ -209,6 +215,5 @@ public class RemoteButtonScreen implements Parcelable {
                 setType(type);
             }
         }
-
     }
 }
