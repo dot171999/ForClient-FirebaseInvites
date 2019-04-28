@@ -50,8 +50,8 @@ public class ButtonsFragment extends Fragment implements View.OnClickListener  {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         if( mScreen != null) {
-            getActivity().setRequestedOrientation(mScreen.getOrientation().equals("landscape") ?
-                    ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+//            getActivity().setRequestedOrientation(mScreen.getOrientation().equals("landscape") ?
+//                    ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
             mLayout = (LinearLayout) view .findViewById(R.id.llButtons);
 
             for(int i=0; i<mScreen.buttonsSize(); i++) {
