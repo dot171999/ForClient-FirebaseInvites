@@ -1,9 +1,12 @@
 package in.altilogic.prayogeek.activities;
 
+import android.os.Bundle;
+
 public class TutorialRemoteActivity extends RemoteScreenActivity {
+
     @Override
-    public void onStart() {
-        super.onStart();
-        downloadRemoteScreen("Tutorials");
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        findRemoteScreen("Tutorials");
     }
 }

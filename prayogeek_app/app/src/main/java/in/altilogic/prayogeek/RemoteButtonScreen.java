@@ -2,11 +2,9 @@ package in.altilogic.prayogeek;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.widget.Button;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class RemoteButtonScreen implements Parcelable {
     private String mScreenName = null;
@@ -14,7 +12,6 @@ public class RemoteButtonScreen implements Parcelable {
     private String mScreenOrientation = null;
     private int mScreenStatus = 0;
     private List<RemoteButton> mButtons;
-
 
     public static final Creator<RemoteButtonScreen> CREATOR = new Creator<RemoteButtonScreen>() {
         @Override
@@ -53,15 +50,9 @@ public class RemoteButtonScreen implements Parcelable {
         parcel.readStringList(bttns);
         if(bttns.size() > 0) {
             this.mButtons = new ArrayList<>();
-            for (String remoteButton: bttns) {
-                String[] parts = remoteButton.split(",");
-                if(parts.length == 5) {
-                    RemoteButton rb = new RemoteButton(parts[0], Integer.getInteger(parts[4]));
-                    rb.setCollection(parts[1]);
-                    rb.setDocument(parts[2]);
-                    rb.setField(parts[3]);
-                    mButtons.add(rb);
-                }
+            for (String remoteButtonParams: bttns) {
+                RemoteButton rb = new RemoteButton(remoteButtonParams);
+                mButtons.add(rb);
             }
         }
     }
@@ -126,94 +117,63 @@ public class RemoteButtonScreen implements Parcelable {
         return mButtons.size();
     };
 
-    public class RemoteButton {
-        private String mName;
-        private String mCollection;
-        private String mDocument;
-        private String mField;
-        private int mId;
-        private Button mButton;
-        private String mType;
+    public RemoteButtonScreen(String params){
+        String[] parts = params.split(",");
+        if(parts.length >= 4){
+            mScreenName = parts[0];
+            mScreenVersion = parts[1];
+            mScreenOrientation = parts[2];
+            try{
+                int status = Integer.parseInt(parts[3]);
+                mScreenStatus = status;
+            }catch (Exception e) {
+                e.printStackTrace();
+                mScreenStatus = 0;
+            }
 
-        RemoteButton(String name, int id){
-            mName = name;
-            mId = id;
-        }
+            if(mButtons != null)
+                mButtons.clear();
 
-        public void setId(int id){
-            mId = id;
-        }
-
-        public int getId(){
-            return mId;
-        }
-
-        public void setType(String type){
-            mType = type;
-        }
-
-        public String getType(){
-            return mType;
-        }
-
-        public void setName(String name) {
-            mName = name;
-        }
-
-        public void setCollection(String name) {
-            mCollection = name;
-        }
-
-        public void setDocument(String document) {
-            mDocument = document;
-        }
-
-        public String getDocument() {
-            return mDocument;
-        }
-
-        public void setField(String field) {
-            mField = field;
-        }
-
-        public String getField() {
-            return mField;
-        }
-
-
-        public String getName() {
-            return mName;
-        }
-
-        public String getCollection() {
-            return mCollection;
-        }
-
-        public String toString() {
-            return mName + "," + mCollection + ','+ mDocument + ',' + mField + ','+ mId;
-        }
-
-        public Button getButton() {
-            return mButton;
-        }
-
-        public void setButton(Button button) {
-            mButton = button;
-            mButton.setId(mId);
-            mButton.setText(mName);
-        }
-
-        public void setParameters(Map<String, Object> dataMap){
-            if(dataMap != null) {
-                String collection = (String) dataMap.get((Object) "collection");
-                String doct = (String) dataMap.get((Object) "document");
-                String field = (String) dataMap.get((Object) "field");
-                String type = (String) dataMap.get((Object) "type");
-                setCollection(collection);
-                setDocument(doct);
-                setField(field);
-                setType(type);
+            mButtons = new ArrayList<>();
+            for(int i=4; i<parts.length; i+=6){
+                RemoteButton rb = new RemoteButton(parts[i], i-3);
+                if(parts.length > i+5){
+                    rb.setCollection(parts[i+1]);
+                    rb.setDocument(parts[i+2]);
+                    rb.setField(parts[i+3]);
+                    int id = 0;
+                    try{
+                        id = Integer.parseInt(parts[i+4]);
+                    }
+                    catch (Exception e){
+                        e.printStackTrace();
+                    }
+                    rb.setId(id);
+                    rb.setType(parts[i+5]);
+                }
+                mButtons.add(rb);
             }
         }
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(mScreenName).append(",")
+                .append(mScreenVersion).append(",")
+                .append(mScreenOrientation).append(",")
+                .append(mScreenStatus).append(",");
+
+        if(mButtons != null) {
+            for (int i=0;i<mButtons.size()-1; i++ ){
+                sb.append( mButtons.get(i).toString());
+                sb.append(",");
+            }
+            if(mButtons.size() > 0) {
+                int i = mButtons.size()-1;
+                sb.append(mButtons.get(i).toString());
+            }
+        }
+
+        return sb.toString();
     }
 }
