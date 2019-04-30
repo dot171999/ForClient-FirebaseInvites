@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.v4.graphics.drawable.DrawableCompat;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 
@@ -20,11 +21,13 @@ import java.util.Objects;
 import java.util.TimeZone;
 
 import in.altilogic.prayogeek.R;
+import in.altilogic.prayogeek.RemoteButtonScreen;
 
 import static android.content.Context.INPUT_METHOD_SERVICE;
 
 public class Utils {
     private static final String PREFERENCES_FILE = "altilogic_prayogeek_settings";
+    private static final String REMOTE_SCREEN_PREFIX = "REMOTE_SCREEN_";
 
 
     public static int getToolbarHeight(Context context) {
@@ -143,5 +146,19 @@ public class Utils {
         return sb.toString();
     }
 
+    public static void saveScreen(Context context, String key, RemoteButtonScreen screen) {
+        if(screen == null)
+            return;
+        saveSharedSetting(context, REMOTE_SCREEN_PREFIX + key, screen.toString());
+    }
+
+    public static RemoteButtonScreen loadScreen(Context context, String key) {
+        if(key == null)
+            return null;
+        String params = readSharedSetting(context, REMOTE_SCREEN_PREFIX + key, null);
+        if(params == null)
+            return  null;
+        return new RemoteButtonScreen(params);
+    }
 }
 

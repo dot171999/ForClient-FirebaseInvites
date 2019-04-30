@@ -15,8 +15,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import in.altilogic.prayogeek.FireBaseHelper;
+import in.altilogic.prayogeek.RemoteButtonScreen;
 import in.altilogic.prayogeek.utils.Utils;
 
 public class ImageDownloadService extends IntentService {
@@ -31,8 +33,10 @@ public class ImageDownloadService extends IntentService {
     public static final int HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_SCREEN = 6;
 
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_COLLECTION = "MESSAGE_TYPE_COLLECTION";
+    public static final String HW_SERVICE_MESSAGE_DOWNLOAD_DOCUMENT = "MESSAGE_TYPE_DOCUMENT";
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT = "MESSAGE_TYPE_EXPERIMENT";
     public static final String HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE = "MESSAGE_TYPE_PATH_FIRESTORE";
+    public static final String HW_SERVICE_MESSAGE_DOWNLOAD_SCREEN = "MESSAGE_TYPE_REMOTE_SCREEN";
 
     private static final int MAX_DOWNLOADING_IMG_FILE_SIZE = (1024*1024); // 1MB
 
@@ -46,6 +50,7 @@ public class ImageDownloadService extends IntentService {
         super("ImageDownloadService");
     }
     private Thread mDownloadImagesThread;
+    private Thread mDownloadScreensThread;
     private String mExperimentType;
     private boolean mIsLocFilesNotFound;
 
@@ -77,8 +82,14 @@ public class ImageDownloadService extends IntentService {
                     notifyActivityAboutStartDownload();
 
 
-                if(mDownloadImagesThread != null)
+                if(mDownloadImagesThread != null){
+                    try {
+                        mDownloadImagesThread.join();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     mDownloadImagesThread = null;
+                }
 
                 mDownloadImagesThread = new Thread(() -> startDownloadImage(collection, experimentPath));
 
@@ -86,7 +97,21 @@ public class ImageDownloadService extends IntentService {
 
                 break;
             case HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_SCREEN:
+                final String document = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_DOCUMENT);
 
+                Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_SCREEN: " + document);
+
+                if( mDownloadScreensThread != null) {
+                    try {
+                        mDownloadScreensThread.join();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    mDownloadScreensThread = null;
+                }
+                mDownloadScreensThread = new Thread(() -> startDownloadScreen(document));
+
+                mDownloadScreensThread.start();
                 break;
             default:
                 break;
@@ -94,7 +119,7 @@ public class ImageDownloadService extends IntentService {
     }
 
     private void startDownloadImage(final String collection, final String experiment_folder) {
-        Log.d(TAG, "Start download "+ experiment_folder +"/"+ mExperimentType);
+        Log.d(TAG, "Start download Images "+ experiment_folder +"/"+ mExperimentType);
         if(mFireBaseHelper == null)
             mFireBaseHelper = new FireBaseHelper();
 
@@ -147,6 +172,106 @@ public class ImageDownloadService extends IntentService {
                 notifyActivityAboutDownloadFail();
             }
         }, e -> notifyActivityAboutDownloadFail());
+    }
+
+    private void startDownloadScreen(final String document) {
+        Log.d(TAG, "Start download screen"+ document);
+        if(mFireBaseHelper == null)
+            mFireBaseHelper = new FireBaseHelper();
+
+        mFireBaseHelper.read("Screens", document, task -> {
+            if (!task.isSuccessful()) {
+                Log.w(TAG, "Listen failed.");
+                notifyActivityAboutDownloadFail();
+                return;
+            }
+            DocumentSnapshot documentSnapshot = task.getResult();
+
+            if (documentSnapshot == null) {
+                Log.w(TAG, "Listen failed.");
+                notifyActivityAboutDownloadFail();
+                return;
+            }
+
+            List<String> screen_parameters = mFireBaseHelper.getArray(documentSnapshot);
+
+            String screenType=null;
+            if(screen_parameters.contains("type")) {
+                screenType = (String) documentSnapshot.get("type");
+            }
+
+            String orientation = "landscape";
+            if(screen_parameters.contains("orientation")){
+                orientation = (String) documentSnapshot.get("orientation");
+            }
+
+            long version = 1;
+            if(screen_parameters.contains("version")){
+                version = (Long) documentSnapshot.get("version");
+            }
+
+            if(screenType == null) {
+                notifyActivityAboutDownloadFail();
+                return;
+            }
+
+            if(screenType.equals("buttons")) {
+                RemoteButtonScreen screen = null;
+                if(screen_parameters.contains("names")){
+                    List<String> mNames = (List<String>) documentSnapshot.get("names");
+                    if(mNames == null){
+                        notifyActivityAboutDownloadFail();
+                        return;
+                    }
+
+                    screen = new RemoteButtonScreen(document, mNames);
+
+                    for(String buttName : mNames) {
+                        if(screen_parameters.contains(Utils.checkSlashSymbols(buttName))){
+                            Map<String, Object> dataMap = (Map<String, Object>) documentSnapshot.get(Utils.checkSlashSymbols(buttName));
+                            screen.getRemoteButton(buttName).setParameters(dataMap);
+                        }
+                    }
+                }
+                if(screen == null) {
+                    notifyActivityAboutDownloadFail();
+                    return;
+                }
+
+                screen.setOrientation(orientation);
+                screen.setVersion(version + "");
+
+                RemoteButtonScreen savedScreen = Utils.loadScreen(this, document);
+                if(savedScreen == null || !savedScreen.getVersion().equals(screen.getVersion())) {
+                    Utils.saveScreen(this, document, screen);
+                }
+
+                if (documentSnapshot.exists()) {
+                    notifyActivityAboutDownloadScreen(screen);
+                }
+                else {
+                    notifyActivityAboutDownloadFail();
+                }
+            }
+            else if(screenType.equals("picture")){
+                if(screen_parameters.contains("collection")){
+                    String collection = (String) documentSnapshot.get("collection");
+                    if(collection != null && screen_parameters.contains("document")){
+                        String doc = (String) documentSnapshot.get("document");
+                        if(doc != null && screen_parameters.contains("field")){
+                            String fld = (String) documentSnapshot.get("field");
+
+                            notifyActivityAboutNewFiles();
+//                            mScreenDocument = doc;
+//                            mExperimentType = fld;
+//                            setScreenOrientation(orientation);
+//
+//                            showGifFragment(collection, doc, fld);
+                        }
+                    }
+                }
+            }
+        }, task2 -> notifyActivityAboutDownloadFail());
     }
 
     private void deleteOldImages() {
@@ -295,6 +420,13 @@ public class ImageDownloadService extends IntentService {
     private void notifyActivityAboutDownloadFail() {
         Intent intentAnswer = new Intent(HW_SERVICE_BROADCAST_VALUE);
         intentAnswer.putExtra(HW_SERVICE_MESSAGE_TYPE_ID, HW_SERVICE_MESSAGE_TYPE_IMAGE_DOWNLOAD_FAIL);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intentAnswer);
+    }
+
+    private void notifyActivityAboutDownloadScreen(RemoteButtonScreen screen) {
+        Intent intentAnswer = new Intent(HW_SERVICE_BROADCAST_VALUE);
+        intentAnswer.putExtra(HW_SERVICE_MESSAGE_TYPE_ID, HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_SCREEN);
+        intentAnswer.putExtra(HW_SERVICE_MESSAGE_DOWNLOAD_SCREEN, screen);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intentAnswer);
     }
 }
