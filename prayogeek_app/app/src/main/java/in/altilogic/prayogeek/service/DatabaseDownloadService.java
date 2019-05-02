@@ -21,7 +21,7 @@ import in.altilogic.prayogeek.FireBaseHelper;
 import in.altilogic.prayogeek.RemoteButtonScreen;
 import in.altilogic.prayogeek.utils.Utils;
 
-public class ImageDownloadService extends IntentService {
+public class DatabaseDownloadService extends IntentService {
     private final String TAG = "YOUSCOPE-DB-SERVICE";
     public static final String HW_SERVICE_BROADCAST_VALUE = "prayogeek.altilogic.in";
     public static final String HW_SERVICE_MESSAGE_TYPE_ID = "MESSAGE_TYPE_ID";
@@ -46,12 +46,12 @@ public class ImageDownloadService extends IntentService {
     private int mFilesCounter = 0;
     private boolean mIsOnline;
     private boolean mStartDownloadNotify;
-    public ImageDownloadService() {
-        super("ImageDownloadService");
+    public DatabaseDownloadService() {
+        super("DatabaseDownloadService");
     }
     private Thread mDownloadImagesThread;
     private Thread mDownloadScreensThread;
-    private String mExperimentType;
+//    private String mExperimentType;
     private boolean mIsLocFilesNotFound;
 
     private File createFile(String fileName) throws IOException {
@@ -65,220 +65,217 @@ public class ImageDownloadService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         int message_type = intent.getIntExtra(HW_SERVICE_MESSAGE_TYPE_ID, -1);
         switch (message_type) {
-            case HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES:
-
-                final String collection = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_COLLECTION);
-                final String experimentPath = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT);
-                String fireStorePath = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE);
-                Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES: " + experimentPath + "/"+fireStorePath);
-
-                mExperimentType = fireStorePath;
-                mFilesNumber = 0;
-                mFilesCounter = 0;
-                mIsOnline = Utils.isOnline(this);
-                mStartDownloadNotify = false;
-                mIsLocFilesNotFound = isLocalFilesNotFound();
-                if(getLocaleImagesVersion() <= 0 || mIsLocFilesNotFound)
-                    notifyActivityAboutStartDownload();
-
-
-                if(mDownloadImagesThread != null){
-                    try {
-                        mDownloadImagesThread.join();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    mDownloadImagesThread = null;
-                }
-
-                mDownloadImagesThread = new Thread(() -> startDownloadImage(collection, experimentPath));
-
-                mDownloadImagesThread.start();
-
+            case HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES: {
+                String collection = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_COLLECTION);
+                String document = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT);
+                String field = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE);
+                Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES: " + document + "/" + field);
+                startDownloadImage(collection, document, field);
                 break;
-            case HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_SCREEN:
+            }
+            case HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_SCREEN: {
                 final String document = intent.getStringExtra(HW_SERVICE_MESSAGE_DOWNLOAD_DOCUMENT);
-
                 Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_SCREEN: " + document);
-
-                if( mDownloadScreensThread != null) {
-                    try {
-                        mDownloadScreensThread.join();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    mDownloadScreensThread = null;
-                }
-                mDownloadScreensThread = new Thread(() -> startDownloadScreen(document));
-
-                mDownloadScreensThread.start();
+                startDownloadScreen(document);
                 break;
+            }
             default:
                 break;
         }
     }
 
-    private void startDownloadImage(final String collection, final String experiment_folder) {
-        Log.d(TAG, "Start download Images "+ experiment_folder +"/"+ mExperimentType);
-        if(mFireBaseHelper == null)
-            mFireBaseHelper = new FireBaseHelper();
+    private void startDownloadImage(final String collection, final String document, final String field) {
+        Log.d(TAG, "Start download Images "+ document +"/"+ field);
 
-        mFireBaseHelper.read(collection, experiment_folder, task -> {
-            if (!task.isSuccessful()) {
-                Log.w(TAG, "Listen failed." + task.getException());
+        mFilesNumber = 0;
+        mFilesCounter = 0;
+        mIsOnline = Utils.isOnline(this);
+        mStartDownloadNotify = false;
+        mIsLocFilesNotFound = isLocalFilesNotFound(field);
+        if(getLocaleImagesVersion(field) <= 0 || mIsLocFilesNotFound)
+            notifyActivityAboutStartDownload();
 
-                if (!mIsOnline)
-                    notifyActivityAboutNoInternetConnection();
-                return;
+
+        if(mDownloadImagesThread != null){
+            try {
+                mDownloadImagesThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-            DocumentSnapshot documentSnapshot = task.getResult();
-            if (documentSnapshot != null && !documentSnapshot.exists()) {
-                Log.d(TAG, "No such document");
-                return;
-            }
-            List<String> basic_electronics = mFireBaseHelper.getArray(documentSnapshot);
+            mDownloadImagesThread = null;
+        }
 
-            if (basic_electronics.contains(mExperimentType)) {
-                List<String> imagesUrls = mFireBaseHelper.getArray(documentSnapshot, mExperimentType, "imageURL");
-                if (imagesUrls == null)
+        mDownloadImagesThread = new Thread(() -> {
+            if(mFireBaseHelper == null)
+                mFireBaseHelper = new FireBaseHelper();
+
+            mFireBaseHelper.read(collection, document, task -> {
+                if (!task.isSuccessful()) {
+                    Log.w(TAG, "Listen failed." + task.getException());
+
+                    if (!mIsOnline)
+                        notifyActivityAboutNoInternetConnection();
                     return;
-
-                int firestore_images_version = mFireBaseHelper.getLong(documentSnapshot, mExperimentType, "version");
-
-                if (firestore_images_version <= 0 && !mIsOnline) {
-                    notifyActivityAboutNoInternetConnection();
+                }
+                DocumentSnapshot documentSnapshot = task.getResult();
+                if (documentSnapshot != null && !documentSnapshot.exists()) {
+                    Log.d(TAG, "No such document");
                     return;
                 }
-                boolean isNewVersion = false;
-                if (getLocaleImagesVersion() != firestore_images_version) {
-                    isNewVersion = true;
-                    deleteOldImages();
-                }
+                List<String> basic_electronics = mFireBaseHelper.getArray(documentSnapshot);
 
-                if (isNewVersion || mIsLocFilesNotFound) {
-                    int count = 1;
-                    notifyActivityAboutStartDownload();
-                    mFilesNumber = imagesUrls.size();
-                    saveImagesVersion(mExperimentType, firestore_images_version);
-                    saveFilesNumber(mExperimentType, imagesUrls.size());
-                    for (String path : imagesUrls) {
-                        downloadUri(path, mExperimentType, count++);
-                    }
-                } else {
-                    notifyActivityAboutNewFiles();
-                }
-            }
-            else {
-                notifyActivityAboutDownloadFail();
-            }
-        }, e -> notifyActivityAboutDownloadFail());
-    }
+                if (basic_electronics.contains(field)) {
+                    List<String> imagesUrls = mFireBaseHelper.getArray(documentSnapshot, field, "imageURL");
+                    if (imagesUrls == null)
+                        return;
 
-    private void startDownloadScreen(final String document) {
-        Log.d(TAG, "Start download screen"+ document);
-        if(mFireBaseHelper == null)
-            mFireBaseHelper = new FireBaseHelper();
+                    int firestore_images_version = mFireBaseHelper.getLong(documentSnapshot, field, "version");
 
-        mFireBaseHelper.read("Screens", document, task -> {
-            if (!task.isSuccessful()) {
-                Log.w(TAG, "Listen failed.");
-                notifyActivityAboutDownloadFail();
-                return;
-            }
-            DocumentSnapshot documentSnapshot = task.getResult();
-
-            if (documentSnapshot == null) {
-                Log.w(TAG, "Listen failed.");
-                notifyActivityAboutDownloadFail();
-                return;
-            }
-
-            List<String> screen_parameters = mFireBaseHelper.getArray(documentSnapshot);
-
-            String screenType=null;
-            if(screen_parameters.contains("type")) {
-                screenType = (String) documentSnapshot.get("type");
-            }
-
-            String orientation = "landscape";
-            if(screen_parameters.contains("orientation")){
-                orientation = (String) documentSnapshot.get("orientation");
-            }
-
-            long version = 1;
-            if(screen_parameters.contains("version")){
-                version = (Long) documentSnapshot.get("version");
-            }
-
-            if(screenType == null) {
-                notifyActivityAboutDownloadFail();
-                return;
-            }
-
-            if(screenType.equals("buttons")) {
-                RemoteButtonScreen screen = null;
-                if(screen_parameters.contains("names")){
-                    List<String> mNames = (List<String>) documentSnapshot.get("names");
-                    if(mNames == null){
-                        notifyActivityAboutDownloadFail();
+                    if (firestore_images_version <= 0 && !mIsOnline) {
+                        notifyActivityAboutNoInternetConnection();
                         return;
                     }
-
-                    screen = new RemoteButtonScreen(document, mNames);
-
-                    for(String buttName : mNames) {
-                        if(screen_parameters.contains(Utils.checkSlashSymbols(buttName))){
-                            Map<String, Object> dataMap = (Map<String, Object>) documentSnapshot.get(Utils.checkSlashSymbols(buttName));
-                            screen.getRemoteButton(buttName).setParameters(dataMap);
-                        }
+                    boolean isNewVersion = false;
+                    if (getLocaleImagesVersion(field) != firestore_images_version) {
+                        isNewVersion = true;
+                        deleteOldImages(field);
                     }
-                }
-                if(screen == null) {
-                    notifyActivityAboutDownloadFail();
-                    return;
-                }
 
-                screen.setOrientation(orientation);
-                screen.setVersion(version + "");
-
-                RemoteButtonScreen savedScreen = Utils.loadScreen(this, document);
-                if(savedScreen == null || !savedScreen.getVersion().equals(screen.getVersion())) {
-                    Utils.saveScreen(this, document, screen);
-                }
-
-                if (documentSnapshot.exists()) {
-                    notifyActivityAboutDownloadScreen(screen);
+                    if (isNewVersion || mIsLocFilesNotFound) {
+                        int count = 1;
+                        notifyActivityAboutStartDownload();
+                        mFilesNumber = imagesUrls.size();
+                        saveImagesVersion(field, firestore_images_version);
+                        saveFilesNumber(field, imagesUrls.size());
+                        for (String path : imagesUrls) {
+                            downloadUri(path, field, count++);
+                        }
+                    } else {
+                        notifyActivityAboutNewFiles(field);
+                    }
                 }
                 else {
                     notifyActivityAboutDownloadFail();
                 }
-            }
-            else if(screenType.equals("picture")){
-                if(screen_parameters.contains("collection")){
-                    String collection = (String) documentSnapshot.get("collection");
-                    if(collection != null && screen_parameters.contains("document")){
-                        String doc = (String) documentSnapshot.get("document");
-                        if(doc != null && screen_parameters.contains("field")){
-                            String fld = (String) documentSnapshot.get("field");
+            }, e -> notifyActivityAboutDownloadFail());
+        });
 
-                            notifyActivityAboutNewFiles();
+        mDownloadImagesThread.start();
+    }
+
+    private void startDownloadScreen(final String document) {
+        Log.d(TAG, "Start download screen"+ document);
+
+        if( mDownloadScreensThread != null) {
+            try {
+                mDownloadScreensThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            mDownloadScreensThread = null;
+        }
+        mDownloadScreensThread = new Thread(() -> {
+
+            if(mFireBaseHelper == null)
+                mFireBaseHelper = new FireBaseHelper();
+
+            mFireBaseHelper.read("Screens", document, task -> {
+                if (!task.isSuccessful()) {
+                    Log.w(TAG, "Listen failed.");
+                    notifyActivityAboutDownloadFail();
+                    return;
+                }
+                DocumentSnapshot documentSnapshot = task.getResult();
+
+                if (documentSnapshot == null) {
+                    Log.w(TAG, "Listen failed.");
+                    notifyActivityAboutDownloadFail();
+                    return;
+                }
+
+                List<String> screen_parameters = mFireBaseHelper.getArray(documentSnapshot);
+
+                String screenType=null;
+                if(screen_parameters.contains("type")) {
+                    screenType = (String) documentSnapshot.get("type");
+                }
+
+                long version = 1;
+                if(screen_parameters.contains("version")){
+                    version = (Long) documentSnapshot.get("version");
+                }
+
+                if(screenType == null) {
+                    notifyActivityAboutDownloadFail();
+                    return;
+                }
+
+                if(screenType.equals("buttons")) {
+                    RemoteButtonScreen screen = null;
+                    if(screen_parameters.contains("names")){
+                        List<String> mNames = (List<String>) documentSnapshot.get("names");
+                        if(mNames == null){
+                            notifyActivityAboutDownloadFail();
+                            return;
+                        }
+
+                        screen = new RemoteButtonScreen(document, mNames);
+
+                        for(String buttName : mNames) {
+                            if(screen_parameters.contains(Utils.checkSlashSymbols(buttName))){
+                                Map<String, Object> dataMap = (Map<String, Object>) documentSnapshot.get(Utils.checkSlashSymbols(buttName));
+                                screen.getRemoteButton(buttName).setParameters(dataMap);
+                            }
+                        }
+                    }
+                    if(screen == null) {
+                        notifyActivityAboutDownloadFail();
+                        return;
+                    }
+
+                    screen.setVersion(version + "");
+
+                    RemoteButtonScreen savedScreen = Utils.loadScreen(this, document);
+                    if(savedScreen == null || !savedScreen.getVersion().equals(screen.getVersion())) {
+                        Utils.saveScreen(this, document, screen);
+                    }
+
+                    if (documentSnapshot.exists()) {
+                        notifyActivityAboutDownloadScreen(screen);
+                    }
+                    else {
+                        notifyActivityAboutDownloadFail();
+                    }
+                }
+                else if(screenType.equals("picture")){
+                    if(screen_parameters.contains("collection")){
+                        String collection = (String) documentSnapshot.get("collection");
+                        if(collection != null && screen_parameters.contains("document")){
+                            String doc = (String) documentSnapshot.get("document");
+                            if(doc != null && screen_parameters.contains("field")){
+                                String field = (String) documentSnapshot.get("field");
+
+//                                notifyActivityAboutNewFiles(field);
+                                startDownloadImage(collection, doc, field);
 //                            mScreenDocument = doc;
 //                            mExperimentType = fld;
-//                            setScreenOrientation(orientation);
 //
 //                            showGifFragment(collection, doc, fld);
+                            }
                         }
                     }
                 }
-            }
-        }, task2 -> notifyActivityAboutDownloadFail());
+            }, task2 -> notifyActivityAboutDownloadFail());
+        });
+
+        mDownloadScreensThread.start();
     }
 
-    private void deleteOldImages() {
-        int number = getFilesNumber(mExperimentType);
+    private void deleteOldImages(String field) {
+        int number = getFilesNumber(field);
 
         for(int i=0; i<number; i++) {
-            String filePath = getFilePath(mExperimentType + (i+1));
+            String filePath = getFilePath(field + (i+1));
             if(filePath == null)
                 continue;
 
@@ -292,11 +289,11 @@ public class ImageDownloadService extends IntentService {
         }
     }
 
-    private boolean isLocalFilesNotFound() {
-        int number = getFilesNumber(mExperimentType);
+    private boolean isLocalFilesNotFound(String field) {
+        int number = getFilesNumber(field);
 
         for(int i=0; i<number; i++) {
-            String filePath = getFilePath(mExperimentType + (i+1));
+            String filePath = getFilePath(field + (i+1));
             if(filePath == null)
                 return true;
             File file = new File(filePath);
@@ -307,7 +304,7 @@ public class ImageDownloadService extends IntentService {
         return false;
     }
 
-    private void downloadUri(String path, final String electronic_type, final int num){
+    private void downloadUri(String path, final String field, final int num){
         if(path == null || path.length() == 0) {
             notifyActivityAboutDownloadFail();
             return;
@@ -338,12 +335,12 @@ public class ImageDownloadService extends IntentService {
                     bos.flush();
                     bos.close();
 
-                    saveFileName(electronic_type + num, finalLocalFile.getAbsolutePath());
+                    saveFileName(field + num, finalLocalFile.getAbsolutePath());
 
                     if(++mFilesCounter >= mFilesNumber) {
                         mFilesNumber = 0;
                         mFilesCounter = 0;
-                        notifyActivityAboutNewFiles();
+                        notifyActivityAboutNewFiles(field);
                     }
 
                 } catch (Exception e) {
@@ -377,8 +374,8 @@ public class ImageDownloadService extends IntentService {
         Utils.saveSharedSetting(this, imagesType, version);
     }
 
-    private int getLocaleImagesVersion() {
-        return Utils.readSharedSetting(this, mExperimentType, 0);
+    private int getLocaleImagesVersion(String field) {
+        return Utils.readSharedSetting(this, field, 0);
     }
 
     private int getFilesNumber(String settings_key) {
@@ -391,10 +388,11 @@ public class ImageDownloadService extends IntentService {
         return fileName;
     }
 
-    private void notifyActivityAboutNewFiles() {
-        Log.d(TAG, "Notify activity about downloaded images " + mExperimentType);
+    private void notifyActivityAboutNewFiles(String field) {
+        Log.d(TAG, "Notify activity about downloaded images " + field);
         Intent intentAnswer = new Intent(HW_SERVICE_BROADCAST_VALUE);
         intentAnswer.putExtra(HW_SERVICE_MESSAGE_TYPE_ID, HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES_COMPLETE);
+        intentAnswer.putExtra(HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT, field);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intentAnswer);
     }
 

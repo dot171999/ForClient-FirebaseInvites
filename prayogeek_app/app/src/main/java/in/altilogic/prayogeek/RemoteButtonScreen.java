@@ -9,7 +9,6 @@ import java.util.List;
 public class RemoteButtonScreen implements Parcelable {
     private String mScreenName = null;
     private String mScreenVersion = null;
-    private String mScreenOrientation = null;
     private int mScreenStatus = 0;
     private List<RemoteButton> mButtons;
 
@@ -33,7 +32,6 @@ public class RemoteButtonScreen implements Parcelable {
     @Override
     public void writeToParcel(Parcel parcel, int f) {
         parcel.writeString(mScreenVersion);
-        parcel.writeString(mScreenOrientation);
         parcel.writeInt(mScreenStatus);
         List<String> bttns = new ArrayList<>();
         for(int i=0; i< mButtons.size(); i++)
@@ -43,7 +41,6 @@ public class RemoteButtonScreen implements Parcelable {
 
     private RemoteButtonScreen(Parcel parcel){
         this.mScreenVersion = parcel.readString();
-        this.mScreenOrientation = parcel.readString();
         this.mScreenStatus = parcel.readInt();
 
         List<String> bttns = new ArrayList<>();
@@ -81,14 +78,6 @@ public class RemoteButtonScreen implements Parcelable {
         return mScreenVersion;
     }
 
-    public String getOrientation() {
-        return mScreenOrientation;
-    }
-
-    public void setOrientation(String orientation) {
-        mScreenOrientation = orientation;
-    }
-
     public void setStatus(int status) {
         mScreenStatus = status;
     }
@@ -122,9 +111,8 @@ public class RemoteButtonScreen implements Parcelable {
         if(parts.length >= 4){
             mScreenName = parts[0];
             mScreenVersion = parts[1];
-            mScreenOrientation = parts[2];
             try{
-                int status = Integer.parseInt(parts[3]);
+                int status = Integer.parseInt(parts[2]);
                 mScreenStatus = status;
             }catch (Exception e) {
                 e.printStackTrace();
@@ -135,8 +123,8 @@ public class RemoteButtonScreen implements Parcelable {
                 mButtons.clear();
 
             mButtons = new ArrayList<>();
-            for(int i=4; i<parts.length; i+=6){
-                RemoteButton rb = new RemoteButton(parts[i], i-3);
+            for(int i=3; i<parts.length; i+=6){
+                RemoteButton rb = new RemoteButton(parts[i], i-2);
                 if(parts.length > i+5){
                     rb.setCollection(parts[i+1]);
                     rb.setDocument(parts[i+2]);
@@ -160,7 +148,6 @@ public class RemoteButtonScreen implements Parcelable {
         StringBuilder sb = new StringBuilder();
         sb.append(mScreenName).append(",")
                 .append(mScreenVersion).append(",")
-                .append(mScreenOrientation).append(",")
                 .append(mScreenStatus).append(",");
 
         if(mButtons != null) {

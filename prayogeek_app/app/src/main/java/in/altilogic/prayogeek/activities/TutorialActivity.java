@@ -32,7 +32,7 @@ import in.altilogic.prayogeek.fragments.ProjectsFragment;
 import in.altilogic.prayogeek.fragments.SerialConsoleFragment;
 import in.altilogic.prayogeek.fragments.SerialConsoleSettingsFragment;
 import in.altilogic.prayogeek.fragments.TutorialFragment;
-import in.altilogic.prayogeek.service.ImageDownloadService;
+import in.altilogic.prayogeek.service.DatabaseDownloadService;
 import in.altilogic.prayogeek.service.SerialConsoleService;
 import in.altilogic.prayogeek.utils.Utils;
 
@@ -123,7 +123,7 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     public void onStart() {
         super.onStart();
         Log.d(TAG, "onStart");
-        IntentFilter statusIntentFilter = new IntentFilter(ImageDownloadService.HW_SERVICE_BROADCAST_VALUE);
+        IntentFilter statusIntentFilter = new IntentFilter(DatabaseDownloadService.HW_SERVICE_BROADCAST_VALUE);
         LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, statusIntentFilter);
     }
 
@@ -136,7 +136,7 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
 
     @Override
     public void onDestroy() {
-        stopService(new Intent(this, ImageDownloadService.class));
+        stopService(new Intent(this, DatabaseDownloadService.class));
         super.onDestroy();
     }
 
@@ -330,24 +330,24 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                int result = intent.getIntExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, -1);
+                int result = intent.getIntExtra(DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, -1);
                 switch (result){
-                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_START_DOWNLOAD:
+                    case DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_START_DOWNLOAD:
                         Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_IMAGE_START_DOWNLOAD");
                         Toast.makeText(getApplicationContext(), "Downloading Experiment. Please wait..", Toast.LENGTH_SHORT ).show();
                         saveSharedSetting(getApplicationContext(), CURRENT_SCREEN_SETTINGS_PAGE, 0);
                         break;
-                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET:
+                    case DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET:
                         Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET");
                         Toast.makeText(getApplicationContext(), "No Network Connection.\nTurn ON network and Retry", Toast.LENGTH_SHORT ).show();
                         isStartShowingImage = false;
                         break;
-                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES_COMPLETE:
+                    case DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES_COMPLETE:
                         Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES_COMPLETE");
                         isStartShowingImage = false;
                         startImageFragment();
                         break;
-                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_DOWNLOAD_FAIL:
+                    case DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_DOWNLOAD_FAIL:
                         Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_IMAGE_DOWNLOAD_FAIL");
                         showMessageDownloadFail();
                         isStartShowingImage = false;
@@ -379,11 +379,11 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private void startDownload(String collection, String folder, String path) {
-        startService(new Intent(this,ImageDownloadService.class)
-                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES)
-                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_COLLECTION, collection)
-                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT, folder)
-                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE, path));
+        startService(new Intent(this, DatabaseDownloadService.class)
+                .putExtra(DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES)
+                .putExtra(DatabaseDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_COLLECTION, collection)
+                .putExtra(DatabaseDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT, folder)
+                .putExtra(DatabaseDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE, path));
     }
 
     private int getFilesNumber(String settings_key) {

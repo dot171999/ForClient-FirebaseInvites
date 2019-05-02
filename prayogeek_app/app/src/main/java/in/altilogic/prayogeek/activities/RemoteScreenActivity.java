@@ -204,15 +204,41 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
         mScreenDocument = document;
 
         Log.d(TAG, "Download remote screen " + mScreenDocument);
-        startDownloadScreen(mScreenDocument);
-//        isResume();
-//        {
-//            RemoteButtonScreen savedScreen = Utils.loadScreen(this, mScreenDocument);
-//            if(getScreenIndex(mScreenDocument) < 0)
-//                mRemoteScreens.add(savedScreen);
-//            showButtonsFragment(savedScreen);
-//            mScreenIndex = getScreenIndex(mScreenDocument);
-//        }
+        if(isResume()) {
+            String nameScreen = Utils.readSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, null);
+            int page = Utils.readSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, -1);
+
+            if(mRemoteScreens != null && mRemoteScreens.size() == 0 && nameScreen != null) {
+                mRemoteScreens.add(Utils.loadScreen(this, mScreenDocument));
+                if(!mScreenDocument.equals(nameScreen))
+                    mRemoteScreens.add(Utils.loadScreen(this, nameScreen));
+                else {
+                    mPage = page;
+                    mScreenDocument = nameScreen;
+                    startDownloadScreen(mScreenDocument);
+                    return;
+                }
+
+                mScreenIndex = getScreenIndex(nameScreen);
+                if(mScreenIndex < 0 || page >= mRemoteScreens.get(mScreenIndex).buttonsSize()) {
+                    Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_FLAG_RESUME, 0);
+                    return;
+                }
+
+                RemoteButton rbs = mRemoteScreens.get(mScreenIndex).getRemoteButton(mRemoteScreens.get(mScreenIndex).getStatus());
+                if(rbs == null) {
+                    Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_FLAG_RESUME, 0);
+                    return;
+                }
+                mExperimentType = rbs.getName();
+                startDownloadImages(rbs.getCollection(), rbs.getDocument(), rbs.getField());
+                mPage = page;
+                mScreenDocument = nameScreen;
+            }
+        }
+        else {
+            startDownloadScreen(mScreenDocument);
+        }
     }
 
     private void showImageFragment() {
@@ -283,45 +309,47 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
     @Override
     public void onClick(View view, int page) {
         mPage = 0;
-        if(mRemoteScreens == null|| mRemoteScreens.size() == 0 || mScreenIndex < 0) {
+        if(mRemoteScreens == null) {
             finishActivity();
             return;
         }
 
-        int mScreenStatus = mRemoteScreens != null ? mRemoteScreens.get(mScreenIndex).getStatus() : 0;
-        Log.d(TAG, "mScreenStatus = " + mScreenStatus + "; page = " + page);
         switch (view.getId()){
             case R.id.btnHome:
-//                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
-//                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
-                if(mRemoteScreens != null)
-                    mRemoteScreens.get(mScreenIndex).setStatus(0);
-                mPrevScreenDocument = null;
                 Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
-                mScreenIndex=0;
-                showButtonsFragment(mRemoteScreens.get(mScreenIndex));
                 Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_FLAG_RESUME, 0);
+
+                if(mScreenIndex < 0 || mScreenIndex >= mRemoteScreens.size()) {
+                    finishActivity();
+                }
+                else {
+                    mRemoteScreens.get(mScreenIndex).setStatus(0);
+                    mPrevScreenDocument = null;
+                    mScreenIndex=0;
+                    showButtonsFragment(mRemoteScreens.get(mScreenIndex));
+                }
                 break;
             case R.id.btnDone:
-//                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenStatus);
-//                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
-                if(mRemoteScreens != null)
-                    mRemoteScreens.get(mScreenIndex).setStatus(0);
-//                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
                 Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
                 Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_FLAG_RESUME, 0);
+                if(mRemoteScreens.size() > mScreenIndex && mScreenIndex >= 0) {
+                    mRemoteScreens.get(mScreenIndex).setStatus(0);
+                }
                 finishActivity();
                 break;
-            case R.id.btnMinimize:
-                Utils.saveScreen(this, mScreenDocument, mRemoteScreens.get(mScreenIndex));
-
+            case R.id.btnMinimize: {
+                int ind = getScreenIndex(mScreenDocument);
+                if(ind >= 0) {
+                    RemoteButtonScreen rbs = mRemoteScreens.get(ind);
+                    Utils.saveScreen(this, rbs.getScreenName(), rbs);
+                }
                 Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenDocument);
                 Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, page);
                 Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_FLAG_RESUME, 1);
 
-//                saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, mScreenStatus);
                 finishActivity();
                 break;
+            }
         }
     }
 
@@ -375,26 +403,6 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
     }
 
     boolean isResume() {
-        int flag = Utils.readSharedSetting(this, CURRENT_SCREEN_SETTINGS_FLAG_RESUME, 0);
-        if(flag == 1) {
-            String nameScreen = Utils.readSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, null);
-            int page = Utils.readSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, -1);
-
-            if(mRemoteScreens != null && mRemoteScreens.size() == 0 && nameScreen != null) {
-                mRemoteScreens.add(Utils.loadScreen(this, mScreenDocument));
-                mRemoteScreens.add(Utils.loadScreen(this, nameScreen));
-                mScreenIndex = getScreenIndex(nameScreen);
-                if(page >= mRemoteScreens.get(mScreenIndex).buttonsSize())
-                    return false;
-
-                RemoteButton rbs = mRemoteScreens.get(mScreenIndex).getRemoteButton(mRemoteScreens.get(mScreenIndex).getStatus());
-                mExperimentType = rbs.getName();
-                startDownloadImages(rbs.getCollection(), rbs.getDocument(), rbs.getField());
-                mPage = page;
-
-                return true;
-            }
-        }
-        return false;
+        return 1 == Utils.readSharedSetting(this, CURRENT_SCREEN_SETTINGS_FLAG_RESUME, 0);
     }
 }

@@ -26,6 +26,7 @@ import in.altilogic.prayogeek.RemoteButtonScreen;
 import static android.content.Context.INPUT_METHOD_SERVICE;
 
 public class Utils {
+    private static final String TAG = "YOUSCOPE-DB-UTILS";
     private static final String PREFERENCES_FILE = "altilogic_prayogeek_settings";
     private static final String REMOTE_SCREEN_PREFIX = "REMOTE_SCREEN_";
 
@@ -149,6 +150,7 @@ public class Utils {
     public static void saveScreen(Context context, String key, RemoteButtonScreen screen) {
         if(screen == null)
             return;
+        Log.d(TAG, "save screen " + screen.toString());
         saveSharedSetting(context, REMOTE_SCREEN_PREFIX + key, screen.toString());
     }
 
@@ -158,6 +160,8 @@ public class Utils {
         String params = readSharedSetting(context, REMOTE_SCREEN_PREFIX + key, null);
         if(params == null)
             return  null;
+        Log.d(TAG, "load screen " + params);
+
         return new RemoteButtonScreen(params);
     }
 }
