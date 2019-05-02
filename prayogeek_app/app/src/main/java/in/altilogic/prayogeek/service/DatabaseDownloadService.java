@@ -51,7 +51,6 @@ public class DatabaseDownloadService extends IntentService {
     }
     private Thread mDownloadImagesThread;
     private Thread mDownloadScreensThread;
-//    private String mExperimentType;
     private boolean mIsLocFilesNotFound;
 
     private File createFile(String fileName) throws IOException {
