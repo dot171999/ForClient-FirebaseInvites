@@ -7,6 +7,7 @@ import android.util.Log;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
@@ -15,6 +16,7 @@ import com.google.firebase.storage.FirebaseStorage;
 
 import in.altilogic.prayogeek.activities.MainActivity;
 import in.altilogic.prayogeek.utils.Utils;
+import uk.co.senab.photoview.PhotoViewAttacher;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,6 +77,10 @@ public class FireBaseHelper {
     public void read(String collection, String document, OnCompleteListener<DocumentSnapshot> completeListener) {
         mDb.collection(collection).document(document).get().addOnCompleteListener(completeListener);
     }
+
+//    public void read(String collection, String document, OnSuccessListener<DocumentSnapshot> completeListener) {
+//        mDb.collection(collection).document(document).get().addOnSuccessListener(completeListener);
+//    }
 
     public void read(String collection, String document, OnCompleteListener<DocumentSnapshot> completeListener, final OnFailureListener failListener) {
         mDb.collection(collection).document(document).get().addOnCompleteListener(completeListener).addOnFailureListener(failListener);

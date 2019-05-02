@@ -41,6 +41,11 @@
             android:name=".activities.OnBoardingActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
         <activity
+            android:name=".activities.UserGuideActivity"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|keyboardHidden"
+            android:theme="@style/AppTheme.NoActionBar"/>
+        <activity
             android:name=".activities.ProfileActivity"
             android:theme="@style/ProfileTheme"/>
         <activity
@@ -52,11 +57,16 @@
         <activity
             android:name=".activities.TutorialActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
+        <activity
+            android:name=".activities.TutorialRemoteActivity"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|keyboardHidden"
+            android:theme="@style/AppTheme.NoActionBar"/>
 
         <activity android:name=".activities.SerialConsoleActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
 
-        <service android:name=".service.ImageDownloadService" android:exported="false">
+        <service android:name=".service.DatabaseDownloadService" android:exported="false">
         </service>
 
         <service

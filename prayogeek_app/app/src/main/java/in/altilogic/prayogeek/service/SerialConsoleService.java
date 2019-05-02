@@ -13,7 +13,6 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.annimon.stream.operator.LongGenerate;
 import com.felhr.usbserial.CDCSerialDevice;
 import com.felhr.usbserial.UsbSerialDevice;
 import com.felhr.usbserial.UsbSerialInterface;
