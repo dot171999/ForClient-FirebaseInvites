@@ -1,8 +1,8 @@
 # Firebase_Test_Repo
 
-  # Firebase screens configuration:
+# Firebase screens configuration:
    All screens configurations should be placed in the "Screens" collection.
-   Now implemented 2 Activities for reading remote configurations. It  contains in the documents:
+   Now implemented 2 Activities for reading remote configurations. It contains in the documents:
     - UserGuide
     - Tutorials
 
