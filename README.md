@@ -20,7 +20,10 @@ Every document should be content in the next fields:
 If the type field equals "buttons", then this document should contain the next fields:
 
 - names (this field contains the buttons list for this screen)
-- the name of the button from the list names where contain next fields, when this button will be pressed the next screen will be download from these parameters.
+- the name of the button from the list names where contain next fields:
+
+ when this button will be pressed the next screen will be download from these parameters.
+
  - collection : "Collection name" 
  - document: "document name"
  - filed: "field name"
