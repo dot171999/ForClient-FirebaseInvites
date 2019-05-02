@@ -4,9 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ActivityInfo;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -20,14 +18,13 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
-import in.altilogic.prayogeek.FireBaseHelper;
 import in.altilogic.prayogeek.Global_Var;
 import in.altilogic.prayogeek.R;
 import in.altilogic.prayogeek.RemoteButton;
 import in.altilogic.prayogeek.RemoteButtonScreen;
 import in.altilogic.prayogeek.fragments.ButtonsFragment;
 import in.altilogic.prayogeek.fragments.ImageFragment;
-import in.altilogic.prayogeek.service.ImageDownloadService;
+import in.altilogic.prayogeek.service.DatabaseDownloadService;
 import in.altilogic.prayogeek.utils.Utils;
 
 public abstract class RemoteScreenActivity extends AppCompatActivity implements View.OnClickListener, ImageFragment.OnClickListener {
@@ -42,7 +39,6 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
 //    private static final String CURRENT_SCREEN_SETTINGS_FIELD = "REMOTE-SETTINGS-CURRENT-SCREEN-FIELD";
 
     private FragmentManager mFragmentManager;
-    private FireBaseHelper mFireBaseHelper;
 
     private List<RemoteButtonScreen> mRemoteScreens = new ArrayList<>(6);
     private boolean isStartFirebaseDownloading;
@@ -61,7 +57,6 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
         setContentView(R.layout.activity_tutolial);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE); // disable snapshots
         mFragmentManager = getSupportFragmentManager();
-        mFireBaseHelper = new FireBaseHelper();
         mStatusBarColor = getWindow().getStatusBarColor();
         mScreenIndex = -1;
         mPage = 0;
@@ -73,7 +68,7 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
     public void onStart() {
         super.onStart();
         Log.d(TAG, "onStart()");
-        IntentFilter statusIntentFilter = new IntentFilter(ImageDownloadService.HW_SERVICE_BROADCAST_VALUE);
+        IntentFilter statusIntentFilter = new IntentFilter(DatabaseDownloadService.HW_SERVICE_BROADCAST_VALUE);
         LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, statusIntentFilter);
     }
 
@@ -86,7 +81,7 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
 
     @Override
     public void onDestroy() {
-        stopService(new Intent(this, ImageDownloadService.class));
+        stopService(new Intent(this, DatabaseDownloadService.class));
         if(mRemoteScreens !=null) {
             mRemoteScreens.clear();
             mRemoteScreens = null;
@@ -96,7 +91,6 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
             mImagePath = null;
         }
 
-        mFireBaseHelper = null;
         super.onDestroy();
     }
 
@@ -141,34 +135,50 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                int result = intent.getIntExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, -1);
+                int result = intent.getIntExtra(DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, -1);
                 switch (result){
-                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_START_DOWNLOAD:
+                    case DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_START_DOWNLOAD:
                         Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_IMAGE_START_DOWNLOAD");
                         Toast.makeText(getApplicationContext(), "Downloading Experiment. Please wait..", Toast.LENGTH_SHORT ).show();
                         break;
-                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET:
+                    case DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET:
                         Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_IMAGE_NO_INTERNET");
                         Toast.makeText(getApplicationContext(), "No Network Connection.\nTurn ON network and Retry", Toast.LENGTH_SHORT ).show();
                         isStartFirebaseDownloading = false;
                         break;
-                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES_COMPLETE:
+                    case DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES_COMPLETE:
                         Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_IMAGE_FILES_COMPLETE");
                         isStartFirebaseDownloading = false;
-                        startImageFragment();
+                        String experiment = intent.getStringExtra(DatabaseDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT);
+                        if(experiment!= null && mExperimentType == null)
+                            mExperimentType = experiment;
+                        if(mImagePath != null) {
+                            mImagePath.clear();
+                            mImagePath = null;
+                        }
+
+                        mImagePath = new ArrayList<>();
+
+                        showImageFragment();
                         break;
-                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_DOWNLOAD_FAIL:
+                    case DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_IMAGE_DOWNLOAD_FAIL:
                         Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_IMAGE_DOWNLOAD_FAIL");
                         Toast.makeText(getApplicationContext(), "Download Fail", Toast.LENGTH_SHORT ).show();
                         isStartFirebaseDownloading = false;
                         break;
-                    case ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_SCREEN:
+                    case DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_SCREEN:
                         Log.d(TAG, "HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_SCREEN");
                         isStartFirebaseDownloading = false;
-                        RemoteButtonScreen screen = intent.getParcelableExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_SCREEN);
+                        RemoteButtonScreen screen = intent.getParcelableExtra(DatabaseDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_SCREEN);
 
                         if(screen == null)
                             return;
+
+                        if(!isScreenComtains(screen))
+                            mRemoteScreens.add(screen);
+
+                        mScreenIndex = getScreenIndex(screen.getScreenName());
+                        showButtonsFragment(screen);
                         break;
                     default:
                         break;
@@ -205,16 +215,7 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
 //        }
     }
 
-    Handler mHandler = new Handler() {
-        public void handleMessage(android.os.Message msg) {
-            if (msg.what < mRemoteScreens.size()) {
-                Log.d(TAG, "Get message from handler " + msg.what);
-//                showButtonsFragment(mRemoteScreens.get(msg.what));
-            }
-        };
-    };
-
-    private void startImageFragment() {
+    private void showImageFragment() {
         for (Fragment fragment:getSupportFragmentManager().getFragments()) {
             getSupportFragmentManager().beginTransaction().remove(fragment).commit();
         }
@@ -224,13 +225,6 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
             for(int i=0; i<number; i++) {
                 String name = getFilePath(remoteButton.getField()+(i+1));
                 mImagePath.add(name);
-            }
-
-            if(mRemoteScreens == null || mRemoteScreens.get(mScreenIndex).getOrientation() == null) {
-                setScreenOrientation("landscape");
-            }
-            else{
-                setScreenOrientation(mRemoteScreens.get(mScreenIndex).getOrientation());
             }
 
             mRemoteScreens.get(mScreenIndex).setStatus(remoteButton.getId());
@@ -243,10 +237,10 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
             }
         }
 
-        ImageFragment mShowGifFragment = ImageFragment.newInstance((ArrayList<String>) mImagePath, mStatusBarColor, mPage, false);
-        mShowGifFragment.setOnClickListener(this);
+        ImageFragment showGifFragment = ImageFragment.newInstance((ArrayList<String>) mImagePath, mStatusBarColor, mPage, false);
+        showGifFragment.setOnClickListener(this);
         FragmentTransaction transaction = mFragmentManager.beginTransaction();
-        transaction.replace(R.id.fragmentContent, mShowGifFragment)
+        transaction.replace(R.id.fragmentContent, showGifFragment)
                 .commit();
     }
 
@@ -280,7 +274,7 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
             }
 
             if(clickedButton.getType() != null && clickedButton.getType().equals("picture"))
-                showGifFragment(clickedButton.getCollection(),clickedButton.getDocument(), clickedButton.getField());
+                startDownloadImages(clickedButton.getCollection(),clickedButton.getDocument(), clickedButton.getField());
             else
                 findRemoteScreen(clickedButton.getName());
         }
@@ -349,7 +343,7 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
 //        saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
     }
 
-    private void showGifFragment(String collection, String folder, String field) {
+    private void startDownloadImages(String collection, String folder, String field) {
         Log.d(TAG, "showGifFragment : " + collection + "/" + folder + "/" + field);
         if(isStartFirebaseDownloading) {
             Toast.makeText(this, "Download in progress. Please wait", Toast.LENGTH_SHORT).show();
@@ -358,37 +352,26 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
         }
 
         isStartFirebaseDownloading = true;
-        if(mImagePath != null) {
-            mImagePath.clear();
-            mImagePath = null;
-        }
-
-        mImagePath = new ArrayList<>();
-        startDownloadImages(collection, folder, field);
-    }
-
-    private void startDownloadImages(String collection, String folder, String type) {
-        startService(new Intent(this,ImageDownloadService.class)
-                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES)
-                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_COLLECTION, collection)
-                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT, folder)
-                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE, type));
+        startService(new Intent(this, DatabaseDownloadService.class)
+                .putExtra(DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_IMAGES)
+                .putExtra(DatabaseDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_COLLECTION, collection)
+                .putExtra(DatabaseDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_EXPERIMENT, folder)
+                .putExtra(DatabaseDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_PATH_FIRESTORE, field));
     }
 
     private void startDownloadScreen(String document) {
-        startService(new Intent(this,ImageDownloadService.class)
-                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, ImageDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_SCREEN)
-                .putExtra(ImageDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_DOCUMENT, document));
+        startService(new Intent(this, DatabaseDownloadService.class)
+                .putExtra(DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_SCREEN)
+                .putExtra(DatabaseDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_DOCUMENT, document));
     }
 
-
-    private void setScreenOrientation(String orientation) {
-        if(orientation == null || orientation.equals("landscape")) {
-            setRequestedOrientation( ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+    boolean isScreenComtains(RemoteButtonScreen screen) {
+        for(int i=0; i<mRemoteScreens.size(); i++) {
+            if(mRemoteScreens.get(i).getScreenName().equals(screen.getScreenName())) {
+                return true;
+            }
         }
-        else{
-            setRequestedOrientation( ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        }
+        return false;
     }
 
     boolean isResume() {
@@ -406,7 +389,7 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
 
                 RemoteButton rbs = mRemoteScreens.get(mScreenIndex).getRemoteButton(mRemoteScreens.get(mScreenIndex).getStatus());
                 mExperimentType = rbs.getName();
-                showGifFragment(rbs.getCollection(), rbs.getDocument(), rbs.getField());
+                startDownloadImages(rbs.getCollection(), rbs.getDocument(), rbs.getField());
                 mPage = page;
 
                 return true;
