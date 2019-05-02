@@ -24,6 +24,8 @@ import in.altilogic.prayogeek.RemoteButton;
 import in.altilogic.prayogeek.RemoteButtonScreen;
 import in.altilogic.prayogeek.fragments.ButtonsFragment;
 import in.altilogic.prayogeek.fragments.ImageFragment;
+import in.altilogic.prayogeek.fragments.SerialConsoleFragment;
+import in.altilogic.prayogeek.fragments.SerialConsoleSettingsFragment;
 import in.altilogic.prayogeek.service.DatabaseDownloadService;
 import in.altilogic.prayogeek.utils.Utils;
 
@@ -31,11 +33,11 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
     public static final String TAG = "YOUSCOPE-REMOTE_ACT";
 
     public final static String CURRENT_SCREEN_SETTINGS_PAGE = "REMOTE-SETTINGS-CURRENT-PAGE";
-//    public final static String CURRENT_SCREEN_SETTINGS = "REMOTE-SETTINGS-CURRENT-SCREEN";
+    public final static String CURRENT_SCREEN_SETTINGS = "REMOTE-SETTINGS-CURRENT-SCREEN";
     public final static String CURRENT_SCREEN_SETTINGS_RESUME = "REMOTE-SETTINGS-CURRENT-SCREEN-RESUME";
     private String CURRENT_SCREEN_SETTINGS_FLAG_RESUME = "REMOTE-SETTINGS-CURRENT-FLAG-RESUME";
 
-//    public final static String CURRENT_SCREEN_SETTINGS_PAGE_RESUME = "REMOTE-SETTINGS-CURRENT-PAGE-RESUME";
+    public final static String CURRENT_SCREEN_SETTINGS_PAGE_RESUME = "REMOTE-SETTINGS-CURRENT-PAGE-RESUME";
 //    private static final String CURRENT_SCREEN_SETTINGS_FIELD = "REMOTE-SETTINGS-CURRENT-SCREEN-FIELD";
 
     private FragmentManager mFragmentManager;
@@ -99,7 +101,19 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
         mPage = 0;
 
         Utils.saveSharedSetting(getApplicationContext(), CURRENT_SCREEN_SETTINGS_PAGE, 0);
-        if(mRemoteScreens != null && mRemoteScreens.size() > 0 && mScreenIndex <= 0) {
+        boolean backFlag = false;
+        if(mExperimentType != null) {
+            if(mExperimentType.equalsIgnoreCase("Serial console")){
+                backFlag = true;
+                mExperimentType = "";
+            }
+            if(mExperimentType.equalsIgnoreCase("Serial console settings")){
+                mExperimentType = "Serial console";
+                showSerialConsoleFragment();
+                return;
+            }
+        }
+        if(mRemoteScreens != null && mRemoteScreens.size() > 0 && mScreenIndex <= 0 && !backFlag) {
             mScreenIndex=0;
 //            saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
 //            saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mRemoteScreens.get(mScreenIndex).getStatus());
@@ -192,8 +206,13 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
             return -1;
 
         for(int i = 0; i< mRemoteScreens.size() ; i++ ) {
-            if(mRemoteScreens.get(i).getScreenName() != null && document.equals(mRemoteScreens.get(i).getScreenName())) {
-                return i;
+            if(mRemoteScreens.get(i) != null) {
+                String screenName = mRemoteScreens.get(i).getScreenName();
+                if (screenName != null) {
+                    if(document.equals(screenName)) {
+                        return i;
+                    }
+                }
             }
         }
 
@@ -205,7 +224,7 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
 
         Log.d(TAG, "Download remote screen " + mScreenDocument);
         if(isResume()) {
-            String nameScreen = Utils.readSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, null);
+            String nameScreen = Utils.readSharedSetting(this, CURRENT_SCREEN_SETTINGS, null);
             int page = Utils.readSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, -1);
 
             if(mRemoteScreens != null && mRemoteScreens.size() == 0 && nameScreen != null) {
@@ -241,6 +260,19 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
         }
     }
 
+    private void showSerialConsoleFragment(){
+        SerialConsoleFragment mConsoleFragment = new SerialConsoleFragment();
+        mConsoleFragment.setOnClickListener(this);
+        mFragmentManager.beginTransaction().replace(R.id.fragmentContent, mConsoleFragment).commit();
+    }
+
+    private void showSerialSettingsFragment() {
+        mExperimentType = "Serial console settings";
+        SerialConsoleSettingsFragment mSettingsFragment = new SerialConsoleSettingsFragment();
+        mFragmentManager.beginTransaction().replace(R.id.fragmentContent, mSettingsFragment).commit();
+    }
+
+
     private void showImageFragment() {
         for (Fragment fragment:getSupportFragmentManager().getFragments()) {
             getSupportFragmentManager().beginTransaction().remove(fragment).commit();
@@ -262,6 +294,9 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
                 mImagePath.add(name);
             }
         }
+
+        if(mImagePath == null || mImagePath.size() == 0)
+            return;
 
         ImageFragment showGifFragment = ImageFragment.newInstance((ArrayList<String>) mImagePath, mStatusBarColor, mPage, false);
         showGifFragment.setOnClickListener(this);
@@ -298,11 +333,40 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
                     return;
                 }
             }
+            else if(mExperimentType.equalsIgnoreCase("Serial console")) {
+                showSerialConsoleFragment();
+                return;
+            }
+            else if(mExperimentType.equalsIgnoreCase("Resume")) {
+                String nameScreen = Utils.readSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, null);
+                int last_screen_page = Utils.readSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, 0);
+                if(nameScreen != null) {
+                    RemoteButtonScreen rbs = Utils.loadScreen(this, nameScreen);
+                    if(rbs != null) {
+                        mPage = last_screen_page;
+                        RemoteButton rb = rbs.getRemoteButton(rbs.getStatus());
+                        if(rb != null) {
+                            if(!isScreenComtains(rbs))
+                                mRemoteScreens.add(rbs);
+
+                            mExperimentType = rb.getName();
+                            mScreenDocument = nameScreen;
+                            mScreenIndex = getScreenIndex(nameScreen);
+                            startDownloadImages(rb.getCollection(), rb.getDocument(), rb.getField());
+                        }
+                    }
+                }
+                return;
+            }
 
             if(clickedButton.getType() != null && clickedButton.getType().equals("picture"))
                 startDownloadImages(clickedButton.getCollection(),clickedButton.getDocument(), clickedButton.getField());
             else
                 findRemoteScreen(clickedButton.getName());
+        }
+        else {
+            if(id == R.id.btnConsoleSettings)
+                showSerialSettingsFragment();
         }
     }
 
@@ -315,7 +379,15 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
         }
 
         switch (view.getId()){
-            case R.id.btnHome:
+            case R.id.btnHome: {
+                Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenDocument);
+                Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
+                int ind = getScreenIndex(mScreenDocument);
+                if(ind >= 0) {
+                    RemoteButtonScreen rbs = mRemoteScreens.get(ind);
+                    Utils.saveScreen(this, rbs.getScreenName(), rbs);
+                }
+
                 Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
                 Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_FLAG_RESUME, 0);
 
@@ -329,7 +401,15 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
                     showButtonsFragment(mRemoteScreens.get(mScreenIndex));
                 }
                 break;
-            case R.id.btnDone:
+            }
+            case R.id.btnDone: {
+                Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenDocument);
+                Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
+                int ind = getScreenIndex(mScreenDocument);
+                if(ind >= 0) {
+                    RemoteButtonScreen rbs = mRemoteScreens.get(ind);
+                    Utils.saveScreen(this, rbs.getScreenName(), rbs);
+                }
                 Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, 0);
                 Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_FLAG_RESUME, 0);
                 if(mRemoteScreens.size() > mScreenIndex && mScreenIndex >= 0) {
@@ -337,13 +417,17 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
                 }
                 finishActivity();
                 break;
+            }
             case R.id.btnMinimize: {
+                Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenDocument);
+                Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
+
                 int ind = getScreenIndex(mScreenDocument);
                 if(ind >= 0) {
                     RemoteButtonScreen rbs = mRemoteScreens.get(ind);
                     Utils.saveScreen(this, rbs.getScreenName(), rbs);
                 }
-                Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mScreenDocument);
+                Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, mScreenDocument);
                 Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, page);
                 Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_FLAG_RESUME, 1);
 
@@ -368,7 +452,7 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
     @Override
     public void onPageChanged(int page) {
         Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE, page);
-//        saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
+        Utils.saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_PAGE_RESUME, page);
     }
 
     private void startDownloadImages(String collection, String folder, String field) {
@@ -388,6 +472,7 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
     }
 
     private void startDownloadScreen(String document) {
+        Log.d(TAG, "Start download screen " + document);
         startService(new Intent(this, DatabaseDownloadService.class)
                 .putExtra(DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_ID, DatabaseDownloadService.HW_SERVICE_MESSAGE_TYPE_DOWNLOAD_SCREEN)
                 .putExtra(DatabaseDownloadService.HW_SERVICE_MESSAGE_DOWNLOAD_DOCUMENT, document));

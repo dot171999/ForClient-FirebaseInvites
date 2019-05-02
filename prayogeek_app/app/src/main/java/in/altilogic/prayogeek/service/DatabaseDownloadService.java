@@ -195,6 +195,12 @@ public class DatabaseDownloadService extends IntentService {
 
                 List<String> screen_parameters = mFireBaseHelper.getArray(documentSnapshot);
 
+                if(screen_parameters == null) {
+                    Log.w(TAG, "Listen failed.");
+                    notifyActivityAboutDownloadFail();
+                    return;
+                }
+
                 String screenType=null;
                 if(screen_parameters.contains("type")) {
                     screenType = (String) documentSnapshot.get("type");
