@@ -115,8 +115,6 @@ public abstract class RemoteScreenActivity extends AppCompatActivity implements 
         }
         if(mRemoteScreens != null && mRemoteScreens.size() > 0 && mScreenIndex <= 0 && !backFlag) {
             mScreenIndex=0;
-//            saveSharedSetting(this, CURRENT_SCREEN_SETTINGS, 0);
-//            saveSharedSetting(this, CURRENT_SCREEN_SETTINGS_RESUME, mRemoteScreens.get(mScreenIndex).getStatus());
             finishActivity();
         }
         else {
