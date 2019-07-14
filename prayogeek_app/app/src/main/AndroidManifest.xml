@@ -36,7 +36,21 @@
 
         <activity
             android:name=".activities.MainActivity"
-            android:theme="@style/AppTheme.NoActionBar"/>
+            android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data
+                    android:host="prayogeek.page.link"
+                    android:scheme="https"
+                    android:pathPattern=".*"/>
+                <data
+                    android:host="prayogeek.page.link"
+                    android:scheme="http"
+                    android:pathPattern=".*"/>
+            </intent-filter>
+        </activity>
         <activity
             android:name=".activities.OnBoardingActivity"
             android:theme="@style/AppTheme.NoActionBar"/>

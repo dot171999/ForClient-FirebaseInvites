@@ -111,5 +111,31 @@
                 android:text="Button4"/>
 
         </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center|center_vertical"
+            android:padding="10dp"
+            android:layout_weight="1">
+
+            <TextView
+                android:id="@+id/txt_points"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin ="16dp"
+                android:textSize="18sp"
+                android:text="Points :"/>
+
+            <Button
+                android:id="@+id/btn_refer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin ="16dp"
+                android:theme="@style/AppTheme.Button"
+                android:textAllCaps="false"
+                android:text="Refer"/>
+
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

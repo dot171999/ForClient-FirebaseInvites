@@ -113,6 +113,7 @@ public class ProfileActivity extends AppCompatActivity {
         else {
             getParent().setResult(RESULT_OK, new Intent());
         }
+        Log.e("Save","save button clicked");
         finish();
     }
 }

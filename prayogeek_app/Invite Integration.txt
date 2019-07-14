@@ -1,0 +1,24 @@
+# Setup dependency
+	-> Follow instructions from these links 
+		-> Setup Invites and Dynamic Links - Links https://firebase.google.com/docs/invites/android | https://firebase.google.com/docs/dynamic-links/use-cases/user-to-user
+		-> Setup Cloud Functions and npm - Links https://firebase.google.com/docs/functions/get-started
+
+# Setup UI
+	-> In layout/content_main.xml from line-114, added a text view to update Points and a button to refer Dynamic Links
+
+# Setup Java Code
+	->  In activities/MainActivity.java 
+		-> from line-145, call function "genDynamicLink" at line-205. Function generates dynamic links after taking necessary parameters.
+		-> from line-271, call function "getReferLink" at line-151. Function listens for a dynamic link.
+	
+	->  In activities/FireBaseHelper.java 
+		-> from line-145 of MainActivity.java, call function "pointsChanges" at line-50. Function listens for changes in points and fetches update from DB.
+		-> from line-167 of MainActivity.java, call function "writeInvitedBy" at line-71. Function adds UID of invitee in DB.
+		-> from line-562 of MainActivity.java, call function "userPoints" at line-85. Function adds points field in DB on first login.	
+
+# DB fields
+	-> "PointsValue" is a permanent collection to change points awarded to Users on successfull invites.
+	-> "UserWithUidAndPoints" is a collection in which documents(UID) are created on successfull user registration.
+
+# Cloud function
+	-> "useWildCard" is a function which looks for any changes in "UserWithUidAndPoints" collections and checks for successfull invite and then update points for invitee and the user invited.	
